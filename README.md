@@ -194,11 +194,11 @@ metadata; texts live with each package).
 
 ## Project License
 
-**Project license: not yet selected.** Until one is chosen, all rights to
-the original code in this tree are reserved by the developer — no grant
-to copy, modify, or redistribute is given. Third-party packages remain
-under their own upstream licenses. (The developer was asked to select a
-license such as MIT/Apache-2.0; this section will be updated on decision.)
+**MIT License** (see `LICENSE`) — applies to the original WeatherGPT SIH 2026
+application code by Muchakarla Hemanth Kumar. Third-party packages, data
+services, tiles, and fonts remain under their own upstream licenses
+(see `THIRD_PARTY_NOTICES.md`). Provenance is documented in
+`docs/PROVENANCE.md`.
 
 ## Developer
 
