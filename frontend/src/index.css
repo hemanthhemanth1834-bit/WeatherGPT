@@ -464,6 +464,8 @@ button, input, select, a { min-height: 0; }
 @media (max-width: 640px) {
   .wg-wrap { padding-inline: 0.65rem; }
   .wg-hero-title { letter-spacing: 0; }
+  .wg-hsearch { flex: 1 1 100% !important; max-width: 100% !important; order: 6; }
+  .wg-livepill { order: 5; max-width: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

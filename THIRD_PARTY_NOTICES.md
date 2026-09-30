@@ -40,8 +40,8 @@ against the version you install if your compliance process requires it.)
 - **Open-Meteo** (forecast + geocoding): free for non-commercial use with
   attribution — attributed in UI source badges and docs.
 - **RainViewer**: radar tiles under provider terms — attributed in the map.
-- **OpenStreetMap contributors / CARTO**: ODbL basemap terms — attribution
-  retained in the map control.
+- **OpenStreetMap contributors**: ODbL tile terms — attribution retained in the
+  map control. (CARTO basemaps were removed after they began requiring an API key.)
 - **NASA GIBS / Worldview**: satellite viewer links only; no imagery
   redistributed; NASA open-data policies apply at the provider.
 - **Web Speech API**: browser-native; no key, no redistribution.

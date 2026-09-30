@@ -45,18 +45,18 @@ export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, on
           </div>
           <div className="wg-card" style={{ padding: "1.1rem 1.2rem", background: "rgba(8,13,26,.55)" }} aria-label="Current snapshot">
             {weather ? (
-              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
                 <span style={{ fontSize: "2.6rem" }} aria-hidden="true">{glyphFor(weather.icon)}</span>
                 <div>
                   <div style={{ fontSize: "2rem", fontWeight: 800 }}>{weather.current_temp}°<span style={{ fontSize: "1rem", color: "var(--wg-muted)" }}>C</span></div>
                   <div style={{ fontWeight: 700, color: "var(--wg-accent)" }}>{weather.condition}</div>
                   <div style={{ fontSize: "0.75rem", color: "var(--wg-muted)" }}>Feels {weather.feels_like}°C · {weather.location}</div>
                 </div>
-                <div style={{ marginLeft: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.3rem 0.9rem", fontSize: "0.76rem" }}>
+                <div style={{ marginLeft: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.35rem 1rem", fontSize: "0.76rem", minWidth: "12rem" }}>
                   <span>💧 Rain <strong>{weather.hourly?.[0]?.rain_prob ?? 0}%</strong></span>
-                  <span>💨 <strong>{weather.wind_speed} km/h</strong></span>
-                  <span>💦 <strong>{weather.humidity}%</strong></span>
-                  <span>🍃 AQI <strong>{weather.aqi}</strong></span>
+                  <span>💨 Wind <strong>{weather.wind_speed} km/h</strong></span>
+                  <span>💦 Humidity <strong>{weather.humidity}%</strong></span>
+                  <span>🍃 AQI <strong>{weather.aqi} ({weather.aqi_status})</strong></span>
                 </div>
               </div>
             ) : (

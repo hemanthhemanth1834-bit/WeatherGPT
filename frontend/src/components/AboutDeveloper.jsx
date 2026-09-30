@@ -50,7 +50,7 @@ export default function AboutDeveloper() {
           until a licensed feed is connected. Every payload carries source, status, and IST timestamp.
         </Section>
         <Section title="🗺 GIS">
-          Leaflet + CARTO/OSM basemap with <span className="wg-chip live">LIVE</span> RainViewer
+          Leaflet + OpenStreetMap basemap with <span className="wg-chip live">LIVE</span> RainViewer
           radar frames (playable timeline), selected-place marker, computed alert zones and an
           illustrative cyclone line (<span className="wg-chip demo">DEMO</span>). Attributions retained on-map.
         </Section>

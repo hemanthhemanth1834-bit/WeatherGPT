@@ -128,8 +128,8 @@ export default function GISMap({ weather, onAsk }) {
         <MapContainer center={[21.5, 82.0]} zoom={5} scrollWheelZoom style={{ height: "100%", width: "100%" }}>
           <FlyTo center={focus} />
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           {layers.radar && frame && (
             <TileLayer key={frame.url} url={frame.url} opacity={0.7} zIndex={200} attribution="Radar &copy; <a href='https://www.rainviewer.com/'>RainViewer</a>" />
@@ -163,7 +163,7 @@ export default function GISMap({ weather, onAsk }) {
         </MapContainer>
       </div>
       <p style={{ fontSize: "0.72rem", color: "var(--wg-muted)", margin: 0 }}>
-        Basemap © OpenStreetMap contributors © CARTO · Radar © RainViewer (live frames) · Zones and track are application illustrations, not official warnings.
+        Basemap © OpenStreetMap contributors · Radar © RainViewer (live frames) · Zones and track are application illustrations, not official warnings.
       </p>
     </section>
   );

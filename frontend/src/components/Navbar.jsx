@@ -83,7 +83,7 @@ export default function Navbar({ onHome, persona, onPersona, language, onLanguag
             </span>
           </button>
 
-          <div ref={boxRef} style={{ position: "relative", flex: "1 1 11rem", maxWidth: "21rem", minWidth: "10rem" }}>
+          <div ref={boxRef} className="wg-hsearch" style={{ position: "relative", flex: "1 1 11rem", maxWidth: "21rem", minWidth: "10rem" }}>
             <form onSubmit={submit} role="search" style={{ display: "flex", gap: "0.35rem" }}>
               <input className="wg-input" type="search" aria-label="Search for a city, district or locality" placeholder="📍 Search place…" value={place}
                 onChange={(e) => { onPlace(e.target.value); setOpen(true); }} onFocus={() => hints.length && setOpen(true)} style={{ padding: "0.5rem 0.7rem" }} />
@@ -105,7 +105,7 @@ export default function Navbar({ onHome, persona, onPersona, language, onLanguag
           </div>
 
           {weather && (
-            <span className="wg-util" style={{ cursor: "default" }} aria-label={`Current: ${weather.current_temp} degrees in ${weather.location}`}>
+            <span className="wg-util wg-livepill" style={{ cursor: "default" }} aria-label={`Current: ${weather.current_temp} degrees in ${weather.location}`}>
               <span className="wg-pulse-dot" aria-hidden="true" style={{ background: "var(--wg-success)" }} />
               {weather.location} · {weather.current_temp}°
               <span className="sub">{weather.condition}</span>
