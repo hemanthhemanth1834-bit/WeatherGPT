@@ -23,22 +23,51 @@ export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, on
 
   return (
     <section aria-label="Command home" style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
-      <div className="wg-hero-band" style={{ padding: "clamp(1.2rem, 4vw, 2.4rem)" }}>
-        <span className="wg-chip live">SIH 2026 · LIVE COMMAND CENTER</span>
-        <h1 className="wg-hero-title" style={{ marginTop: "0.6rem" }}>
-          WeatherGPT <span className="wg-gradient-text">— AI Weather Intelligence</span>
-        </h1>
-        <p style={{ margin: "0.6rem 0 0", color: "var(--wg-muted)", fontSize: "clamp(0.85rem, 2vw, 1rem)", maxWidth: "44rem", lineHeight: 1.6 }}>
-          Conversational AI for Weather Forecasting, Alerts &amp; Climate Intelligence.
-          AI-powered weather intelligence for India — ask in your language, by text or voice.
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "1rem" }}>
-          <button className="wg-btn" onClick={() => onTab("chat")}>🎙️ Ask WeatherGPT</button>
-          <button className="wg-btn-ghost" onClick={() => onTab("map")}>🗺 Radar map</button>
-          <button className="wg-btn-ghost" onClick={() => onTab("dashboard")}>📊 7-day forecast</button>
-          <button className="wg-btn-ghost" onClick={() => onTab("alerts")}>
-            🚨 Alerts{alertCount > 0 ? ` (${alertCount})` : ""}
-          </button>
+      <div className="wg-hero-band" style={{ padding: "clamp(1.2rem, 4vw, 2.2rem)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(17rem,1fr))", gap: "1.4rem", alignItems: "center" }}>
+          <div>
+            <span className="wg-chip live">SIH 2026 · LIVE COMMAND CENTER</span>
+            <h1 className="wg-hero-title" style={{ marginTop: "0.6rem" }}>
+              WeatherGPT <span className="wg-gradient-text">— AI Weather Intelligence</span>
+            </h1>
+            <p style={{ margin: "0.6rem 0 0", color: "var(--wg-muted)", fontSize: "clamp(0.85rem, 2vw, 0.95rem)", lineHeight: 1.6 }}>
+              Conversational AI for Weather Forecasting, Alerts &amp; Climate Intelligence.
+              AI-powered weather intelligence for India — ask in your language, by text or voice.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "1rem" }}>
+              <button className="wg-btn" onClick={() => onTab("chat")}>🎙️ Ask WeatherGPT</button>
+              <button className="wg-btn-ghost" onClick={() => onTab("map")}>🗺 Radar map</button>
+              <button className="wg-btn-ghost" onClick={() => onTab("dashboard")}>📊 7-day forecast</button>
+              <button className="wg-btn-ghost" onClick={() => onTab("alerts")}>
+                🚨 Alerts{alertCount > 0 ? ` (${alertCount})` : ""}
+              </button>
+            </div>
+          </div>
+          <div className="wg-card" style={{ padding: "1.1rem 1.2rem", background: "rgba(8,13,26,.55)" }} aria-label="Current snapshot">
+            {weather ? (
+              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                <span style={{ fontSize: "2.6rem" }} aria-hidden="true">{glyphFor(weather.icon)}</span>
+                <div>
+                  <div style={{ fontSize: "2rem", fontWeight: 800 }}>{weather.current_temp}°<span style={{ fontSize: "1rem", color: "var(--wg-muted)" }}>C</span></div>
+                  <div style={{ fontWeight: 700, color: "var(--wg-accent)" }}>{weather.condition}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--wg-muted)" }}>Feels {weather.feels_like}°C · {weather.location}</div>
+                </div>
+                <div style={{ marginLeft: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.3rem 0.9rem", fontSize: "0.76rem" }}>
+                  <span>💧 Rain <strong>{weather.hourly?.[0]?.rain_prob ?? 0}%</strong></span>
+                  <span>💨 <strong>{weather.wind_speed} km/h</strong></span>
+                  <span>💦 <strong>{weather.humidity}%</strong></span>
+                  <span>🍃 AQI <strong>{weather.aqi}</strong></span>
+                </div>
+              </div>
+            ) : (
+              <p style={{ color: "var(--wg-muted)", fontSize: "0.85rem", margin: 0 }}>
+                {busy ? "Loading live snapshot…" : "Search a place to load its live snapshot."}
+              </p>
+            )}
+            <div className="wg-mono" style={{ marginTop: "0.6rem", fontSize: "0.64rem", color: "var(--wg-muted)" }}>
+              {weather ? <>SOURCE {weather.data_source} · {weather.status} · {weather.updated_at_ist}</> : "SOURCE Open-Meteo · awaiting first load"}
+            </div>
+          </div>
         </div>
       </div>
 

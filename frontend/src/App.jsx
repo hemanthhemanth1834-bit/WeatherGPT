@@ -3,7 +3,7 @@ import Navbar, { personaForApi } from "./components/Navbar";
 import WeatherChat from "./components/WeatherChat";
 import { fetchActiveAlerts, fetchCurrentWeather, sendChatQuery } from "./services/api";
 
-/* Secondary views ride in lazy chunks; the home + chat entry stays lean. */
+/* Secondary views ride in lazy chunks; home + chat entry stays lean. */
 const HomePanel = lazy(() => import("./components/HomePanel"));
 const WeatherDashboard = lazy(() => import("./components/WeatherDashboard"));
 const GISMap = lazy(() => import("./components/GISMap"));
@@ -17,6 +17,13 @@ const RiskPanel = lazy(() => import("./components/RiskPanel"));
 const NwpSatellitePanel = lazy(() => import("./components/NwpSatellitePanel"));
 const SavedPlacesPanel = lazy(() => import("./components/SavedPlacesPanel"));
 const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
+
+const GROUPS = [
+  ["Overview", [["home", "🏠", "Command"], ["chat", "💬", "AI Chat"], ["dashboard", "📊", "Forecast"]]],
+  ["Intelligence", [["map", "🗺", "Radar · GIS"], ["severe", "🌀", "Severe"], ["alerts", "🚨", "Alerts"], ["risk", "⚠", "Risk"], ["climate", "🌡", "Climate"], ["compare", "⚖", "Compare"]]],
+  ["Sectors", [["agri", "🌾", "Agriculture"], ["aviation_marine", "✈", "Air · Sea"], ["nwp", "🛰", "NWP"], ["satellite", "📡", "Satellite"], ["saved", "★", "Saved"]]],
+  ["Project", [["about", "ℹ", "About"]]],
+];
 
 const SAVED_KEY = "weathergpt.savedPlaces";
 
@@ -55,6 +62,7 @@ export default function App() {
   const [saved, setSaved] = useState(loadSaved);
   const [notice, setNotice] = useState("");
   const [micTick, setMicTick] = useState(0);
+  const [drawer, setDrawer] = useState(false);
 
   const persistSaved = (next) => {
     setSaved(next);
@@ -80,10 +88,17 @@ export default function App() {
     });
   }, []);
 
-  const removeSaved = useCallback(
-    (name) => persistSaved(saved.filter((p) => p.toLowerCase() !== name.toLowerCase())),
-    [saved]
-  );
+  const removeSaved = useCallback((name) => {
+    setSaved((prev) => {
+      const next = prev.filter((p) => p.toLowerCase() !== name.toLowerCase());
+      try {
+        localStorage.setItem(SAVED_KEY, JSON.stringify(next));
+      } catch {
+        /* noop */
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -183,6 +198,7 @@ export default function App() {
   const goTab = useCallback((name) => {
     const map = { open_map: "map", open_dashboard: "dashboard", open_agri: "agri", open_alerts: "alerts", open_compare: "compare" };
     setTab(map[name] || name);
+    setDrawer(false);
   }, []);
 
   const voiceToChat = useCallback(() => {
@@ -190,19 +206,23 @@ export default function App() {
     setMicTick((t) => t + 1);
   }, []);
 
-  const askFromTab = useCallback(
-    (q) => {
-      setTab("chat");
-      ask(q);
-    },
-    [ask]
+  const askFromTab = useCallback((q) => {
+    setTab("chat");
+    ask(q);
+  }, [ask]);
+
+  const sideLink = (id, ico, label) => (
+    <button key={id} className="wg-sidelink" aria-current={tab === id ? "page" : undefined} onClick={() => goTab(id)}>
+      <span className="ico" aria-hidden="true">{ico}</span>
+      <span>{label}</span>
+      {id === "alerts" && alerts.length > 0 && <span className="wg-badge cnt">{alerts.length}</span>}
+    </button>
   );
 
   return (
     <div className="wg-shell">
       <Navbar
-        tab={tab}
-        onTab={setTab}
+        onHome={() => goTab("home")}
         persona={persona}
         onPersona={setPersona}
         language={language}
@@ -215,78 +235,116 @@ export default function App() {
         onSearch={searchPlace}
         onLocate={locateMe}
         alertCount={alerts.length}
+        onAlerts={() => goTab("alerts")}
         saved={saved}
         onRemoveSaved={removeSaved}
         weather={weather}
         onVoice={voiceToChat}
+        onMenu={() => setDrawer(true)}
       />
 
-      {notice && (
-        <div className="wg-wrap" style={{ marginTop: "0.6rem" }}>
-          <div className="wg-alert warn" role="status">
-            {notice}{" "}
-            <button className="wg-btn-ghost" style={{ marginLeft: "0.5rem" }} onClick={() => setNotice("")}>
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
+      <div className="wg-body">
+        <aside className="wg-side" aria-label="Primary">
+          {GROUPS.map(([group, links]) => (
+            <React.Fragment key={group}>
+              <div className="wg-sidegroup">{group}</div>
+              {links.map(([id, ico, label]) => sideLink(id, ico, label))}
+            </React.Fragment>
+          ))}
+        </aside>
 
-      <main className="wg-wrap" style={{ flex: 1, paddingTop: "0.9rem", paddingBottom: "1.2rem" }}>
-        {tab === "chat" && (
-          <WeatherChat messages={messages} busy={busy} language={language} persona={persona} onAsk={ask} onTab={goTab} micTick={micTick} />
-        )}
-        <Suspense
-          fallback={
-            <div role="status" style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
-              <div className="wg-spin" aria-label="Loading panel" />
+        <div className="wg-maincol">
+          {notice && (
+            <div className="wg-wrap" style={{ marginTop: "0.6rem" }}>
+              <div className="wg-alert warn" role="status">
+                {notice}{" "}
+                <button className="wg-btn-ghost" style={{ marginLeft: "0.5rem" }} onClick={() => setNotice("")}>
+                  Dismiss
+                </button>
+              </div>
             </div>
-          }
-        >
-          {tab === "home" && (
-            <HomePanel weather={weather} busy={busy} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} />
           )}
-          {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
-          {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
-          {tab === "agri" && <AgriAdvisor place={place} onAsk={askFromTab} />}
-          {tab === "aviation_marine" && <AviationMarine onAsk={askFromTab} />}
-          {tab === "alerts" && <AlertCenter onAsk={askFromTab} />}
-          {tab === "severe" && <SevereWeatherPanel onAsk={askFromTab} />}
-          {tab === "compare" && <CityComparison onAsk={askFromTab} />}
-          {tab === "climate" && <ClimateAnalytics onAsk={askFromTab} />}
-          {tab === "risk" && <RiskPanel location={place} />}
-          {tab === "nwp" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="nwp" />}
-          {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
-          {tab === "saved" && (
-            <SavedPlacesPanel
-              current={place}
-              saved={saved}
-              weather={weather}
-              onSelect={(name) => searchPlace(name)}
-              onAddCurrent={() => remember(place)}
-              onRemove={removeSaved}
-            />
-          )}
-          {tab === "about" && <AboutDeveloper />}
-        </Suspense>
-      </main>
 
-      <footer className="wg-topbar" style={{ top: "auto", borderTop: "1px solid var(--wg-line)", borderBottom: "none" }}>
-        <div className="wg-wrap" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 1.2rem", justifyContent: "space-between", paddingTop: "0.7rem", paddingBottom: "0.7rem", fontSize: "0.74rem", color: "var(--wg-muted)" }}>
-          <span>
-            <strong style={{ color: "var(--wg-ink)" }}>WeatherGPT</strong> · AI Weather Intelligence · SIH 2026
-            <br />
-            Muchakarla Hemanth Kumar · SRK Institute of Technology · B.Tech CSE–AI/ML · 2024–2028
-          </span>
-          <span style={{ display: "flex", gap: "0.9rem", flexWrap: "wrap" }}>
-            <a href="https://github.com/hemanthhemanth1834-bit" target="_blank" rel="noreferrer">GitHub</a>
-            <a href="https://www.linkedin.com/in/hemanth-kumar-muchakarla-7974002a7/" target="_blank" rel="noreferrer">LinkedIn</a>
-            <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT#third-party-notices" target="_blank" rel="noreferrer">Attribution</a>
-            <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
-          </span>
-          <span className="wg-mono">Open-Meteo · LIVE — GFS LIVE · WRF NOT CONFIGURED</span>
+          <main className="wg-wrap" style={{ flex: 1, paddingTop: "0.9rem", paddingBottom: "1.2rem", width: "100%" }}>
+            {tab === "chat" && (
+              <WeatherChat messages={messages} busy={busy} language={language} persona={persona} onAsk={ask} onTab={goTab} micTick={micTick} />
+            )}
+            <Suspense
+              fallback={
+                <div role="status" style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
+                  <div className="wg-spin" aria-label="Loading panel" />
+                </div>
+              }
+            >
+              {tab === "home" && (
+                <HomePanel weather={weather} busy={busy} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} />
+              )}
+              {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
+              {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
+              {tab === "agri" && <AgriAdvisor place={place} onAsk={askFromTab} />}
+              {tab === "aviation_marine" && <AviationMarine onAsk={askFromTab} />}
+              {tab === "alerts" && <AlertCenter onAsk={askFromTab} />}
+              {tab === "severe" && <SevereWeatherPanel onAsk={askFromTab} />}
+              {tab === "compare" && <CityComparison onAsk={askFromTab} />}
+              {tab === "climate" && <ClimateAnalytics onAsk={askFromTab} />}
+              {tab === "risk" && <RiskPanel location={place} />}
+              {tab === "nwp" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="nwp" />}
+              {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
+              {tab === "saved" && (
+                <SavedPlacesPanel current={place} saved={saved} weather={weather}
+                  onSelect={(name) => searchPlace(name)} onAddCurrent={() => remember(place)} onRemove={removeSaved} />
+              )}
+              {tab === "about" && <AboutDeveloper />}
+            </Suspense>
+          </main>
+
+          <footer style={{ borderTop: "1px solid var(--wg-line)", background: "rgba(9,14,27,.85)" }}>
+            <div className="wg-wrap" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 1.2rem", justifyContent: "space-between", paddingTop: "0.7rem", paddingBottom: "0.7rem", fontSize: "0.74rem", color: "var(--wg-muted)" }}>
+              <span>
+                <strong style={{ color: "var(--wg-ink)" }}>WeatherGPT</strong> · AI Weather Intelligence · SIH 2026
+                <br />
+                Muchakarla Hemanth Kumar · SRK Institute of Technology · B.Tech CSE–AI/ML · 2024–2028
+              </span>
+              <span style={{ display: "flex", gap: "0.9rem", flexWrap: "wrap" }}>
+                <a href="https://github.com/hemanthhemanth1834-bit" target="_blank" rel="noreferrer">GitHub</a>
+                <a href="https://www.linkedin.com/in/hemanth-kumar-muchakarla-7974002a7/" target="_blank" rel="noreferrer">LinkedIn</a>
+                <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT#third-party-notices" target="_blank" rel="noreferrer">Attribution</a>
+                <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
+              </span>
+              <span className="wg-mono">Open-Meteo · LIVE — GFS LIVE · WRF NOT CONFIGURED</span>
+            </div>
+          </footer>
         </div>
-      </footer>
+      </div>
+
+      <div className="wg-bottomnav">
+        <nav aria-label="Primary mobile">
+          {[["home", "🏠", "Home"], ["chat", "💬", "Chat"], ["map", "🗺", "Map"], ["alerts", "🚨", "Alerts"], ["__menu", "☰", "Menu"]].map(([id, ico, label]) => (
+            <button key={id} className="wg-bnav" aria-selected={tab === id} onClick={() => (id === "__menu" ? setDrawer(true) : goTab(id))}>
+              <span className="ico" aria-hidden="true">{ico}</span>
+              <span>{label}{id === "alerts" && alerts.length > 0 ? ` (${alerts.length})` : ""}</span>
+            </button>
+          ))}
+        </nav>
+      </div>
+
+      {drawer && (
+        <>
+          <div className="wg-drawer-veil" onClick={() => setDrawer(false)} aria-hidden="true" />
+          <div className="wg-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
+              <strong>WeatherGPT · SIH 2026</strong>
+              <button className="wg-btn-ghost" onClick={() => setDrawer(false)} aria-label="Close menu">✕</button>
+            </div>
+            {GROUPS.map(([group, links]) => (
+              <React.Fragment key={group}>
+                <div className="wg-sidegroup">{group}</div>
+                {links.map(([id, ico, label]) => sideLink(id, ico, label))}
+              </React.Fragment>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
