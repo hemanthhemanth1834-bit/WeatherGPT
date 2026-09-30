@@ -389,6 +389,8 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
                                                "trend", "warming", "el nino", "la nina", "last year"))
     wants_travel = any(w in lowered for w in ("travel", "trip", "journey", "safe to",
                                               "is it safe", "commute", "drive"))
+    wants_aqi = any(w in lowered for w in ("aqi", "air quality", "pollution", "smog",
+                                           "pm2", "pm10", "haze"))
 
     advisory = None
     briefing = None
@@ -427,6 +429,17 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         extra += (f"\n\n**Travel read (ESTIMATED risk {risk['overall']}):** {top} "
                   f"Wind {data.wind_speed} km/h, visibility {data.visibility} km, "
                   f"rain chance {(data.hourly[0].rain_prob if data.hourly else 0)}%.")
+    if wants_aqi:
+        try:
+            from .air_quality import get_air_quality
+            live_aqi = get_air_quality(lat, lon)
+            extra += (f"\n\n**Air quality (LIVE, {live_aqi['standard']}):** "
+                      f"US AQI **{live_aqi['us_aqi']}** ({live_aqi['band']}), "
+                      f"PM2.5 {live_aqi['pm2_5']}, PM10 {live_aqi['pm10']}. "
+                      f"Dominant pollutant: {live_aqi['dominant_pollutant']}.")
+        except RuntimeError:
+            extra += (f"\n\n**Air quality (ESTIMATED fallback):** AQI **{data.aqi}** "
+                      f"({data.aqi_status}). Live feed unavailable right now.")
 
     speech, markdown = _render_weather(proper, state, data, lang)
     markdown += extra

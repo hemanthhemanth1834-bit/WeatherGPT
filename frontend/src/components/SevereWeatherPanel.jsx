@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchActiveAlerts, fetchCycloneTrack } from "../services/api";
+import EmergencyContacts from "./EmergencyContacts";
 
 const CATS = ["Cyclone", "Heavy Rain", "Flood", "Thunderstorm", "Lightning", "Heatwave", "Cold Wave", "Strong Wind"];
 
@@ -23,6 +24,7 @@ export default function SevereWeatherPanel({ onAsk }) {
   const [track, setTrack] = useState(null);
   const [cat, setCat] = useState("Cyclone");
   const [error, setError] = useState("");
+  const [showContacts, setShowContacts] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,13 +49,19 @@ export default function SevereWeatherPanel({ onAsk }) {
   return (
     <section aria-label="Severe weather" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
       <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
-        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem" }}>🌀 Severe-weather desk</h2>
-        <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--wg-muted)" }}>
-          <span className="wg-chip demo">TRACK: DEMO DATA</span>{" "}
-          <span className="wg-chip estimated">ALERTS: COMPUTED</span>{" "}
-          Illustrative cyclone geometry and telemetry-derived warnings — never official bulletins.
-        </p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: "1.15rem" }}>🌀 Severe-weather desk</h2>
+            <p style={{ margin: "0.25rem 0 0", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
+              <span className="wg-chip demo">TRACK: DEMO DATA</span>{" "}
+              <span className="wg-chip estimated">ALERTS: COMPUTED</span>{" "}
+              Illustrative cyclone geometry and telemetry-derived warnings — never official bulletins.
+            </p>
+          </div>
+          <button className="wg-btn" onClick={() => setShowContacts(true)}>📞 Emergency contacts</button>
+        </div>
       </div>
+      {showContacts && <EmergencyContacts onClose={() => setShowContacts(false)} />}
 
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
 

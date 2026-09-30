@@ -90,7 +90,7 @@ def _download(lat: float, lon: float, place: str, state: str) -> WeatherData:
             "&current=temperature_2m,relative_humidity_2m,apparent_temperature,"
             "precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m"
             "&hourly=temperature_2m,precipitation_probability,precipitation,"
-            "weather_code,wind_speed_10m"
+            "weather_code,wind_speed_10m,relative_humidity_2m"
             "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
             "precipitation_sum,wind_speed_10m_max,sunrise,sunset,uv_index_max"
             "&timezone=Asia%2FKolkata"
@@ -124,6 +124,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         temps = hourly_raw.get("temperature_2m", [])
         probs = hourly_raw.get("precipitation_probability", [])
         winds = hourly_raw.get("wind_speed_10m", [])
+        hums = hourly_raw.get("relative_humidity_2m", [])
         stamp = times[i]
         hourly.append(HourlyPoint(
             time=stamp.split("T")[1] if "T" in stamp else stamp,
@@ -131,6 +132,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
             rain_prob=int(probs[i]) if i < len(probs) and probs[i] is not None else 0,
             condition=hlabel, icon=hicon,
             wind_speed=round(float(winds[i]), 1) if i < len(winds) else 10.0,
+            humidity=int(hums[i]) if i < len(hums) and hums[i] is not None else 60,
         ))
 
     daily: List[DailyPoint] = []
@@ -186,7 +188,7 @@ def _fallback(lat: float, lon: float, place: str, state: str) -> WeatherData:
     hourly = [
         HourlyPoint(time=f"{(now.hour + i) % 24:02d}:00", temp=27.0,
                     rain_prob=15, condition="Partly Cloudy",
-                    icon="CloudSun", wind_speed=12.0)
+                    icon="CloudSun", wind_speed=12.0, humidity=65)
         for i in range(24)
     ]
     daily = [

@@ -18,13 +18,17 @@ from .services.advisories import (aviation_briefing, climate_reference,
                                   crop_advisory, marine_advisory,
                                   supported_crops)
 from .services.agent_tools import list_tools
+from .services.air_quality import get_air_quality, uv_guidance
 from .services.alerts import active_alerts, cyclone_track
 from .services.chat import _compare as compare_places
 from .services.chat import answer
+from .services.history import climate_history
 from .services.indian_sources_service import get_indian_sources_status
 from .services.nwp_service import get_nwp_status
+from .services.providers import health_snapshot
 from .services.risk_engine import assess_risk
 from .services.satellite_service import get_satellite_info
+from .services.travel import travel_safety
 from .services.weather import get_weather
 
 app = FastAPI(
@@ -77,6 +81,81 @@ def project() -> dict:
 @app.get("/api/agent/tools")
 def tools() -> dict:
     return list_tools()
+
+
+@app.get("/api/agent/engine")
+def engine() -> dict:
+    """How answers are produced: deterministic tools; LLM only if configured."""
+    import os
+    provider = os.getenv("AI_PROVIDER", "auto").lower()
+    llm_key = bool(os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY"))
+    active = "RULE-BASED TOOL-GROUNDED"
+    if provider not in ("auto", "none", "") and llm_key:
+        active = "LLM-ASSISTED (key configured)"
+    return {
+        "engine": active,
+        "ai_provider_setting": provider,
+        "llm_configured": llm_key,
+        "fallback": "deterministic WeatherGPT tools (always available)",
+        "note": "Figures always originate from data tools, never invented.",
+    }
+
+
+@app.get("/api/providers/health")
+def providers(live: bool = True) -> dict:
+    """Live status/latency table for every registered provider."""
+    return health_snapshot(check_live=live)
+
+
+@app.get("/api/air-quality")
+def air_quality(location: str = Query("Pune"), lat: Optional[float] = None,
+                lon: Optional[float] = None) -> dict:
+    """Live AQI + pollutants (US AQI standard). Falls back to estimate."""
+    if lat is None or lon is None:
+        lat, lon, proper, state = geo.geocode(location)
+    else:
+        proper, state = location, "India"
+    try:
+        return get_air_quality(lat, lon)
+    except RuntimeError:
+        estimated = 78
+        return {"us_aqi": estimated, "band": "Moderate", "standard": "US AQI (EPA)",
+                "dominant_pollutant": "—", "pm2_5": None, "pm10": None,
+                "nitrogen_dioxide": None, "ozone": None, "sulphur_dioxide": None,
+                "carbon_monoxide": None, "observed_at": "",
+                "data_source": "Local estimate (AQI upstream unavailable)",
+                "data_type": "Estimated", "status": "FALLBACK"}
+
+
+@app.get("/api/travel/safety")
+def travel(location: str = Query("Pune"), lat: Optional[float] = None,
+           lon: Optional[float] = None) -> dict:
+    """LOW / MODERATE / HIGH trip read with drivers (ESTIMATED)."""
+    if lat is None or lon is None:
+        lat, lon, proper, state = geo.geocode(location)
+    else:
+        proper, state = location, "India"
+    return travel_safety(get_weather(lat, lon, proper, state))
+
+
+@app.get("/api/climate/history")
+def history_years(location: str = Query("Pune"), years: int = Query(5)) -> dict:
+    """Observed yearly means from ERA5 reanalysis (LIVE archive)."""
+    lat, lon, proper, state = geo.geocode(location)
+    return climate_history(lat, lon, proper, state, years)
+
+
+@app.get("/api/uv")
+def uv(location: str = Query("Pune")) -> dict:
+    """Live UV index with protection guidance."""
+    lat, lon, proper, state = geo.geocode(location)
+    data = get_weather(lat, lon, proper, state)
+    guide = uv_guidance(data.uv_index)
+    return {"location": proper, "state": state, "uv_index": data.uv_index,
+            "level": guide["level"], "advice": guide["advice"],
+            "sunrise": data.sunrise, "sunset": data.sunset,
+            "data_source": data.data_source, "status": data.status,
+            "updated_at_ist": data.updated_at_ist}
 
 
 @app.post("/api/chat/query", response_model=ChatResponse)

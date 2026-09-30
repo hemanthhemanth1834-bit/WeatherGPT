@@ -45,3 +45,17 @@ def test_answer_compare_contract_without_network(monkeypatch):
     response = chat.answer(WeatherQueryRequest(query="compare A vs B"))
     assert response.comparison_data is not None
     assert response.structured_weather is not None
+
+
+def test_aqi_intent_labels_source(monkeypatch):
+    from app.models import WeatherData
+    fake = WeatherData(location="Pune", state="Maharashtra", hourly=[], daily=[])
+    monkeypatch.setattr(chat, "get_weather", lambda *a: fake)
+    monkeypatch.setattr(
+        "app.services.air_quality.get_air_quality",
+        lambda *a: {"standard": "US AQI (EPA)", "us_aqi": 88, "band": "Moderate",
+                    "pm2_5": 30.0, "pm10": 55.0, "dominant_pollutant": "pm2_5"},
+    )
+    response = chat.answer(WeatherQueryRequest(query="What is the AQI and air quality?"))
+    assert "Air quality (LIVE" in response.markdown_response
+    assert "88" in response.markdown_response

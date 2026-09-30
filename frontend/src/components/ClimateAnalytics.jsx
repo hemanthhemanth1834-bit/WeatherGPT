@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchClimateTrends } from "../services/api";
+import { fetchClimateHistory, fetchClimateTrends } from "../services/api";
 
 function Bars({ values, color, format }) {
   const peak = Math.max(...values.map((v) => Math.abs(v)), 1);
@@ -20,6 +20,7 @@ export default function ClimateAnalytics({ onAsk }) {
   const [region, setRegion] = useState("All India");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [observed, setObserved] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +30,9 @@ export default function ClimateAnalytics({ onAsk }) {
       try {
         const result = await fetchClimateTrends(region);
         if (!cancelled) setData(result);
+        fetchClimateHistory(region === "All India" ? "New Delhi" : region, 5)
+          .then((h) => !cancelled && setObserved(h))
+          .catch(() => !cancelled && setObserved(null));
       } catch {
         if (!cancelled) setError("Climate reference failed to load — please retry.");
       } finally {
@@ -62,6 +66,26 @@ export default function ClimateAnalytics({ onAsk }) {
       {data && (
         <>
           <p style={{ fontSize: "0.85rem", lineHeight: 1.6, margin: 0 }}>{data.summary}</p>
+          {observed && (
+            <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+              <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.82rem" }}>
+                Observed recent years — {observed.location} ({observed.period}){" "}
+                <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OBSERVED · ERA5</span>
+              </h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+                {observed.years.map((y) => (
+                  <div key={y.year} style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem 1rem", fontSize: "0.78rem", padding: "0.4rem 0.6rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
+                    <strong className="wg-mono">{y.year}</strong>
+                    <span>mean max <strong>{y.mean_max_c}°C</strong></span>
+                    <span>rain <strong>{y.total_rain_mm} mm</strong></span>
+                    <span>40°C+ days <strong>{y.hot_days_ge40c}</strong></span>
+                    <span>wet days <strong>{y.wet_days_ge25mm}</strong></span>
+                  </div>
+                ))}
+              </div>
+              <p className="wg-mono" style={{ fontSize: "0.64rem", color: "var(--wg-muted)" }}>SOURCE Open-Meteo Archive API · {observed.data_type}</p>
+            </div>
+          )}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(18rem,1fr))", gap: "0.7rem" }}>
             <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
               <h3 style={{ margin: "0 0 0.3rem", fontSize: "0.82rem" }}>Temperature anomaly (°C)</h3>

@@ -1,11 +1,24 @@
 import React, { useEffect, useState } from "react";
-import { fetchRiskAssessment } from "../services/api";
+import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
 import { glyphFor } from "./ModernWeatherCard";
 
 const RISK_TONE = { LOW: "live", MODERATE: "static", HIGH: "demo", EXTREME: "off" };
 
-export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, onTab }) {
+function agoLabel(ist) {
+  if (!ist) return "";
+  const m = ist.match(/(\d+)\s+(\w+)\s+(\d{4}),\s+(\d+):(\d+)/);
+  if (!m) return "";
+  const months = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+  const then = Date.UTC(+m[3], months[m[2]], +m[1], +m[4] - 5, +m[5] - 30);
+  const mins = Math.max(0, Math.round((Date.now() - then) / 60000));
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  return `${Math.floor(mins / 60)} h ${mins % 60} min ago`;
+}
+
+export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, onTab, onRefresh }) {
   const [risk, setRisk] = useState(null);
+  const [auto, setAuto] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -18,6 +31,12 @@ export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, on
       cancelled = true;
     };
   }, [weather?.location, weather?.lat, weather?.lon]);
+
+  useEffect(() => {
+    if (!auto || !weather?.location) return undefined;
+    const id = setInterval(() => onRefresh(weather.location), 10 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [auto, weather?.location, onRefresh]);
 
   const topAlert = alerts?.[0];
 
@@ -109,8 +128,12 @@ export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, on
               </button>
             </div>
           </div>
-          <div className="wg-mono" style={{ marginTop: "0.7rem", fontSize: "0.68rem", color: "var(--wg-muted)" }}>
-            SOURCE {weather.data_source} · STATUS {weather.status} · UPDATED {weather.updated_at_ist || "—"} · {weather.nwp_model}
+          <div className="wg-mono" style={{ marginTop: "0.7rem", fontSize: "0.68rem", color: "var(--wg-muted)", display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center" }}>
+            <span>SOURCE {weather.data_source} · STATUS {weather.status} · UPDATED {weather.updated_at_ist || "—"}{weather.updated_at_ist ? ` (${agoLabel(weather.updated_at_ist)})` : ""} · {weather.nwp_model}</span>
+            <button className="wg-btn-ghost" style={{ padding: "0.2rem 0.6rem", fontSize: "0.68rem" }} onClick={() => onRefresh(weather.location)} aria-label="Refresh now">↻ Refresh</button>
+            <label style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center", fontSize: "0.68rem" }}>
+              <input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> auto (10 min)
+            </label>
           </div>
           {topAlert && (
             <button onClick={() => onTab("alerts")} style={{ marginTop: "0.6rem", width: "100%", textAlign: "left", background: "rgba(248,113,113,.07)", border: "1px solid rgba(248,113,113,.35)", color: "inherit", borderRadius: "0.8rem", padding: "0.6rem 0.9rem", cursor: "pointer", fontSize: "0.8rem" }}>

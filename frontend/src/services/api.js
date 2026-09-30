@@ -92,3 +92,23 @@ export const fetchIndianSources = () => get("/sources/indian");
 export const fetchAgentTools = () => get("/agent/tools");
 
 export const fetchDeveloperMeta = () => get("/meta/developer");
+
+export const fetchAirQuality = (location = "Pune", lat = null, lon = null) => {
+  let path = `/air-quality?location=${encodeURIComponent(location)}`;
+  if (lat !== null && lon !== null) path += `&lat=${lat}&lon=${lon}`;
+  return get(path);
+};
+
+export const fetchTravelSafety = (location = "Pune") =>
+  get(`/travel/safety?location=${encodeURIComponent(location)}`);
+
+export const fetchClimateHistory = (location = "Pune", years = 5) =>
+  get(`/climate/history?location=${encodeURIComponent(location)}&years=${years}`);
+
+export const fetchProvidersHealth = (live = true) =>
+  get(`/providers/health?live=${live ? "true" : "false"}`);
+
+export const fetchEngineStatus = () => get("/agent/engine");
+
+export const fetchUV = (location = "Pune") =>
+  get(`/uv?location=${encodeURIComponent(location)}`);

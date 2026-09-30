@@ -37,12 +37,19 @@ against the version you install if your compliance process requires it.)
 
 ## Data, tiles, and browser APIs (terms apply at the provider)
 
-- **Open-Meteo** (forecast + geocoding): free for non-commercial use with
-  attribution — attributed in UI source badges and docs.
+- **Open-Meteo** (forecast + geocoding + air quality + marine + archive/ERA5):
+  free for non-commercial use with attribution — attributed in UI source
+  badges and docs. All five endpoints probed LIVE on 30 Sep 2026
+  (see `/api/providers/health`).
 - **RainViewer**: radar tiles under provider terms — attributed in the map.
-- **OpenStreetMap contributors**: ODbL tile terms — attribution retained in the
-  map control. (CARTO basemaps were removed after they began requiring an API key.)
-- **NASA GIBS / Worldview**: satellite viewer links only; no imagery
+- **OpenStreetMap contributors**: ODbL tile terms — attribution retained in
+  the map control. (CARTO basemaps were removed after they began requiring
+  an API key.)
+- **NASA GIBS / Worldview**: satellite viewer links + one verified WMTS tile
+  pattern (tile fetch probed HTTP 200 on 30 Sep 2026); no imagery
   redistributed; NASA open-data policies apply at the provider.
 - **Web Speech API**: browser-native; no key, no redistribution.
 - Fonts via Google Fonts (Inter, JetBrains Mono) under their own licenses.
+- Evaluated but not used: OpenWeather/WeatherAPI key tiers (unneeded —
+  Open-Meteo covers requirements), Nominatim (1 req/s policy; Open-Meteo
+  geocoding plus a 24 h cache suffice).

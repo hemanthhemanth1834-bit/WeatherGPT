@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchCropAdvisory } from "../services/api";
+import { fetchCropAdvisory, fetchCurrentWeather } from "../services/api";
 import { speechEngine } from "../services/voice";
 
 const CROPS = [
@@ -15,6 +15,7 @@ export default function AgriAdvisor({ place, onAsk }) {
   const [crop, setCrop] = useState("cotton");
   const [district, setDistrict] = useState("Nagpur");
   const [data, setData] = useState(null);
+  const [wx, setWx] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [voicing, setVoicing] = useState(false);
@@ -25,8 +26,14 @@ export default function AgriAdvisor({ place, onAsk }) {
       setBusy(true);
       setError("");
       try {
-        const result = await fetchCropAdvisory(crop, district);
-        if (!cancelled) setData(result);
+        const [result, live] = await Promise.all([
+          fetchCropAdvisory(crop, district),
+          fetchCurrentWeather(district).catch(() => null),
+        ]);
+        if (!cancelled) {
+          setData(result);
+          setWx(live);
+        }
       } catch {
         if (!cancelled) setError("Advisory failed to load — please retry.");
       } finally {

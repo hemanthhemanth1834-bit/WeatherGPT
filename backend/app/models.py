@@ -14,6 +14,7 @@ class HourlyPoint(BaseModel):
     condition: str = "Clear Sky"
     icon: str = "Sun"
     wind_speed: float = 10.0
+    humidity: int = 60
 
 
 class DailyPoint(BaseModel):
@@ -120,6 +121,10 @@ class MarineAdvisory(BaseModel):
     warning_message: str = ""
     high_tide_time: str = ""
     low_tide_time: str = ""
+    wave_direction: Optional[float] = None
+    wave_period_s: Optional[float] = None
+    sea_surface_temp_c: Optional[float] = None
+    provenance: str = "FALLBACK estimate"
 
 
 class HealthPersonas(BaseModel):

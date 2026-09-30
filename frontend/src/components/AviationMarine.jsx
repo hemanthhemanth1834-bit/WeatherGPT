@@ -83,7 +83,7 @@ export default function AviationMarine({ onAsk }) {
       <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
         <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem" }}>Marine advisory</h2>
         <p style={{ margin: "0 0 0.7rem", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
-          <span className="wg-chip estimated">MODEL-DEPENDENT ESTIMATE</span> Computed from live coastal wind — not an official INCOIS bulletin.
+          <span className="wg-chip estimated">MODEL · Open-Meteo wave model</span> Computed from live model output — not an official INCOIS bulletin.
         </p>
         <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.8rem" }} role="group" aria-label="Coastal sector">
           {COASTS.map(([id, label]) => (
@@ -95,8 +95,11 @@ export default function AviationMarine({ onAsk }) {
         {sea && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(9rem,1fr))", gap: "0.6rem", fontSize: "0.85rem" }}>
             <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Waves</div><strong>{sea.wave_height_m} m · {sea.sea_condition}</strong></div>
+            <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Direction / Period</div><strong>{sea.wave_direction != null ? `${sea.wave_direction}°` : "—"} / {sea.wave_period_s != null ? `${sea.wave_period_s}s` : "—"}</strong></div>
+            <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Sea temp</div><strong>{sea.sea_surface_temp_c != null ? `${sea.sea_surface_temp_c}°C` : "—"}</strong></div>
             <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Wind</div><strong>{sea.wind_speed_knots} kt</strong></div>
             <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Zone</div><strong>{sea.coastal_zone}</strong></div>
+            <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Provenance</div><strong style={{ fontSize: "0.72rem" }}>{sea.provenance || "MODEL"}</strong></div>
             <p style={{ gridColumn: "1/-1", margin: 0 }}>{sea.warning_message}</p>
             <p className="wg-mono" style={{ gridColumn: "1/-1", margin: 0, fontSize: "0.7rem", color: "var(--wg-muted)" }}>
               High tide {sea.high_tide_time} · Low tide {sea.low_tide_time} (indicative)

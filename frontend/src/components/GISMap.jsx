@@ -99,7 +99,15 @@ export default function GISMap({ weather, onAsk }) {
           <span style={{ flex: 1 }} />
           <button className="wg-btn-ghost" onClick={() => setFocus([19.81, 85.83])}>Bay of Bengal</button>
           <button className="wg-btn-ghost" onClick={() => setFocus([19.07, 72.87])}>Mumbai</button>
-          <button className="wg-btn-ghost" onClick={() => { setFocus([21.5, 82.0]); }}>All India</button>
+          <button className="wg-btn-ghost" onClick={() => setFocus([21.5, 82.0])}>All India</button>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }} role="group" aria-label="Region quick filters">
+          <span style={{ fontSize: "0.7rem", color: "var(--wg-muted)" }}>Region:</span>
+          {[["All India", [21.5, 82.0]], ["North", [30.5, 78.0]], ["South", [13.0, 78.0]], ["West", [20.5, 73.5]], ["East", [24.0, 87.5]], ["Central", [23.5, 80.0]]].map(([label, center]) => (
+            <button key={label} className="wg-tab" style={{ fontSize: "0.7rem", padding: "0.3rem 0.6rem" }} onClick={() => setFocus(center)}>
+              {label}
+            </button>
+          ))}
         </div>
         {frames.length > 1 && layers.radar && (
           <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }} aria-label="Radar timeline">

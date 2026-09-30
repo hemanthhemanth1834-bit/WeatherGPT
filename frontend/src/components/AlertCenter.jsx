@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchActiveAlerts } from "../services/api";
 import { speechEngine } from "../services/voice";
+import EmergencyContacts from "./EmergencyContacts";
 
 const FILTERS = ["All", "Red", "Orange", "Yellow"];
 
@@ -10,16 +11,41 @@ export default function AlertCenter({ onAsk }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [voicing, setVoicing] = useState(null);
+  const [showContacts, setShowContacts] = useState(false);
 
   const load = async (level) => {
     setBusy(true);
     setError("");
     try {
-      setAlerts(await fetchActiveAlerts(level === "All" ? null : level));
+      const data = await fetchActiveAlerts(level === "All" ? null : level);
+      setAlerts(data);
+      if (typeof window !== "undefined" && "Notification" in window &&
+          Notification.permission === "granted" && data.length > 0 && !load.notified) {
+        load.notified = true;
+        try {
+          new Notification(`WeatherGPT: ${data[0].severity} alert`, { body: data[0].headline });
+        } catch {
+          /* blocked by browser policy */
+        }
+      }
     } catch {
       setError("Alert feed failed — the backend may be unreachable. Please retry.");
     } finally {
       setBusy(false);
+    }
+  };
+
+  const enableNotifications = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+      setError("Browser notifications are not supported here.");
+      return;
+    }
+    const result = await Notification.requestPermission();
+    if (result !== "granted") {
+      setError("Notification permission was not granted.");
+    } else {
+      load.notified = false;
+      load(filter);
     }
   };
 
@@ -47,14 +73,21 @@ export default function AlertCenter({ onAsk }) {
             Computed from live telemetry against documented thresholds — <strong>not official IMD bulletins</strong>.
           </p>
         </div>
-        <div role="group" aria-label="Filter by severity" style={{ display: "flex", gap: "0.35rem" }}>
+        <div role="group" aria-label="Filter by severity" style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
           {FILTERS.map((level) => (
             <button key={level} className="wg-tab" aria-selected={filter === level} onClick={() => setFilter(level)}>
               {level}
             </button>
           ))}
+          <button className="wg-btn-ghost" style={{ fontSize: "0.72rem" }} onClick={() => setShowContacts(true)}>
+            📞 Emergency contacts
+          </button>
+          <button className="wg-btn-ghost" style={{ fontSize: "0.72rem" }} onClick={enableNotifications} title="One browser notification per session for the top alert">
+            🔔 Notify me
+          </button>
         </div>
       </div>
+      {showContacts && <EmergencyContacts onClose={() => setShowContacts(false)} />}
 
       {error && (
         <div className="wg-alert error" role="alert">⚠️ {error}</div>

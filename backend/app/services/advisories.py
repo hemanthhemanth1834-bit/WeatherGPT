@@ -143,7 +143,7 @@ def aviation_briefing(query: str) -> AviationBriefing:
 
 
 # ---------------------------------------------------------------------------
-# Marine (live wind + empirical wave estimate)
+# Marine: LIVE Open-Meteo Marine API first, empirical estimate as FALLBACK
 # ---------------------------------------------------------------------------
 COASTS: Dict[str, dict] = {
     "mumbai": {"zone": "Mumbai / Konkan coast, Arabian Sea", "lat": 18.9220, "lon": 72.8347},
@@ -159,43 +159,101 @@ COASTS: Dict[str, dict] = {
 }
 
 
+def _live_marine(lat: float, lon: float) -> dict | None:
+    """Read wave model output. Returns None when unavailable."""
+    try:
+        url = ("https://marine-api.open-meteo.com/v1/marine"
+               f"?latitude={lat}&longitude={lon}"
+               "&current=wave_height,wave_direction,wave_period,"
+               "sea_surface_temperature,wind_wave_height,swell_wave_height"
+               "&timezone=Asia%2FKolkata")
+        response = requests.get(url, timeout=5)
+        if response.status_code != 200:
+            return None
+        current = response.json().get("current", {})
+        if current.get("wave_height") is None:
+            return None
+        return current
+    except Exception:
+        return None
+
+
+def _fallback_waves(wind_kmh: float) -> tuple[float, float]:
+    knots = round(wind_kmh * 0.54, 1)
+    return knots, max(0.8, round(0.032 * (wind_kmh ** 1.3), 1))
+
+
 def marine_advisory(place: str) -> MarineAdvisory:
-    """Estimate sea state from live coastal wind (not an official bulletin)."""
+    """Live wave-model advisory; empirical estimate only as labelled FALLBACK."""
+    from .cache import cached
+
     text = (place or "").lower()
     key = next((k for k in COASTS if k in text), "mumbai")
     coast = COASTS[key]
-    wind_kmh = 16.0
-    try:
-        url = ("https://api.open-meteo.com/v1/forecast"
-               f"?latitude={coast['lat']}&longitude={coast['lon']}"
-               "&current=wind_speed_10m&timezone=Asia%2FKolkata")
-        response = requests.get(url, timeout=4)
-        if response.status_code == 200:
-            wind_kmh = float(response.json().get("current", {}).get("wind_speed_10m", 16.0))
-    except Exception:
-        pass
-    knots = round(wind_kmh * 0.54, 1)
-    waves = max(0.8, round(0.032 * (wind_kmh ** 1.3), 1))
+
+    live = cached(1800, f"sea:{key}",
+                  lambda: _live_marine(coast["lat"], coast["lon"]))
+
+    extra: dict = {}
+    if live is not None:
+        waves = float(live["wave_height"])
+        direction = live.get("wave_direction")
+        period = live.get("wave_period")
+        sea_temp = live.get("sea_surface_temperature")
+        wind_kmh = 16.0
+        try:
+            url = ("https://api.open-meteo.com/v1/forecast"
+                   f"?latitude={coast['lat']}&longitude={coast['lon']}"
+                   "&current=wind_speed_10m&timezone=Asia%2FKolkata")
+            response = requests.get(url, timeout=4)
+            if response.status_code == 200:
+                wind_kmh = float(response.json().get("current", {}).get("wind_speed_10m", 16.0))
+        except Exception:
+            pass
+        knots = round(wind_kmh * 0.54, 1)
+        provenance = "LIVE (Open-Meteo wave model)"
+        extra = {"wave_direction": direction, "wave_period_s": period,
+                 "sea_surface_temp_c": sea_temp}
+    else:
+        wind_kmh = 16.0
+        try:
+            url = ("https://api.open-meteo.com/v1/forecast"
+                   f"?latitude={coast['lat']}&longitude={coast['lon']}"
+                   "&current=wind_speed_10m&timezone=Asia%2FKolkata")
+            response = requests.get(url, timeout=4)
+            if response.status_code == 200:
+                wind_kmh = float(response.json().get("current", {}).get("wind_speed_10m", 16.0))
+        except Exception:
+            pass
+        knots, waves = _fallback_waves(wind_kmh)
+        provenance = "FALLBACK estimate from coastal wind (model unavailable)"
+
     if waves >= 3.5 or knots >= 28:
         state, warn = "Rough to Very Rough", True
-        message = (f"RED WARNING (estimate): {waves} m waves with {knots} kt winds. "
+        message = (f"RED WARNING: {waves} m waves with {knots} kt winds. "
                    "Stay out of the deep sea.")
     elif waves >= 2.3 or knots >= 18:
         state, warn = "Moderate to Rough", True
-        message = (f"ORANGE ADVISORY (estimate): {waves} m swell near high tide. "
+        message = (f"ORANGE ADVISORY: {waves} m swell near high tide. "
                    "Small boats should stay close to harbour.")
     elif waves >= 1.5 or knots >= 14:
         state, warn = "Moderate", False
-        message = f"YELLOW CAUTION (estimate): {waves} m waves. Stay vigilant on beaches."
+        message = f"YELLOW CAUTION: {waves} m waves. Stay vigilant on beaches."
     else:
         state, warn = "Slight to Smooth", False
-        message = f"Normal operations possible (estimate): waves near {waves} m."
+        message = f"Normal operations possible: waves near {waves} m."
+    message += f" [{provenance}]"
+
     hour = datetime.datetime.now().hour
     return MarineAdvisory(
         coastal_zone=coast["zone"], wave_height_m=waves, sea_condition=state,
         wind_speed_knots=knots, fisherman_warning=warn, warning_message=message,
         high_tide_time=f"{(hour + 4) % 24:02d}:35 IST (indicative)",
         low_tide_time=f"{(hour + 10) % 24:02d}:15 IST (indicative)",
+        wave_direction=extra.get("wave_direction"),
+        wave_period_s=extra.get("wave_period_s"),
+        sea_surface_temp_c=extra.get("sea_surface_temp_c"),
+        provenance=provenance,
     )
 
 

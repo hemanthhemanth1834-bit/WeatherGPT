@@ -64,6 +64,13 @@ UV. AQI is an **ESTIMATED** placeholder band. Every payload carries
 `data_source / status / updated_at_ist / confidence`; upstream failure
 yields a labelled **SIMULATED** estimate, never a crash.
 
+Free provider stack (all probed LIVE; see `GET /api/providers/health`):
+Open-Meteo Forecast, Geocoding, **Air Quality** (US AQI + PM2.5/PM10/NO₂/O₃/SO₂/CO),
+**Marine** (wave height/direction/period, sea temperature), **Archive/ERA5**
+(observed yearly history), RainViewer radar, NASA GIBS tiles.
+WRF/MOSDAC/IMD feeds: NOT CONFIGURED. Key-gated tiers and Nominatim were
+evaluated and deliberately not used (see `THIRD_PARTY_NOTICES.md`).
+
 ## GFS / WRF / NWP
 
 - **GFS: LIVE** via the Open-Meteo blend (`GET /api/nwp/status`).

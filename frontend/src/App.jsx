@@ -15,6 +15,7 @@ const CityComparison = lazy(() => import("./components/CityComparison"));
 const ClimateAnalytics = lazy(() => import("./components/ClimateAnalytics"));
 const RiskPanel = lazy(() => import("./components/RiskPanel"));
 const NwpSatellitePanel = lazy(() => import("./components/NwpSatellitePanel"));
+const ProvidersPanel = lazy(() => import("./components/ProvidersPanel"));
 const SavedPlacesPanel = lazy(() => import("./components/SavedPlacesPanel"));
 const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
 
@@ -277,7 +278,7 @@ export default function App() {
               }
             >
               {tab === "home" && (
-                <HomePanel weather={weather} busy={busy} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} />
+                <HomePanel weather={weather} busy={busy} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} onRefresh={searchPlace} />
               )}
               {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
               {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
@@ -288,7 +289,14 @@ export default function App() {
               {tab === "compare" && <CityComparison onAsk={askFromTab} />}
               {tab === "climate" && <ClimateAnalytics onAsk={askFromTab} />}
               {tab === "risk" && <RiskPanel location={place} />}
-              {tab === "nwp" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="nwp" />}
+              {tab === "nwp" && (
+            <>
+              <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="nwp" />
+              <div style={{ marginTop: "0.8rem" }}>
+                <ProvidersPanel />
+              </div>
+            </>
+          )}
               {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
               {tab === "saved" && (
                 <SavedPlacesPanel current={place} saved={saved} weather={weather}

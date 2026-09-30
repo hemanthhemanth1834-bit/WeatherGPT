@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
+import { fetchCurrentWeather, fetchRiskAssessment, fetchTravelSafety } from "../services/api";
 import SourceBadge from "./SourceBadge";
 
 const LEVEL_STYLES = {
@@ -12,6 +12,7 @@ const LEVEL_STYLES = {
 export default function RiskPanel({ location }) {
   const [risk, setRisk] = useState(null);
   const [climate, setClimate] = useState(null);
+  const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -19,12 +20,14 @@ export default function RiskPanel({ location }) {
     setLoading(true);
     setError("");
     try {
-      const [r, w] = await Promise.all([
+      const [r, w, t] = await Promise.all([
         fetchRiskAssessment(location || "Pune"),
         fetchCurrentWeather(location || "Pune"),
+        fetchTravelSafety(location || "Pune").catch(() => null),
       ]);
       setRisk(r);
       setClimate(w);
+      setTrip(t);
     } catch (e) {
       setError("Risk engine unavailable. Ensure the backend is running.");
     } finally {
@@ -80,6 +83,11 @@ export default function RiskPanel({ location }) {
           {(risk.advisories || []).map((a, i) => (
             <p key={i} className="wg-alert warn" style={{ margin: 0 }}>{a}</p>
           ))}
+          {trip && (
+            <p className="wg-alert info" style={{ margin: 0 }}>
+              🧭 Travel safety <strong>{trip.safety}</strong> ({trip.score}/100, ESTIMATED): {trip.advice} Drivers — {trip.drivers.join("; ")}.
+            </p>
+          )}
           <p style={{ fontSize: "0.68rem", color: "var(--wg-faint)", margin: 0 }}>{risk.disclaimer}</p>
         </div>
       )}

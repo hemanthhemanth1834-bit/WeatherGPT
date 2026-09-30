@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchRegionalTalukas } from "../services/api";
+import { fetchAirQuality, fetchRegionalTalukas, fetchUV } from "../services/api";
 import { glyphFor } from "./ModernWeatherCard";
 
 function Metric({ label, value, sub }) {
@@ -41,12 +41,30 @@ function TempSpark({ hourly }) {
 
 export default function WeatherDashboard({ weather, busy, onAsk }) {
   const [areas, setAreas] = useState([]);
+  const [metric, setMetric] = useState("temp");
+  const [aqi, setAqi] = useState(null);
+  const [uv, setUv] = useState(null);
 
   useEffect(() => {
     if (weather?.location) {
       fetchRegionalTalukas(weather.location).then(setAreas).catch(() => setAreas([]));
     }
   }, [weather?.location]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (weather?.location) {
+      fetchAirQuality(weather.location, weather.lat, weather.lon)
+        .then((a) => !cancelled && setAqi(a))
+        .catch(() => !cancelled && setAqi(null));
+      fetchUV(weather.location)
+        .then((u) => !cancelled && setUv(u))
+        .catch(() => !cancelled && setUv(null));
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [weather?.location, weather?.lat, weather?.lon]);
 
   if (busy && !weather) {
     return (
@@ -119,6 +137,37 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
       </div>
       <SourceLine source={`${weather.data_source} · current conditions`} status={weather.status} hint={`Updated ${weather.updated_at_ist || "—"}`} />
 
+      <div className="wg-grid-panels">
+        <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+          <h3 style={{ margin: "0 0 0.5rem", fontSize: "0.8rem" }}>🍃 Air quality {aqi && <span className={`wg-chip ${aqi.status === "LIVE" ? "live" : "estimated"}`} style={{ marginLeft: "0.4rem" }}>{aqi.status}</span>}</h3>
+          {aqi ? (
+            <>
+              <div style={{ fontSize: "1.4rem", fontWeight: 800 }}>{aqi.us_aqi} <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>{aqi.band}</span></div>
+              <div className="wg-mono" style={{ fontSize: "0.66rem", color: "var(--wg-muted)" }}>{aqi.standard}{aqi.dominant_pollutant && aqi.dominant_pollutant !== "—" ? ` · worst: ${aqi.dominant_pollutant}` : ""}</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "0.3rem", marginTop: "0.5rem", fontSize: "0.72rem" }}>
+                {[["PM2.5", aqi.pm2_5], ["PM10", aqi.pm10], ["NO₂", aqi.nitrogen_dioxide], ["O₃", aqi.ozone], ["SO₂", aqi.sulphur_dioxide], ["CO", aqi.carbon_monoxide]].map(([k, v]) => (
+                  <span key={k} style={{ color: "var(--wg-muted)" }}>{k} <strong style={{ color: "var(--wg-ink)" }}>{v ?? "—"}</strong></span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Air-quality feed loading…</p>
+          )}
+        </div>
+        <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+          <h3 style={{ margin: "0 0 0.5rem", fontSize: "0.8rem" }}>☀ UV protection</h3>
+          {uv ? (
+            <>
+              <div style={{ fontSize: "1.4rem", fontWeight: 800 }}>{uv.uv_index} <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>{uv.level}</span></div>
+              <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)", margin: "0.3rem 0 0" }}>{uv.advice}</p>
+              <p className="wg-mono" style={{ fontSize: "0.66rem", color: "var(--wg-muted)" }}>SOURCE {uv.data_source} · {uv.status}</p>
+            </>
+          ) : (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>UV guidance loading…</p>
+          )}
+        </div>
+      </div>
+
       {areas.length > 0 && (
         <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
           <h3 style={{ margin: "0 0 0.5rem", fontSize: "0.8rem" }}>Nearby areas</h3>
@@ -133,14 +182,28 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
       )}
 
       <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
-        <h3 style={{ margin: "0 0 0.6rem", fontSize: "0.8rem" }}>Next 24 hours (LIVE NWP)</h3>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", justifyContent: "space-between", marginBottom: "0.6rem" }}>
+          <h3 style={{ margin: 0, fontSize: "0.8rem" }}>Next 24 hours (LIVE NWP)</h3>
+          <div role="group" aria-label="Hourly metric" style={{ display: "flex", gap: "0.3rem" }}>
+            {[["temp", "°C"], ["rain", "Rain %"], ["wind", "Wind"], ["hum", "Humidity"]].map(([id, label]) => (
+              <button key={id} className="wg-tab" aria-selected={metric === id} onClick={() => setMetric(id)} style={{ fontSize: "0.7rem", padding: "0.35rem 0.6rem" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
         <TempSpark hourly={weather.hourly} />
         <div className="wg-scrollrow" style={{ marginTop: "0.4rem" }}>
           {(weather.hourly || []).map((h, i) => (
             <div key={i} className="wg-card" style={{ minWidth: "5.4rem", padding: "0.55rem", textAlign: "center" }}>
               <div className="wg-mono" style={{ fontSize: "0.7rem" }}>{h.time}</div>
               <div style={{ fontSize: "1.2rem" }} aria-hidden="true">{glyphFor(h.icon)}</div>
-              <div style={{ fontWeight: 800 }}>{h.temp}°</div>
+              <div style={{ fontWeight: 800 }}>
+                {metric === "temp" && <>{h.temp}°</>}
+                {metric === "rain" && <>{h.rain_prob}%</>}
+                {metric === "wind" && <>{h.wind_speed}<span style={{ fontSize: "0.65rem" }}> km/h</span></>}
+                {metric === "hum" && <>{h.humidity ?? weather.humidity}<span style={{ fontSize: "0.65rem" }}>%</span></>}
+              </div>
               <div style={{ fontSize: "0.7rem", color: h.rain_prob >= 60 ? "var(--wg-accent)" : "var(--wg-muted)" }}>💧{h.rain_prob}%</div>
             </div>
           ))}

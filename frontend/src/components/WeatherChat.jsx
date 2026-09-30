@@ -53,6 +53,15 @@ const PERSONA_LABEL = {
 
 const LANG_LABEL = { auto: "Auto", en: "English", hi: "हिन्दी", mr: "मराठी", ta: "தமிழ்", te: "తెలుగు", bn: "বাংলা", gu: "ગુજરાતી", pa: "ਪੰਜਾਬੀ", kn: "ಕನ್ನಡ", ml: "മലയാളം", or: "ଓଡ଼ିଆ" };
 
+const MODES = [
+  ["🌆 City Weather", "Current weather with feels-like, wind and rain chance"],
+  ["🌀 Cyclone Watch", "Any cyclone or storm threat right now"],
+  ["🌧 Heavy Rain", "Will it rain heavily today or tomorrow"],
+  ["🌡 Heat / Cold", "Heatwave or cold-wave risk"],
+  ["🌊 Sea State", "Marine conditions and fisherman warning"],
+  ["🧭 Travel", "Is it safe to travel this week"],
+];
+
 export default function WeatherChat({ messages, busy, language, persona, onAsk, onTab, micTick }) {
   const [draft, setDraft] = useState("");
   const [recording, setRecording] = useState(false);
@@ -158,6 +167,14 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
           </div>
 
           {voiceNote && <div className="wg-alert warn" role="alert">🎙 {voiceNote}</div>}
+
+          <div className="wg-scrollrow" aria-label="Capability modes">
+            {MODES.map(([label, query]) => (
+              <button key={label} className="wg-chip" style={{ cursor: "pointer", textTransform: "none", fontSize: "0.7rem" }} onClick={() => onAsk(query)} title={query}>
+                {label}
+              </button>
+            ))}
+          </div>
 
           <div className="wg-scrollrow" aria-label="Suggested questions">
             {prompts.map((p) => (

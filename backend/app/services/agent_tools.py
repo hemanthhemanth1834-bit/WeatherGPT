@@ -17,11 +17,14 @@ TOOL_REGISTRY: List[Dict[str, Any]] = [
     {"name": "risk_analysis", "description": "Deterministic LOW/MODERATE/HIGH/EXTREME risk from thresholds.", "source": "Local computation (ESTIMATED)", "handler": "risk_engine.assess_risk"},
     {"name": "agriculture_advisory", "description": "Crop-specific Agromet guidance (informational only).", "source": "Rule-based on live weather (DEMO-grade advice)", "handler": "advisories.crop_advisory"},
     {"name": "satellite_information", "description": "Satellite imagery/service pointers with acquisition time.", "source": "NASA GIBS LIVE links + MOSDAC NOT CONFIGURED", "handler": "satellite_service.get_satellite_info"},
+    {"name": "air_quality_live", "description": "Live US AQI + PM2.5/PM10/NO2/O3/SO2/CO.", "source": "Open-Meteo Air Quality (LIVE)", "handler": "air_quality.get_air_quality"},
+    {"name": "travel_safety", "description": "LOW/MODERATE/HIGH trip read with drivers.", "source": "Weather + risk + alerts (ESTIMATED)", "handler": "travel.travel_safety"},
+    {"name": "provider_health", "description": "Live status/latency of every provider.", "source": "Runtime probes", "handler": "providers.health_snapshot"},
 ]
 
 
 def list_tools() -> Dict[str, Any]:
     return {
-        "architecture": "Intent router (chat.answer) -> deterministic tool -> templated multilingual response. Numerical values always originate from tools.",
+        "architecture": "Intent router (chat.answer) -> deterministic tool -> templated multilingual response. Numerical values always originate from tools. Optional LLM layer activates only with configured credentials (see /api/agent/engine).",
         "tools": TOOL_REGISTRY,
     }
