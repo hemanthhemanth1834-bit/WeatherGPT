@@ -29,3 +29,5 @@ frontend/dist/
 # Logs
 *.log
 logs/
+
+.vercel
