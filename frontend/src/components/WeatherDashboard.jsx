@@ -4,11 +4,38 @@ import { glyphFor } from "./ModernWeatherCard";
 
 function Metric({ label, value, sub }) {
   return (
-    <div className="wg-card" style={{ padding: "0.7rem 0.85rem" }}>
-      <div style={{ fontSize: "0.68rem", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--wg-muted)" }}>{label}</div>
-      <div style={{ fontWeight: 800, fontSize: "1.05rem" }}>{value}</div>
-      {sub && <div style={{ fontSize: "0.72rem", color: "var(--wg-muted)" }}>{sub}</div>}
+    <div className="wg-card wg-tile">
+      <div className="k">{label}</div>
+      <div className="v">{value}</div>
+      {sub && <div className="s">{sub}</div>}
     </div>
+  );
+}
+
+function SourceLine({ source, status, hint }) {
+  const tone = status === "LIVE" ? "live" : status === "STATIC" ? "static" : "estimated";
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center", fontSize: "0.7rem", color: "var(--wg-muted)" }}>
+      <span className="wg-mono">SOURCE: {source}</span>
+      <span className={`wg-chip ${tone}`}>STATUS: {status}</span>
+      {hint && <span>{hint}</span>}
+    </div>
+  );
+}
+
+function TempSpark({ hourly }) {
+  if (!hourly?.length) return null;
+  const temps = hourly.slice(0, 24).map((h) => h.temp);
+  const min = Math.min(...temps);
+  const span = Math.max(...temps) - min || 1;
+  const pts = temps.map((t, i) => `${(i / (temps.length - 1)) * 100},${34 - ((t - min) / span) * 28}`).join(" ");
+  return (
+    <svg viewBox="0 0 100 36" role="img" aria-label="24-hour temperature curve" style={{ width: "100%", height: "3.2rem" }}>
+      <polyline points={pts} fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
+      {temps.filter((_, i) => i % 6 === 0).map((t, k) => (
+        <text key={k} x={(k * 6 / (temps.length - 1)) * 100} y="35" fontSize="4" fill="#93a1b8">{t}°</text>
+      ))}
+    </svg>
   );
 }
 
@@ -84,11 +111,13 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
         <Metric label="Wind" value={`${weather.wind_speed} km/h`} sub={weather.wind_direction} />
         <Metric label="Pressure" value={`${weather.pressure} hPa`} />
         <Metric label="Precipitation" value={`${weather.precipitation} mm`} />
+        <Metric label="Cloud cover" value={`${weather.cloud_cover ?? 0}%`} sub="LIVE sky" />
         <Metric label="UV index" value={weather.uv_index} />
         <Metric label="Visibility" value={`${weather.visibility} km`} />
         <Metric label="Sunrise" value={`${weather.sunrise} IST`} />
         <Metric label="Sunset" value={`${weather.sunset} IST`} />
       </div>
+      <SourceLine source={`${weather.data_source} · current conditions`} status={weather.status} hint={`Updated ${weather.updated_at_ist || "—"}`} />
 
       {areas.length > 0 && (
         <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
@@ -105,7 +134,8 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
 
       <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
         <h3 style={{ margin: "0 0 0.6rem", fontSize: "0.8rem" }}>Next 24 hours (LIVE NWP)</h3>
-        <div className="wg-scrollrow">
+        <TempSpark hourly={weather.hourly} />
+        <div className="wg-scrollrow" style={{ marginTop: "0.4rem" }}>
           {(weather.hourly || []).map((h, i) => (
             <div key={i} className="wg-card" style={{ minWidth: "5.4rem", padding: "0.55rem", textAlign: "center" }}>
               <div className="wg-mono" style={{ fontSize: "0.7rem" }}>{h.time}</div>
@@ -119,7 +149,8 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
 
       <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
         <h3 style={{ margin: "0 0 0.6rem", fontSize: "0.8rem" }}>7-day outlook</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+        <SourceLine source={`${weather.data_source} · daily NWP`} status={weather.status} />
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginTop: "0.5rem" }}>
           {(weather.daily || []).map((d, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.7rem", fontSize: "0.82rem", padding: "0.45rem 0.6rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
               <strong style={{ width: "4.2rem" }}>{d.day}</strong>

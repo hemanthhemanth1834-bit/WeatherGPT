@@ -1,15 +1,16 @@
 import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import Navbar from "./components/Navbar";
+import Navbar, { personaForApi } from "./components/Navbar";
 import WeatherChat from "./components/WeatherChat";
 import { fetchActiveAlerts, fetchCurrentWeather, sendChatQuery } from "./services/api";
 
-/* Secondary views are split into lazy chunks so the first load stays small.
-   The chat view (default) ships with the entry bundle. */
+/* Secondary views ride in lazy chunks; the home + chat entry stays lean. */
+const HomePanel = lazy(() => import("./components/HomePanel"));
 const WeatherDashboard = lazy(() => import("./components/WeatherDashboard"));
 const GISMap = lazy(() => import("./components/GISMap"));
 const AgriAdvisor = lazy(() => import("./components/AgriAdvisor"));
 const AviationMarine = lazy(() => import("./components/AviationMarine"));
 const AlertCenter = lazy(() => import("./components/AlertCenter"));
+const SevereWeatherPanel = lazy(() => import("./components/SevereWeatherPanel"));
 const CityComparison = lazy(() => import("./components/CityComparison"));
 const ClimateAnalytics = lazy(() => import("./components/ClimateAnalytics"));
 const RiskPanel = lazy(() => import("./components/RiskPanel"));
@@ -42,7 +43,7 @@ function OpeningMessage() {
 }
 
 export default function App() {
-  const [tab, setTab] = useState("chat");
+  const [tab, setTab] = useState("home");
   const [persona, setPersona] = useState("general");
   const [language, setLanguage] = useState("auto");
   const [place, setPlace] = useState("Pune");
@@ -53,6 +54,15 @@ export default function App() {
   const [saved, setSaved] = useState(loadSaved);
   const [notice, setNotice] = useState("");
 
+  const persistSaved = (next) => {
+    setSaved(next);
+    try {
+      localStorage.setItem(SAVED_KEY, JSON.stringify(next));
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
   const remember = useCallback((name) => {
     const clean = (name || "").trim();
     if (!clean) return;
@@ -62,11 +72,16 @@ export default function App() {
       try {
         localStorage.setItem(SAVED_KEY, JSON.stringify(next));
       } catch {
-        /* storage unavailable */
+        /* noop */
       }
       return next;
     });
   }, []);
+
+  const removeSaved = useCallback(
+    (name) => persistSaved(saved.filter((p) => p.toLowerCase() !== name.toLowerCase())),
+    [saved]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -93,7 +108,7 @@ export default function App() {
       setMessages((prev) => [...prev, { id: `u-${Date.now()}`, sender: "user", text: query }]);
       setBusy(true);
       try {
-        const reply = await sendChatQuery(query, persona, language, place);
+        const reply = await sendChatQuery(query, personaForApi(persona), language, place);
         setMessages((prev) => [
           ...prev,
           {
@@ -168,6 +183,14 @@ export default function App() {
     setTab(map[name] || name);
   }, []);
 
+  const askFromTab = useCallback(
+    (q) => {
+      setTab("chat");
+      ask(q);
+    },
+    [ask]
+  );
+
   return (
     <div className="wg-shell">
       <Navbar
@@ -186,6 +209,7 @@ export default function App() {
         onLocate={locateMe}
         alertCount={alerts.length}
         saved={saved}
+        onRemoveSaved={removeSaved}
       />
 
       {notice && (
@@ -210,13 +234,17 @@ export default function App() {
             </div>
           }
         >
-          {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={ask} />}
-          {tab === "map" && <GISMap onAsk={(loc) => { goTab("chat"); ask(`Weather and hazards for ${loc}`); }} />}
-          {tab === "agri" && <AgriAdvisor place={place} onAsk={(q) => { goTab("chat"); ask(q); }} />}
-          {tab === "aviation_marine" && <AviationMarine onAsk={(q) => { goTab("chat"); ask(q); }} />}
-          {tab === "alerts" && <AlertCenter onAsk={(q) => { goTab("chat"); ask(q); }} />}
-          {tab === "compare" && <CityComparison onAsk={(q) => { goTab("chat"); ask(q); }} />}
-          {tab === "climate" && <ClimateAnalytics onAsk={(q) => { goTab("chat"); ask(q); }} />}
+          {tab === "home" && (
+            <HomePanel weather={weather} busy={busy} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} />
+          )}
+          {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
+          {tab === "map" && <GISMap onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
+          {tab === "agri" && <AgriAdvisor place={place} onAsk={askFromTab} />}
+          {tab === "aviation_marine" && <AviationMarine onAsk={askFromTab} />}
+          {tab === "alerts" && <AlertCenter onAsk={askFromTab} />}
+          {tab === "severe" && <SevereWeatherPanel onAsk={askFromTab} />}
+          {tab === "compare" && <CityComparison onAsk={askFromTab} />}
+          {tab === "climate" && <ClimateAnalytics onAsk={askFromTab} />}
           {tab === "risk" && <RiskPanel location={place} />}
           {tab === "nwp" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} />}
           {tab === "about" && <AboutDeveloper />}
@@ -224,12 +252,19 @@ export default function App() {
       </main>
 
       <footer className="wg-topbar" style={{ top: "auto", borderTop: "1px solid var(--wg-line)", borderBottom: "none" }}>
-        <div className="wg-wrap" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", justifyContent: "space-between", paddingTop: "0.55rem", paddingBottom: "0.55rem", fontSize: "0.72rem", color: "var(--wg-muted)" }}>
+        <div className="wg-wrap" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 1.2rem", justifyContent: "space-between", paddingTop: "0.7rem", paddingBottom: "0.7rem", fontSize: "0.74rem", color: "var(--wg-muted)" }}>
           <span>
-            <strong style={{ color: "var(--wg-ink)" }}>WeatherGPT — AI Weather Intelligence</strong>
-            {" · "}SIH 2026 · Muchakarla Hemanth Kumar · SRKIT CSE–AI/ML
+            <strong style={{ color: "var(--wg-ink)" }}>WeatherGPT</strong> · AI Weather Intelligence · SIH 2026
+            <br />
+            Muchakarla Hemanth Kumar · SRK Institute of Technology
           </span>
-          <span className="wg-mono">GFS LIVE · WRF NOT CONFIGURED · ITU CAP v1.2</span>
+          <span style={{ display: "flex", gap: "0.9rem", flexWrap: "wrap" }}>
+            <a href="https://github.com/hemanthhemanth1834-bit" target="_blank" rel="noreferrer">GitHub</a>
+            <a href="https://www.linkedin.com/in/hemanth-kumar-muchakarla-7974002a7/" target="_blank" rel="noreferrer">LinkedIn</a>
+            <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT#third-party-notices" target="_blank" rel="noreferrer">Attribution</a>
+            <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
+          </span>
+          <span className="wg-mono">Open-Meteo · LIVE — GFS LIVE · WRF NOT CONFIGURED</span>
         </div>
       </footer>
     </div>

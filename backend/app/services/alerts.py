@@ -38,7 +38,7 @@ def _sample(lat: float, lon: float) -> dict:
             f"?latitude={lat}&longitude={lon}"
             "&current=temperature_2m,relative_humidity_2m,precipitation,"
             "weather_code,wind_speed_10m"
-            "&daily=temperature_2m_max,precipitation_sum,"
+            "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,"
             "precipitation_probability_max,wind_speed_10m_max"
             "&timezone=Asia%2FKolkata"
         )
@@ -51,6 +51,7 @@ def _sample(lat: float, lon: float) -> dict:
             return {
                 "temp": float(current.get("temperature_2m", 28.0)),
                 "temp_max": float(first("temperature_2m_max", 32.0)),
+                "temp_min": float(first("temperature_2m_min", 22.0)),
                 "precip": float(current.get("precipitation", 0.0)),
                 "rain_sum": float(first("precipitation_sum", 0.0)),
                 "rain_prob": int(first("precipitation_probability_max", 10)),
@@ -61,7 +62,7 @@ def _sample(lat: float, lon: float) -> dict:
             }
     except Exception:
         pass
-    return {"temp": 28.0, "temp_max": 32.0, "precip": 0.0, "rain_sum": 0.0,
+    return {"temp": 28.0, "temp_max": 32.0, "temp_min": 22.0, "precip": 0.0, "rain_sum": 0.0,
             "rain_prob": 10, "wind": 12.0, "wind_max": 18.0, "code": 1, "humidity": 60}
 
 
@@ -89,6 +90,7 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
         storm = (sample["code"] in (80, 81, 82, 95, 96, 99)
                  or (sample["rain_prob"] > 60 and sample["wind_max"] > 25))
         heat = sample["temp"] >= 40.0 or sample["temp_max"] >= 41.5
+        cold = sample["temp"] <= 7.0 or sample["temp_min"] <= 5.0
         coastal_wind = (station["coastal"]
                         and (sample["wind"] > 22.0 or sample["wind_max"] > 32.0))
 
@@ -137,6 +139,21 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
                 instruction=(f"Temperature {sample['temp']}°C (day max {sample['temp_max']}°C). "
                              "Hydrate often and avoid midday sun; follow official health advisories."),
                 color=SEVERITY_COLORS[level],
+            ))
+        elif cold:
+            alerts.append(CAPAlert(
+                id=f"WG-CW2-{tag}",
+                headline=(f"YELLOW ALERT: Cold-wave conditions near {station['district']} "
+                          f"({sample['temp']}°C)"),
+                event="Cold Wave", severity="Yellow",
+                urgency="Expected", certainty="Observed" if sample["temp"] <= 7 else "Likely",
+                area_desc=f"{station['district']} and surrounding blocks, {station['state']}",
+                district=station["district"], state=station["state"],
+                lat=station["lat"], lon=station["lon"],
+                effective=now, expires=_stamp(36),
+                instruction=(f"Minimum near {sample['temp_min']}°C. Layer clothing, protect crops and "
+                             "livestock from frost, and follow official cold-wave advisories."),
+                color="#38BDF8",
             ))
         elif coastal_wind:
             alerts.append(CAPAlert(

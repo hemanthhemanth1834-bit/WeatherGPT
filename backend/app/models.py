@@ -43,6 +43,7 @@ class WeatherData(BaseModel):
     wind_speed: float = 12.0
     wind_direction: str = "W"
     precipitation: float = 0.0
+    cloud_cover: float = 0.0
     pressure: float = 1012.0
     uv_index: float = 6.0
     visibility: float = 9.0

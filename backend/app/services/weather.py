@@ -88,7 +88,7 @@ def _download(lat: float, lon: float, place: str, state: str) -> WeatherData:
             "https://api.open-meteo.com/v1/forecast"
             f"?latitude={lat}&longitude={lon}"
             "&current=temperature_2m,relative_humidity_2m,apparent_temperature,"
-            "precipitation,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m"
+            "precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m"
             "&hourly=temperature_2m,precipitation_probability,precipitation,"
             "weather_code,wind_speed_10m"
             "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
@@ -166,6 +166,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         wind_speed=round(float(current.get("wind_speed_10m", 12.0)), 1),
         wind_direction=compass(current.get("wind_direction_10m", 270)),
         precipitation=rain_now,
+        cloud_cover=float(current.get("cloud_cover", 0.0) or 0.0),
         pressure=round(float(current.get("surface_pressure", 1012.0)), 1),
         uv_index=round(float(uv_list[0]), 1),
         visibility=9.0, aqi=aqi, aqi_status=aqi_band(aqi),
@@ -199,7 +200,7 @@ def _fallback(lat: float, lon: float, place: str, state: str) -> WeatherData:
         location=place, state=state, country="India", lat=lat, lon=lon,
         current_temp=27.0, feels_like=29.0, condition="Partly Cloudy",
         condition_code=2, humidity=65, wind_speed=12.0, wind_direction="W",
-        precipitation=0.0, pressure=1011.0, uv_index=6.0, visibility=8.0,
+        precipitation=0.0, cloud_cover=25.0, pressure=1011.0, uv_index=6.0, visibility=8.0,
         aqi=80, aqi_status="Satisfactory", sunrise="06:05", sunset="18:35",
         hourly=hourly, daily=daily,
         nwp_model="Unavailable — local estimate",

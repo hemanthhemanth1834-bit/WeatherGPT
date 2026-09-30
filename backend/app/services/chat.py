@@ -11,9 +11,10 @@ from typing import Dict, List, Optional, Tuple
 from ..models import (ChatResponse, CityComparisonData, HealthPersonas,
                       WeatherData, WeatherQueryRequest)
 from . import geo
-from .advisories import aviation_briefing, crop_advisory
+from .advisories import aviation_briefing, climate_reference, crop_advisory
 from .advisories import marine_advisory
 from .alerts import active_alerts
+from .risk_engine import assess_risk
 from .weather import WMO_LABELS, get_weather
 
 # ---------------------------------------------------------------------------
@@ -384,6 +385,10 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
                                "fisherman", "fishing", "समुद्र"))
     wants_alert = any(w in lowered for w in ("cyclone", "alert", "warning", "flood",
                                              "disaster", "storm", "अलर्ट", "वादळ"))
+    wants_climate = any(w in lowered for w in ("climate", "monsoon", "history", "historical",
+                                               "trend", "warming", "el nino", "la nina", "last year"))
+    wants_travel = any(w in lowered for w in ("travel", "trip", "journey", "safe to",
+                                              "is it safe", "commute", "drive"))
 
     advisory = None
     briefing = None
@@ -406,12 +411,22 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         sea = marine_advisory(proper)
         extra += (f"\n\n**Marine (estimate):** {sea.wave_height_m} m waves, "
                   f"{sea.sea_condition}. {sea.warning_message}")
-    if wants_alert or data.precipitation > 25 or data.current_temp > 42:
+    if wants_alert or data.precipitation > 25 or data.current_temp > 42 or persona == "disaster_manager":
         alerts = active_alerts(state=state, district=proper)
         if not alerts:
             alerts = active_alerts()
         lines = "\n".join(f"- **[{a.severity}]** {a.headline}" for a in alerts[:4])
         extra += f"\n\n**Alerts (computed, not official):**\n{lines}"
+    if wants_climate:
+        ref = climate_reference(f"{proper} ({state})")
+        extra += (f"\n\n**Climate reference (STATIC):** {ref['summary']} "
+                  f"Baseline {ref['baseline_period']}; monsoon LPA {ref['lpa_monsoon_rainfall_mm']} mm.")
+    if wants_travel:
+        risk = assess_risk(data)
+        top = risk["advisories"][0] if risk["advisories"] else ""
+        extra += (f"\n\n**Travel read (ESTIMATED risk {risk['overall']}):** {top} "
+                  f"Wind {data.wind_speed} km/h, visibility {data.visibility} km, "
+                  f"rain chance {(data.hourly[0].rain_prob if data.hourly else 0)}%.")
 
     speech, markdown = _render_weather(proper, state, data, lang)
     markdown += extra

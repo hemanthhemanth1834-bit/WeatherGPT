@@ -82,6 +82,7 @@ export default function CityComparison({ onAsk }) {
           </div>
           <Row label="Temperature" a={`${result.city1.current_temp}°C`} b={`${result.city2.current_temp}°C`} />
           <Row label="Humidity" a={`${result.city1.humidity}%`} b={`${result.city2.humidity}%`} />
+          <Row label="Wind" a={`${result.city1.wind_speed} km/h ${result.city1.wind_direction}`} b={`${result.city2.wind_speed} km/h ${result.city2.wind_direction}`} />
           <Row label="AQI (est.)" a={`${result.city1.aqi} ${result.city1.aqi_status}`} b={`${result.city2.aqi} ${result.city2.aqi_status}`} />
           <p style={{ fontSize: "0.85rem", margin: "0.3rem 0 0" }}>
             Warmer: <strong>{result.temp_warmer_city}</strong> ({result.temp_diff}°C) · Cleaner air:{" "}
