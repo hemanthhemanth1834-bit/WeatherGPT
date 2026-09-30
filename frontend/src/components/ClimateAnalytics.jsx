@@ -1,175 +1,92 @@
-import React, { useState, useEffect } from "react";
-import { TrendingUp, AlertCircle, Calendar, Sparkles, BarChart2, CloudRain, Flame } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { fetchClimateTrends } from "../services/api";
 
-export default function ClimateAnalytics({ onAskAI }) {
-  const [climateData, setClimateData] = useState(null);
-  const [selectedRegion, setSelectedRegion] = useState("All India");
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState("");
+function Bars({ values, color, format }) {
+  const peak = Math.max(...values.map((v) => Math.abs(v)), 1);
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap: "0.45rem", height: "9rem", paddingTop: "0.5rem" }} role="img" aria-label="Bar chart">
+      {values.map((v, i) => (
+        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem", height: "100%", justifyContent: "flex-end" }}>
+          <span style={{ fontSize: "0.62rem" }} className="wg-mono">{format(v)}</span>
+          <div style={{ width: "100%", height: `${Math.max(4, (Math.abs(v) / peak) * 100)}%`, background: color, borderRadius: "0.3rem", opacity: 0.85 }} />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function ClimateAnalytics({ onAsk }) {
+  const [data, setData] = useState(null);
+  const [region, setRegion] = useState("All India");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setLoadError("");
+    let cancelled = false;
+    (async () => {
+      setBusy(true);
+      setError("");
       try {
-        const data = await fetchClimateTrends(selectedRegion);
-        setClimateData(data);
-      } catch (e) {
-        console.error(e);
-        setLoadError("Climate data unavailable — backend unreachable or request timed out. Please retry.");
+        const result = await fetchClimateTrends(region);
+        if (!cancelled) setData(result);
+      } catch {
+        if (!cancelled) setError("Climate reference failed to load — please retry.");
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setBusy(false);
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    loadData();
-  }, [selectedRegion]);
+  }, [region]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 space-y-6 animate-fadeIn">
-      {/* Climate Header Banner */}
-      <div className="glass-card p-6 border border-purple-500/30 bg-gradient-to-r from-purple-950/40 via-gray-900/90 to-gray-900/90">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-purple-400 font-bold text-xs uppercase tracking-wider mb-1">
-              <TrendingUp size={16} /> IMD Multi-Decadal Climate & Monsoon Anomaly Analytics
-            </div>
-            <h2 className="text-2xl font-extrabold text-white">
-              Historical Climate Trends & Anomaly Detection (1970 - 2026)
-            </h2>
-            <p className="text-xs text-gray-400 mt-1">
-              Evaluating long-period averages (LPA), temperature departures, and spatial shifts in Indian monsoon rainfall.
-            </p>
-            <p className="mt-1.5 inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-purple-500/15 text-purple-300 border border-purple-500/40">
-              STATIC REFERENCE series — not live station observations.
-            </p>
-          </div>
-
-          <button
-            onClick={() => onAskAI("Explain the 50-year climate warming and monsoon rainfall shift trends in India")}
-            className="btn-primary text-xs py-2 px-3.5 bg-gradient-to-r from-purple-600 to-indigo-600"
-          >
-            <Sparkles size={14} /> AI Climate Synthesis
-          </button>
+    <section aria-label="Climate analytics" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+      <div className="wg-card" style={{ padding: "1rem 1.2rem", display: "flex", flexWrap: "wrap", gap: "0.8rem", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h2 style={{ margin: 0, fontSize: "1.15rem" }}>Climate reference (1970–2026)</h2>
+          <p style={{ margin: "0.25rem 0 0", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
+            Decadal anomalies vs {data?.baseline_period || "reference normals"}.
+            <span className="wg-chip static" style={{ marginLeft: "0.5rem" }}>STATIC REFERENCE</span>
+          </p>
         </div>
+        <label style={{ display: "flex", gap: "0.4rem", alignItems: "center", fontSize: "0.78rem" }}>
+          Region
+          <input className="wg-input" style={{ width: "10rem" }} value={region} onChange={(e) => setRegion(e.target.value)} aria-label="Climate region" />
+        </label>
       </div>
 
-      {loadError && (
-        <div role="alert" className="p-3.5 rounded-2xl border border-red-500/40 bg-red-950/40 text-xs text-red-200">
-          ⚠️ {loadError}
-        </div>
-      )}
+      {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
+      {busy && <div role="status" style={{ color: "var(--wg-muted)" }}>Loading…</div>}
 
-      {climateData && (
-        <div className="space-y-6">
-          {/* Key Metric Highlights */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="glass-card p-5 border border-red-500/20 bg-red-950/10">
-              <div className="flex items-center gap-2 text-red-400 font-bold text-xs mb-1">
-                <Flame size={16} /> Decadal Surface Warming
-              </div>
-              <div className="text-3xl font-extrabold text-white font-mono mt-1">
-                +1.34°C
-              </div>
-              <div className="text-xs text-gray-400 mt-1">
-                Temperature departure above 1961-1990 IMD baseline normal.
-              </div>
+      {data && (
+        <>
+          <p style={{ fontSize: "0.85rem", lineHeight: 1.6, margin: 0 }}>{data.summary}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(18rem,1fr))", gap: "0.7rem" }}>
+            <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+              <h3 style={{ margin: "0 0 0.3rem", fontSize: "0.82rem" }}>Temperature anomaly (°C)</h3>
+              <Bars values={data.temperature_anomaly_celsius} color="#f87171" format={(v) => `${v > 0 ? "+" : ""}${v}`} />
+              <p className="wg-mono" style={{ fontSize: "0.65rem", color: "var(--wg-muted)" }}>{data.decadal_years.join(" · ")}</p>
             </div>
-
-            <div className="glass-card p-5 border border-sky-500/20 bg-sky-950/10">
-              <div className="flex items-center gap-2 text-sky-400 font-bold text-xs mb-1">
-                <CloudRain size={16} /> Southwest Monsoon LPA Baseline
-              </div>
-              <div className="text-3xl font-extrabold text-white font-mono mt-1">
-                {climateData.lpa_monsoon_rainfall_mm} mm
-              </div>
-              <div className="text-xs text-gray-400 mt-1">
-                Long Period Average (1971–2020) national monsoon benchmark.
-              </div>
-            </div>
-
-            <div className="glass-card p-5 border border-amber-500/20 bg-amber-950/10">
-              <div className="flex items-center gap-2 text-amber-400 font-bold text-xs mb-1">
-                <AlertCircle size={16} /> Extreme Weather Frequency
-              </div>
-              <div className="text-3xl font-extrabold text-white font-mono mt-1">
-                +75% Rise
-              </div>
-              <div className="text-xs text-gray-400 mt-1">
-                Increase in high-intensity convective rainfall days (&gt;150mm).
-              </div>
+            <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+              <h3 style={{ margin: "0 0 0.3rem", fontSize: "0.82rem" }}>Monsoon departure (% of {data.lpa_monsoon_rainfall_mm} mm LPA)</h3>
+              <Bars values={data.monsoon_departure_pct} color="#38bdf8" format={(v) => `${v > 0 ? "+" : ""}${v}%`} />
+              <p className="wg-mono" style={{ fontSize: "0.65rem", color: "var(--wg-muted)" }}>{data.decadal_years.join(" · ")}</p>
             </div>
           </div>
-
-          {/* Decadal Historical Table & Chart Visualization */}
-          <div className="glass-card p-6 border border-gray-800 space-y-4">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <BarChart2 size={18} className="text-purple-400" />
-              Decadal Climate Departures & Anomaly Matrix
-            </h3>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-gray-800 text-gray-400 uppercase tracking-wider">
-                    <th className="py-2.5 px-3">Decade / Year</th>
-                    <th className="py-2.5 px-3">Temp Anomaly (°C)</th>
-                    <th className="py-2.5 px-3">Monsoon Departure (%)</th>
-                    <th className="py-2.5 px-3">Extreme Weather Events Index</th>
-                    <th className="py-2.5 px-3">IMD Climate Indicator</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-850">
-                  {climateData.decadal_years.map((year, idx) => {
-                    const temp = climateData.temperature_anomaly_celsius[idx];
-                    const dep = climateData.monsoon_departure_pct[idx];
-                    const ext = climateData.extreme_weather_event_count[idx];
-                    return (
-                      <tr key={year} className="hover:bg-gray-900/50 transition">
-                        <td className="py-3 px-3 font-bold text-white font-mono">{year}</td>
-                        <td className="py-3 px-3 font-mono">
-                          <span className={`font-semibold ${temp > 0.5 ? "text-red-400" : (temp > 0 ? "text-amber-300" : "text-emerald-400")}`}>
-                            {temp > 0 ? `+${temp}` : temp}°C
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 font-mono">
-                          <span className={`font-semibold ${dep >= 0 ? "text-sky-400" : "text-amber-400"}`}>
-                            {dep >= 0 ? `+${dep}` : dep}%
-                          </span>
-                        </td>
-                        <td className="py-3 px-3 font-mono text-gray-200">
-                          {ext} Days / Year
-                        </td>
-                        <td className="py-3 px-3">
-                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                            idx > 5 ? "bg-red-500/20 text-red-300 border border-red-500/30" : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-                          }`}>
-                            {idx > 5 ? "Elevated Warming Regime" : "Stable Baseline Normals"}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Regional Insights List */}
-          <div className="glass-card p-5 border border-gray-800 space-y-3">
-            <h4 className="text-sm font-bold text-gray-200">
-              📌 Key Scientific Insights (MoES / IITM Climate Assessment):
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {climateData.key_insights.map((ins, i) => (
-                <div key={i} className="p-3.5 bg-gray-950/60 rounded-xl border border-gray-800 text-xs text-gray-300 leading-relaxed">
-                  {ins}
-                </div>
+          <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+            <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.82rem" }}>Key shifts</h3>
+            <ul style={{ margin: 0, paddingLeft: "1.1rem", fontSize: "0.83rem", lineHeight: 1.6 }}>
+              {data.key_insights.map((k, i) => (
+                <li key={i}>{k}</li>
               ))}
-            </div>
+            </ul>
+            <button className="wg-btn" style={{ marginTop: "0.7rem" }} onClick={() => onAsk("Explain India's long-term warming and monsoon shifts in simple words")}>
+              Ask AI to explain →
+            </button>
           </div>
-        </div>
+        </>
       )}
-    </div>
+    </section>
   );
 }

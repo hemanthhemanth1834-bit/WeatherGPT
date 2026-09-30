@@ -1,13 +1,13 @@
-import sys
+"""Vercel serverless entry point: expose the FastAPI app."""
 import os
+import sys
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.abspath(os.path.join(current_dir, ".."))
-backend_dir = os.path.join(root_dir, "backend")
+CURRENT = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(CURRENT, ".."))
+BACKEND = os.path.join(ROOT, "backend")
 
-if root_dir not in sys.path:
-    sys.path.insert(0, root_dir)
-if backend_dir not in sys.path:
-    sys.path.insert(0, backend_dir)
+for path in (ROOT, BACKEND):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
-from backend.app.main import app
+from backend.app.main import app  # noqa: E402  (path setup above)

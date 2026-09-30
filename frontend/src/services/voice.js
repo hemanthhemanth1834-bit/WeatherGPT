@@ -1,120 +1,122 @@
-// Web Speech API Voice Engine for Indian Languages (STT & TTS)
+/* Browser-native voice engine (Web Speech API). Original implementation.
+   Speech recognition and synthesis depend on the browser/provider; every
+   failure surfaces a human-readable message so the UI can fall back
+   to typed input. No keys, no network calls of our own. */
 
-const LANG_VOICE_MAP = {
-  "auto": "en-IN",
-  "en": "en-IN",
-  "hi": "hi-IN",
-  "mr": "mr-IN",
-  "ta": "ta-IN",
-  "te": "te-IN",
-  "bn": "bn-IN",
-  "gu": "gu-IN",
-  "kn": "kn-IN",
-  "pa": "pa-IN",
-  "ml": "ml-IN",
-  "or": "or-IN"
+const BCP47 = {
+  auto: "en-IN",
+  en: "en-IN",
+  hi: "hi-IN",
+  mr: "mr-IN",
+  ta: "ta-IN",
+  te: "te-IN",
+  bn: "bn-IN",
+  gu: "gu-IN",
+  pa: "pa-IN",
+  kn: "kn-IN",
+  ml: "ml-IN",
+  or: "or-IN",
 };
 
-export class SpeechEngine {
+export function voiceSupported() {
+  if (typeof window === "undefined") return { stt: false, tts: false };
+  return {
+    stt: Boolean(window.SpeechRecognition || window.webkitSpeechRecognition),
+    tts: Boolean(window.speechSynthesis),
+  };
+}
+
+class VoiceEngine {
   constructor() {
     this.recognition = null;
-    this.isListening = false;
-    this.synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
-    
-    // Check SpeechRecognition support
-    const SpeechRecognition = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
-    if (SpeechRecognition) {
-      this.recognition = new SpeechRecognition();
-      this.recognition.continuous = false;
-      this.recognition.interimResults = true;
+    this.listening = false;
+    if (typeof window !== "undefined") {
+      const Impl = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (Impl) {
+        this.recognition = new Impl();
+        this.recognition.continuous = false;
+        this.recognition.interimResults = true;
+      }
+      this.synth = window.speechSynthesis || null;
+    } else {
+      this.synth = null;
     }
   }
 
-  startListening(langCode = "en-IN", onResult, onEnd, onError) {
+  get available() {
+    return Boolean(this.recognition);
+  }
+
+  listen(lang = "en", events = {}) {
     if (!this.recognition) {
-      if (onError) onError("Speech Recognition not supported in this browser. Please use Chrome/Safari or type text.");
+      events.onError?.("unsupported");
       return;
     }
-
-    const bcpLang = LANG_VOICE_MAP[langCode] || langCode;
-    this.recognition.lang = bcpLang;
-
-    this.recognition.onstart = () => {
-      this.isListening = true;
-    };
-
+    if (this.listening) {
+      try {
+        this.recognition.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+    this.recognition.lang = BCP47[lang] || "en-IN";
     this.recognition.onresult = (event) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
+      let interim = "";
+      let final = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const text = event.results[i][0].transcript;
+        if (event.results[i].isFinal) final += text;
+        else interim += text;
       }
-
-      if (onResult) {
-        onResult(finalTranscript || interimTranscript, !!finalTranscript);
-      }
+      events.onResult?.(final || interim, Boolean(final));
     };
-
     this.recognition.onerror = (event) => {
-      this.isListening = false;
-      if (onError) onError(event.error);
+      this.listening = false;
+      events.onError?.(event.error || "error");
     };
-
     this.recognition.onend = () => {
-      this.isListening = false;
-      if (onEnd) onEnd();
+      this.listening = false;
+      events.onEnd?.();
     };
-
     try {
       this.recognition.start();
-    } catch (e) {
-      console.warn("Recognition already started", e);
+      this.listening = true;
+      events.onStart?.();
+    } catch {
+      events.onError?.("busy");
     }
   }
 
   stopListening() {
-    if (this.recognition && this.isListening) {
-      this.recognition.stop();
-      this.isListening = false;
+    if (this.recognition && this.listening) {
+      try {
+        this.recognition.stop();
+      } catch {
+        /* noop */
+      }
+      this.listening = false;
     }
   }
 
-  speak(text, langCode = "en", onEnd) {
-    if (!this.synth) return;
-    
-    // Cancel any pending speech
+  speak(text, lang = "en", onEnd) {
+    if (!this.synth || !text) {
+      onEnd?.();
+      return;
+    }
     this.synth.cancel();
-
     const utterance = new SpeechSynthesisUtterance(text);
-    const bcpLang = LANG_VOICE_MAP[langCode] || "en-IN";
-    utterance.lang = bcpLang;
-    utterance.rate = 0.95; // Slightly slower for clear regional pronunciation
-    utterance.pitch = 1.0;
-
-    // Pick matching voice if available
-    const voices = this.synth.getVoices();
-    const matchingVoice = voices.find(v => v.lang.startsWith(bcpLang.split("-")[0]));
-    if (matchingVoice) {
-      utterance.voice = matchingVoice;
-    }
-
-    if (onEnd) {
-      utterance.onend = onEnd;
-    }
-
+    const tag = BCP47[lang] || "en-IN";
+    utterance.lang = tag;
+    utterance.rate = 0.95;
+    const voice = this.synth.getVoices().find((v) => v.lang.startsWith(tag.split("-")[0]));
+    if (voice) utterance.voice = voice;
+    if (onEnd) utterance.onend = onEnd;
     this.synth.speak(utterance);
   }
 
   stopSpeaking() {
-    if (this.synth) {
-      this.synth.cancel();
-    }
+    this.synth?.cancel();
   }
 }
 
-export const speechEngine = new SpeechEngine();
+export const speechEngine = new VoiceEngine();

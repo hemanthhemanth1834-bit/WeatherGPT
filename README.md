@@ -1,260 +1,209 @@
 # WeatherGPT
 
-## SIH 2026
+## AI Weather Intelligence
 
-**Smart India Hackathon 2026 (SIH 2026)** submission — AI / ML / Weather Intelligence / Disaster Decision Support.
+Conversational weather forecasts, alerts, and climate insight for India —
+built for demonstration and decision support, with honest data labels on
+every display.
 
-**WeatherGPT — AI Weather Intelligence**: an AI-powered conversational weather intelligence and decision-support platform.
+## Smart India Hackathon 2026
+
+SIH 2026 · AI / ML / Weather Intelligence / Disaster Decision Support ·
+MoES / IMD problem statement 26068 (Disaster Management, Software).
 
 ## Problem Statement
 
-**WeatherGPT: Conversational AI for Weather Forecasting, Alerts, and Climate Information** (MoES / IMD #26068, Disaster Management, Software).
-
-The system provides:
-
-1. Real-time weather information — **LIVE** (Open-Meteo NWP blend)
-2. Natural-language weather queries — **LIVE** (deterministic tool-routed engine)
-3. Numerical weather prediction integration (GFS/WRF) — **GFS LIVE via Open-Meteo · WRF NOT CONFIGURED**
-4. Extreme weather alerts — **LIVE telemetry scan (computed, not official bulletins)**
-5. Location-based forecasting — **LIVE** (450+ Indian locations + global geocoding)
-6. Advisory generation — **DEMO-grade** (Agromet rules; informational only)
-7. Multilingual Indian-language support — **LIVE** (10 languages: en, hi, mr, ta, te, bn, gu, pa, kn, ml, or)
-8. Climate trends and historical weather analysis — **STATIC reference series**
-9. Voice-enabled interaction — **LIVE** (Web Speech API STT/TTS; provider-dependent)
-10. GIS/weather visualization — **LIVE radar tiles + DEMO overlays**
-11. Disaster preparedness and decision support — **ESTIMATED risk engine + CAP-style hub**
-12. Scalable real-time data ingestion — **READY** (cached REST + WebSocket heartbeat)
-
-Status labels used everywhere: **LIVE · DEMO · SIMULATED · STATIC · API-DEPENDENT · MODEL-DEPENDENT · NOT CONFIGURED · ESTIMATED**.
+**WeatherGPT: Conversational AI for Weather Forecasting, Alerts, and
+Climate Information.** Citizens and farmers struggle with technical
+bulletins; static apps cannot answer local questions. The required system
+covers: (1) real-time weather, (2) natural-language queries, (3) NWP
+integration, (4) extreme-weather alerts, (5) location forecasting,
+(6) advisories, (7) Indian-language support, (8) climate/history analysis,
+(9) voice interaction, (10) GIS visualization, (11) real-time ingestion,
+(12) disaster decision support.
 
 ## Solution
 
-WeatherGPT routes natural-language queries (typed or spoken, in 10+ Indian languages) to **deterministic weather tools** — never letting the language layer invent numbers. Live NWP values come from Open-Meteo; alerts are computed from live telemetry against documented thresholds; risk is computed from a transparent deterministic engine; and every result carries **source + timestamp + status**.
+A React + FastAPI app where a multilingual chat engine routes each query
+to **deterministic data tools** (never inventing numbers), backed by live
+Open-Meteo NWP, computed threshold alerts, a documented risk engine, and
+per-panel source labels (`LIVE / DEMO / STATIC / ESTIMATED / SIMULATED /
+NOT CONFIGURED`).
 
-SIH 2026 additions over the downloaded base: risk engine, NWP interface (GFS LIVE / WRF NOT CONFIGURED), satellite module, Indian sources registry, explicit agent tool registry, source-transparency badges, env-based config, caching, saved locations, About/SIH surfaces, and tests.
+## Key Features
 
-## Features
-
-- Conversational weather AI (10 languages + auto-detect + transliteration)
-- Voice assistant (Speech → STT → intent → weather tool → response → TTS) with clean fallback
-- Dashboard: current, feels-like, humidity, pressure, wind, visibility, precipitation, cloud, sunrise/sunset, UV, AQI (estimated), hourly (24h), daily (7-day)
-- GIS map (Leaflet + OSM/Esri basemaps + RainViewer LIVE radar + DEMO cyclone/alert overlays)
-- Alert center (CAP-style, severity filters, audio broadcast)
-- Cyclone track viewer (**DEMO** illustrative track — never a live bulletin)
-- Agriculture advisories (paddy, cotton, wheat, sugarcane, soybean, mustard; informational only)
-- Aviation briefing (STATIC sample METAR/TAF for VIDP/VABB/VOBL/VECC — clearly labelled samples)
-- Marine advisory (LIVE coastal wind + empirical wave model — estimate, not official INCOIS bulletin)
-- Climate analytics (STATIC 1970–2026 reference series vs 1961–1990 baseline)
-- Risk engine (LOW/MODERATE/HIGH/EXTREME, documented thresholds, ESTIMATED)
-- City comparison (temp, humidity, AQI, rain risk, travel score, health personas)
-- Saved preferred locations (browser localStorage; no personal data transmitted)
+- Live current + 24-hour + 7-day forecasts for any Indian place (gazetteer + live geocoding)
+- Chat in 11 languages (en, hi, mr, ta, te, bn, gu, pa, kn, ml, or) with voice input/output
+- Computed CAP-style alerts with severity filters and audio broadcast
+- Deterministic LOW–EXTREME risk engine with published thresholds
+- Leaflet GIS: live RainViewer radar, illustrative alert zones and cyclone line
+- Farm advisories (6 crops), STATIC sample aviation briefings, estimated marine advisories
+- STATIC decadal climate reference with bar visualisations
+- City-vs-city comparison, saved places, NWP/satellite provenance panels
 
 ## Architecture
 
 ```
-[ React 19 + Vite + Tailwind + Leaflet + Chart.js ]
-        │  REST /api/*  +  WebSocket /ws/alerts
-        ▼
-[ FastAPI backend (Python) ]
-  intent router (llm_engine) → deterministic tools:
-    weather_current / weather_forecast / weather_alerts / location_search /
-    risk_analysis / agriculture_advisory / climate_analysis / satellite_information
-  upstream: Open-Meteo forecast + geocoding (LIVE, no key)
-  cache: in-memory TTL (600s default) · config: env-based
+React 19 + Vite + Tailwind ──REST /api/*, WS /ws/alerts──▶ FastAPI
+  lazy-loaded panels (Leaflet isolated)      intent router (chat.py)
+                                             ─▶ deterministic tools
+                                             Open-Meteo │ cache (TTL)
 ```
 
-## AI Architecture
+## AI Agent
 
-- `process_conversational_query()` detects language → extracts location(s) → classifies intent (compare / cyclone / agri / aviation / marine / default) → calls deterministic tool(s) → renders templated multilingual markdown + speech text.
-- Tool registry: `GET /api/agent/tools` lists all 11 tools with sources.
-- Rule: numerical weather values ALWAYS originate from tools. The LLM layer never fabricates observations, warnings, cyclone positions, or model accuracy.
+`POST /api/chat/query` → language detect → place extract → intent
+(compare / agri / aviation / marine / alerts / weather) → tool call →
+templated reply. Full registry at `GET /api/agent/tools`. Numbers always
+originate from tools.
 
-## Weather Sources
+## Weather Data
 
-| Source | Status | Used for |
-|---|---|---|
-| Open-Meteo forecast | **LIVE** | current/hourly/daily, NWP blend |
-| Open-Meteo geocoding | **LIVE** | global + taluka search |
-| RainViewer | **LIVE** | radar tiles on GIS map |
-| Local 450+ location index | **STATIC** | fast geocoding |
-| AQI | **ESTIMATED** | heuristic band bundled with weather |
-| Aviation METAR/TAF | **STATIC samples** | 4 airports, labelled |
-| Marine waves | **MODEL-DEPENDENT estimate** | empirical SMB from live wind |
-| Climate series | **STATIC reference** | 1970–2026 anomalies |
+Open-Meteo NWP blend (**LIVE**): current, hourly, daily, sunrise/sunset,
+UV. AQI is an **ESTIMATED** placeholder band. Every payload carries
+`data_source / status / updated_at_ist / confidence`; upstream failure
+yields a labelled **SIMULATED** estimate, never a crash.
 
-## GFS/WRF/NWP
+## GFS / WRF / NWP
 
-- **GFS: LIVE** via Open-Meteo global blend (0.125° ensemble grid). Status: `GET /api/nwp/status`.
-- **WRF: NOT CONFIGURED.** Interface is ready: `WRF_ENABLED` + `WRF_GRIB_PATH` env → cfgrib/xarray ingestion → lat/lon subset → serve via `/api/nwp/forecast` (to be added when a feed is provisioned). GRIB/NetCDF deps intentionally not installed until then.
+- **GFS: LIVE** via the Open-Meteo blend (`GET /api/nwp/status`).
+- **WRF: NOT CONFIGURED.** The interface documents the GRIB2/NetCDF
+  (`cfgrib`/`xarray`) ingestion design, enabled via `WRF_ENABLED` /
+  `WRF_GRIB_PATH` when a feed exists. No live WRF is claimed.
 
 ## GIS
 
-Leaflet + OSM/Esri basemaps. Layers: LIVE RainViewer radar, DEMO cyclone track, DEMO CAP polygons, STATIC radar-station markers. Provenance strip on the map distinguishes LIVE vs DEMO. Basemaps: OpenStreetMap contributors, Esri/Maxar.
+Leaflet + CARTO/OSM basemap, **LIVE** RainViewer radar toggle,
+**DEMO** alert circles and cyclone line, layer switches, quick-focus
+buttons. Provenance strip distinguishes live from illustrative layers.
 
-## Multilingual Support
+## Satellite
 
-Architecture: script/keyword detection (`detect_language`) → per-language response templates + condition/AQI translation tables → BCP-47 voice mapping. UI language switcher in navbar. Languages: English, Hindi, Marathi, Tamil, Telugu, Bengali, Gujarati, Punjabi, Kannada, Malayalam, Odia. Technical values (numbers/units) are never translated, only labelled.
-
-## Voice Assistant
-
-Pipeline: Speech → Web Speech STT → intent → weather tool → templated response → Web Speech TTS. Indian-language voices where the browser/provider supports them. Fallback: typed input + clear "not supported in this browser" message. No API keys exposed (browser-native APIs only).
-
-## Climate Analytics
-
-STATIC reference series (1970–2026 anomalies vs 1961–1990 baseline; monsoon vs 880.6mm LPA). Charts via Chart.js. Labelled OBSERVED/ESTIMATED where applicable — not live station records.
+Pointers, not proxied pixels: NASA GIBS/Worldview live viewer links
+(**API-DEPENDENT**), RainViewer radar (**LIVE**), MOSDAC/ISRO
+(**NOT CONFIGURED** — needs data access). No static image is shown as live.
 
 ## Alerts
 
-CAP-style alerts computed from LIVE telemetry against IMD-style thresholds (heavy rain, thunderstorm/Damini proxy, heatwave, coastal wind). The fallback synoptic alert is illustrative. **These are NOT official IMD bulletins.** Each alert carries severity, location, issue/start/end times, source, and recommended action. Always follow IMD/NDMA/local authorities.
+Computed from live station telemetry against documented thresholds
+(rain, storm, heat, coastal wind) plus an illustrative synoptic note.
+**Not official IMD bulletins.** Each card shows severity, area, window,
+source, and recommended action.
 
 ## Risk Engine
 
-Deterministic LOW / MODERATE / HIGH / EXTREME engine (`backend/app/services/risk_engine.py`) with documented thresholds for heat, rainfall, flood (rainfall-driven proxy), wind, thunderstorm (WMO codes), and cyclone (wind+rain coincidence). Output is labelled **ESTIMATED** — not scientifically validated, not an official warning. Try: `GET /api/risk/assess?location=Pune`.
+Deterministic heat/rainfall/flood/wind/thunderstorm/cyclone levels from
+published thresholds (`backend/app/services/risk_engine.py`),
+`GET /api/risk/assess`. Output is **ESTIMATED** — unvalidated, unofficial.
 
 ## Agriculture
 
-Rule-based advisories per crop using live temp/rain-prob/humidity. Covers irrigation, spray timing, harvest windows + Damini lightning proxy. **Informational only — not a substitute for professional agricultural advice.**
+Rule-based advice for paddy, cotton, wheat, sugarcane, soybean, mustard
+from live temp/rain/humidity. **Informational only**, Meghdoot-style format.
 
 ## Aviation
 
-STATIC sample METAR/TAF for VIDP, VABB, VOBL, VECC with decoded fields + flight categories (VFR/MVFR/IFR/LIFR). Samples are illustrative, not live observations. Do not use for flight planning.
+**STATIC DEMO DATA**: our own sample METAR/TAF for VIDP/VABB/VOBL/VECC
+with decoded fields and flight categories. Never for flight planning.
 
 ## Marine
 
-LIVE coastal wind → empirical wave height (SMB) → sea state + fisherman warning tiers. **Estimate, not an official INCOIS bulletin.** Tide times are illustrative offsets.
+Live coastal wind → empirical wave estimate (**MODEL-DEPENDENT**),
+sea state, fisherman tiers, indicative tides. **Not an INCOIS bulletin.**
+
+## Climate Analytics
+
+**STATIC** decadal reference (temperature anomalies, monsoon departure
+vs 880.6 mm LPA, event counts) with bar charts and plain-language
+insights. Not live station records.
+
+## Multilingual Support
+
+Script + keyword detection across 11 languages, per-language reply
+templates (figures never translated, only labelled), UI switcher,
+BCP-47 voice mapping.
+
+## Voice
+
+Speech → Web Speech STT → intent → weather tool → reply → TTS, with
+explicit fallbacks when the browser denies mic/support. No keys involved.
 
 ## Technology Stack
 
-- Frontend: React 19, Vite, Tailwind CSS v4, Leaflet + react-leaflet, Chart.js + react-chartjs-2, lucide-react, react-markdown
-- Backend: FastAPI, uvicorn, requests/httpx, pydantic, python-dotenv, pytest
-- Data: Open-Meteo (forecast + geocoding), RainViewer (radar), NASA GIBS links (satellite viewer)
-- Deploy: Vercel (`vercel.json`: Python API + static frontend build)
+Frontend: React 19, Vite, Tailwind CSS 4, Leaflet + react-leaflet,
+lucide-react, react-markdown. Backend: FastAPI, uvicorn, pydantic,
+httpx/requests, python-dotenv, pytest. Data: Open-Meteo, RainViewer,
+NASA GIBS links, OSM/CARTO tiles.
 
 ## Installation
 
 ```bash
-# Backend
-cd backend
-pip install -r requirements.txt
-
-# Frontend
-cd frontend
-npm install
+# backend
+cd backend && pip install -r requirements.txt
+# frontend
+cd frontend && npm install
 ```
 
 ## Environment Variables
 
-See `.env.example` (placeholders only — never commit `.env` with real credentials):
-
-| Variable | Default | Purpose |
-|---|---|---|
-| `CORS_ALLOW_ORIGINS` | `*` | Allowed CORS origins |
-| `WEATHERGPT_VERSION` | `2.0.0-sih` | API version string |
-| `WEATHERGPT_ENV` | `development` | Environment name |
-| `WEATHER_CACHE_TTL_SECONDS` | `600` | Weather cache TTL |
-| `OPENAI_API_KEY` | blank | Future LLM provider (NOT CONFIGURED) |
-| `OPENWEATHER_API_KEY` | blank | Future provider (NOT CONFIGURED) |
-| `IMD_API_KEY` | blank | Future IMD feed (NOT CONFIGURED) |
-| `MOSDAC_API_KEY` | blank | Future MOSDAC access (NOT CONFIGURED) |
-| `WRF_ENABLED` | `false` | WRF feed switch |
-| `WRF_GRIB_PATH` | blank | WRF GRIB/NetCDF path |
-| `VITE_API_URL` | blank | Frontend API override for local dev |
+See `.env.example` (placeholders only — never commit `.env`):
+`CORS_ALLOW_ORIGINS` (default local Vite origins; `*` disables
+credentials automatically), `WEATHERGPT_VERSION`, `WEATHERGPT_ENV`,
+`WEATHER_CACHE_TTL_SECONDS`, optional `OPENAI_API_KEY`,
+`OPENWEATHER_API_KEY`, `IMD_API_KEY`, `MOSDAC_API_KEY`, `WRF_ENABLED`,
+`WRF_GRIB_PATH`, frontend `VITE_API_URL`.
 
 ## Running Locally
 
 ```bash
-# Terminal 1 — backend (http://127.0.0.1:8000/docs)
-cd backend
-python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-
-# Terminal 2 — frontend (http://localhost:5173)
-cd frontend
-npm run dev
+cd backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload  # docs at /docs
+cd frontend && npm run dev   # http://localhost:5173
 ```
-
-## API Documentation
-
-Interactive docs: `http://127.0.0.1:8000/docs`
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/chat/query` | Conversational weather queries |
-| `GET` | `/api/weather/current` | Live observations + hourly/daily (LIVE) |
-| `GET` | `/api/weather/compare` | Two-city comparison |
-| `GET` | `/api/weather/history` | Reference climate context (STATIC) |
-| `GET` | `/api/locations/search` | Autocomplete |
-| `GET` | `/api/locations/regional-explorer` | Taluka explorer |
-| `GET` | `/api/alerts/active` | Computed CAP-style alerts |
-| `GET` | `/api/alerts/cyclone-track` | Illustrative track GeoJSON (DEMO) |
-| `GET` | `/api/advisory/crop` | Agromet advisory (DEMO-grade) |
-| `GET` | `/api/advisory/crops-list` | Supported crops |
-| `GET` | `/api/aviation/briefing` | Sample METAR/TAF (STATIC) |
-| `GET` | `/api/marine/advisory` | Wave/fisherman estimate |
-| `GET` | `/api/climate/trends` | Reference series (STATIC) |
-| `GET` | `/api/risk/assess` | Deterministic risk (ESTIMATED) |
-| `GET` | `/api/nwp/status` | GFS LIVE / WRF NOT CONFIGURED |
-| `GET` | `/api/satellite/info` | Satellite pointers (API-DEPENDENT) |
-| `GET` | `/api/sources/indian` | IMD/MOSDAC/INCOIS/Open-Meteo status |
-| `GET` | `/api/agent/tools` | Agent tool registry |
-| `GET` | `/api/meta/developer` | Developer identity |
-| `GET` | `/api/meta/project` | Project identity + license note |
-| `GET` | `/api/health` | Health check |
-| `WS` | `/ws/alerts` | Heartbeat + alert count |
 
 ## Testing
 
 ```bash
-cd backend
-python -m pytest -q        # backend unit tests (risk engine, API health, tools)
-cd ../frontend
-npm run lint               # oxlint
-npm run build              # production build check
+cd backend && python -m pytest -q     # 27 tests: risk, geo, chat, API, CORS
+cd frontend && npm run build          # production bundle check
+cd frontend && npx oxlint src         # lint (0 errors)
 ```
 
-## Deployment
+## Production
 
-Vercel per `vercel.json` (API → `api/index.py`, frontend static build). Set `VITE_API_URL` only if the API lives on a different origin; same-origin `/api` is the default in production. Never commit `.env`.
+Same-origin `/api` by default; set `VITE_API_URL` only for split hosting.
+Set explicit `CORS_ALLOW_ORIGINS` on the platform (never commit secrets).
+Backend: any ASGI host (`vercel.json` included for Vercel). Run the smoke
+checks in Testing after deploy.
 
-## Project Structure
+## Limitations
 
-```
-WeatherGPT-main/
-├── api/index.py                 # Vercel Python entry (imports backend app)
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # routes incl. risk/nwp/satellite/sources/agent/meta
-│   │   ├── config.py            # env-based config (NEW, SIH 2026)
-│   │   ├── schemas/models.py    # + transparency fields, RiskAssessment, DeveloperMeta
-│   │   └── services/
-│   │       ├── weather_service.py  # + TTL cache + source labels
-│   │       ├── cache.py            # NEW: TTL cache
-│   │       ├── risk_engine.py      # NEW: deterministic risk
-│   │       ├── nwp_service.py      # NEW: GFS LIVE / WRF NOT CONFIGURED
-│   │       ├── satellite_service.py# NEW: satellite pointers
-│   │       ├── indian_sources_service.py # NEW: IMD/MOSDAC/INCOIS registry
-│   │       ├── agent_tools.py      # NEW: tool registry
-│   │       ├── alert_service.py / agri_advisory.py / aviation_service.py /
-│   │       │   marine_service.py / historical_service.py / llm_engine.py
-│   ├── requirements.txt / run.py
-│   └── tests/                   # NEW: pytest suite
-├── frontend/src/
-│   ├── components/ SourceBadge, RiskPanel, AboutDeveloper, NwpSatellitePanel (NEW) + existing
-│   └── services/api.js, voice.js
-├── .env.example                 # NEW: placeholders only
-└── vercel.json
-```
+WRF / MOSDAC / IMD feed / LLM keys: NOT CONFIGURED. Aviation STATIC.
+Climate STATIC. AQI/marine/risk ESTIMATED. Alerts computed, unofficial.
+Voice needs a supporting browser. See per-panel labels.
 
-## Screenshots
+## Attribution
 
-> Add SIH demo screenshots here (`docs/screenshots/`): chat, dashboard with source badge, GIS map with LIVE/DEMO strip, alerts, risk panel, NWP/satellite provenance, About/SIH page. No screenshots are bundled in this revision.
+Application code independently implemented by Muchakarla Hemanth Kumar
+for SIH 2026. Third parties in `THIRD_PARTY_NOTICES.md`; provenance in
+`docs/PROVENANCE.md`; summary in `ATTRIBUTION.md`.
+
+## Third-Party Notices
+
+See `THIRD_PARTY_NOTICES.md` (licenses verified from installed package
+metadata; texts live with each package).
+
+## Project License
+
+**Project license: not yet selected.** Until one is chosen, all rights to
+the original code in this tree are reserved by the developer — no grant
+to copy, modify, or redistribute is given. Third-party packages remain
+under their own upstream licenses. (The developer was asked to select a
+license such as MIT/Apache-2.0; this section will be updated on decision.)
 
 ## Developer
 
 **Muchakarla Hemanth Kumar**
-B.Tech CSE – AI/ML
-SRK Institute of Technology (SRKIT)
-2024–2028
-SIH 2026
+B.Tech CSE – AI/ML · SRK Institute of Technology (SRKIT) · 2024–2028 · SIH 2026
 
 ## GitHub
 
@@ -263,19 +212,3 @@ https://github.com/hemanthhemanth1834-bit
 ## LinkedIn
 
 https://www.linkedin.com/in/hemanth-kumar-muchakarla-7974002a7/
-
-## Acknowledgements
-
-- **Original open-source base**: the downloaded `WeatherGPT-main` ZIP (React + FastAPI weather intelligence app: conversational engine, Open-Meteo integration, Leaflet GIS, CAP-style alerts, Agromet/aviation/marine/climate modules). The original archive contained **no LICENSE, NOTICE, or author/copyright file**, and no upstream repository URL inside the archive. A same-named public repository (`Kavin1467/WeatherGPT`, same SIH problem statement) was found during investigation, but its project structure (vanilla-JS frontend, `Prototype/`, Windows `.exe`) does **not** match this archive — so it could **not** be verified as the exact upstream. See `ATTRIBUTION.md`.
-- **Modifications by Muchakarla Hemanth Kumar (SIH 2026)**: risk engine, NWP/satellite/Indian-sources/agent-tools modules, source-transparency layer, caching, env config, saved locations, About/SIH surfaces, rebranding to "WeatherGPT — AI Weather Intelligence", README rewrite, `.env.example`, tests; finalization round: CORS hardening, code-splitting, honesty labels, error states, accessibility labels, crash fixes.
-- **Third-party data/services**: Open-Meteo (forecast + geocoding), RainViewer (radar), NASA GIBS/Worldview (satellite viewer links), OpenStreetMap contributors, Esri/Maxar (basemap tiles), IMD/MOSDAC/INCOIS (referenced as authoritative sources; no affiliation claimed).
-- **Third-party libraries**: React, Vite, Tailwind CSS, Leaflet, lucide-react, react-markdown, FastAPI, uvicorn, pydantic — each under its own upstream license (see `frontend/package.json`, `backend/requirements.txt`, `THIRD_PARTY_NOTICES.md`).
-- **License/attribution status**: ⚠️ The downloaded base included **no license file**. Required original copyright/attribution notices (if any existed upstream) have been preserved as far as present in the archive (none were found to remove). Because there is no license granting redistribution rights, **do not assume this code can be freely redistributed** — the SIH submission should confirm the upstream repository URL and license with the event organisers before any public redistribution. No claim is made that inherited code was originally written by the SIH developer. See `ATTRIBUTION.md` and `## License` below.
-
-## License
-
-No license file was present in the downloaded archive, and the exact upstream repository could **not** be verified (see `ATTRIBUTION.md`). Consequently:
-
-- This project currently has **no redistribution license**. All rights to the inherited portions remain with their unknown original authors.
-- The modifications documented in this README / `ATTRIBUTION.md` are the work of **Muchakarla Hemanth Kumar** for SIH 2026.
-- **Do not publicly redistribute** (including pushing the full copied source to a public GitHub repository) until the upstream source and its license are confirmed, or until the event organisers advise otherwise.

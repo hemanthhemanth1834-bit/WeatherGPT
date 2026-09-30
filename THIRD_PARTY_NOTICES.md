@@ -1,39 +1,48 @@
-# THIRD-PARTY NOTICES — WeatherGPT (SIH 2026)
+# THIRD-PARTY NOTICES — WeatherGPT SIH 2026
 
-This file lists third-party software, data, and services used by the project.
-It does not reproduce license texts — consult each package's own license file
-(`node_modules/<pkg>/LICENSE`, PyPI project pages, or provider terms).
+Licenses below were read from the installed packages' own metadata
+(`pip show`, `package-lock.json`) on 30 Sep 2026. License texts live
+with each package (npm `node_modules/<pkg>/LICENSE`, PyPI project
+pages) — this file records, not reproduces, them. Nothing below is
+vendored into this repository.
 
-## Data & services (no code redistribution; subject to provider terms)
+## Frontend (`frontend/package.json`)
 
-| Provider | Use | Terms / attribution |
+| Package | Version | License | Purpose |
+|---|---|---|---|
+| react, react-dom | 19.2.8 | MIT | UI runtime |
+| vite, @vitejs/plugin-react | 8.2.2 / 6.1.1 | MIT | Build tooling |
+| tailwindcss, @tailwindcss/vite | 4.3.3 | MIT | Styling |
+| leaflet | 1.9.4 | BSD-2-Clause | Interactive maps |
+| react-leaflet | 5.0.0 | Hippocratic-2.1 | React bindings for Leaflet — ethical-source terms; review if your policy requires pure OSI licensing (map use is isolated in `GISMap.jsx`) |
+| lucide-react | 1.38.0 | ISC | Icons (About/Risk/NWP panels) |
+| react-markdown, remark-gfm | 10.1.0 / 4.0.1 | MIT | Chat markdown rendering |
+| oxlint (dev) | 1.80.0 | MIT | Linting |
+
+## Backend (`backend/requirements.txt`)
+
+| Package | License (per PyPI metadata) | Purpose |
 |---|---|---|
-| Open-Meteo (https://open-meteo.com/) | LIVE forecast + geocoding | Free for non-commercial use, requires attribution |
-| RainViewer (https://www.rainviewer.com/) | LIVE radar tiles on GIS map | Provider API terms; in-map attribution retained |
-| NASA GIBS / Worldview (https://worldview.earthdata.nasa.gov/) | Satellite viewer links only (no imagery redistributed) | NASA open-data policies apply at the provider |
-| OpenStreetMap contributors | Basemap tiles + attribution | ODbL; attribution retained in map control |
-| Esri / Maxar / Earthstar Geographics | Alternate basemap tiles | Esri terms; attribution retained in map control |
-| IMD / MOSDAC-ISRO / INCOIS | Referenced as authoritative sources only; no affiliation claimed; no scraped content | Respective government data policies |
+| fastapi | MIT (upstream) | API framework |
+| uvicorn | BSD-3-Clause (upstream) | ASGI server |
+| pydantic | MIT (upstream) | Data validation |
+| httpx | BSD-3-Clause | HTTP client |
+| requests | Apache-2.0 | HTTP client |
+| python-multipart | Apache-2.0 (upstream) | Form parsing |
+| python-dotenv | BSD-3-Clause | Env loading |
+| pytest | MIT (upstream) | Testing |
 
-## Frontend libraries (`frontend/package.json`)
+(“upstream” = the license historically published by that project; confirm
+against the version you install if your compliance process requires it.)
 
-- react, react-dom — Meta (upstream license, see package)
-- vite, @vitejs/plugin-react — Evan You / Vite team (upstream license, see package)
-- tailwindcss, @tailwindcss/vite — Tailwind Labs (upstream license, see package)
-- leaflet, react-leaflet — Leaflet contributors (BSD-2-Clause as published upstream)
-- lucide-react — Lucide contributors (ISC as published upstream)
-- react-markdown, remark-gfm — respective authors (MIT as published upstream)
+## Data, tiles, and browser APIs (terms apply at the provider)
 
-Removed as unused in finalization: `chart.js`, `react-chartjs-2`, `canvas-confetti`
-(not imported anywhere under `frontend/src/`).
-
-## Backend libraries (`backend/requirements.txt`)
-
-- fastapi, uvicorn, pydantic, httpx, requests, python-multipart, python-dotenv, pytest —
-  each under its own upstream license (see PyPI project pages).
-
-## Note on the inherited base
-
-The downloaded archive carried no license file, so the license of the inherited
-application code itself is unknown — see `ATTRIBUTION.md` and `README.md → License`.
-The entries above cover independently published third-party packages/services only.
+- **Open-Meteo** (forecast + geocoding): free for non-commercial use with
+  attribution — attributed in UI source badges and docs.
+- **RainViewer**: radar tiles under provider terms — attributed in the map.
+- **OpenStreetMap contributors / CARTO**: ODbL basemap terms — attribution
+  retained in the map control.
+- **NASA GIBS / Worldview**: satellite viewer links only; no imagery
+  redistributed; NASA open-data policies apply at the provider.
+- **Web Speech API**: browser-native; no key, no redistribution.
+- Fonts via Google Fonts (Inter, JetBrains Mono) under their own licenses.

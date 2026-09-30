@@ -1,20 +1,20 @@
 """Unit tests for the deterministic risk engine (no network required)."""
-from app.schemas.models import (
-    WeatherData, HourlyForecast, DailyForecast,
+from app.models import (
+    WeatherData, HourlyPoint, DailyPoint,
 )
 from app.services.risk_engine import assess_risk
 
 
 def _make_weather(temp=30.0, feels=32.0, precip=0.0, wind=10.0, code=1, rain_prob=10):
     hourly = [
-        HourlyForecast(time=f"{h:02d}:00", temp=temp, rain_prob=rain_prob,
-                       condition="Clear", icon="Sun", wind_speed=wind)
+        HourlyPoint(time=f"{h:02d}:00", temp=temp, rain_prob=rain_prob,
+                    condition="Clear", icon="Sun", wind_speed=wind)
         for h in range(12)
     ]
     daily = [
-        DailyForecast(date="2026-09-30", day="Today", temp_max=temp + 3,
-                      temp_min=temp - 3, condition="Clear", icon="Sun",
-                      rain_sum=precip, wind_max=wind)
+        DailyPoint(date="2026-09-30", day="Today", temp_max=temp + 3,
+                   temp_min=temp - 3, condition="Clear", icon="Sun",
+                   rain_sum=precip, wind_max=wind)
     ]
     return WeatherData(
         location="Testville", state="Test State", lat=18.5, lon=73.8,

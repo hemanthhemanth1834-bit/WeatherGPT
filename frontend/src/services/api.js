@@ -1,125 +1,94 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") 
-    ? "http://127.0.0.1:8000/api" 
+/* Client for the WeatherGPT backend. Original implementation.
+   Same-origin /api in production; override with VITE_API_URL locally. */
+const BASE =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" &&
+  (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://127.0.0.1:8000/api"
     : "/api");
 
-export async function sendChatQuery(query, persona = "general", language = "auto", locationName = "") {
-  const res = await fetch(`${API_BASE_URL}/chat/query`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      query,
-      persona,
-      language,
-      location_name: locationName
-    })
-  });
-  if (!res.ok) throw new Error("Failed to query WeatherGPT engine");
-  return await res.json();
-}
-
-export async function fetchCurrentWeather(location = "New Delhi", lat = null, lon = null) {
-  let url = `${API_BASE_URL}/weather/current?location=${encodeURIComponent(location)}`;
-  if (lat !== null && lon !== null) {
-    url += `&lat=${lat}&lon=${lon}`;
+async function request(path, options) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const response = await fetch(`${BASE}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: { "Content-Type": "application/json", ...(options?.headers || {}) },
+    });
+    if (!response.ok) {
+      throw new Error(`Request failed (${response.status})`);
+    }
+    return await response.json();
+  } finally {
+    clearTimeout(timer);
   }
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch current weather");
-  return await res.json();
 }
 
-export async function fetchActiveAlerts(severity = null) {
-  let url = `${API_BASE_URL}/alerts/active`;
-  if (severity) url += `?severity=${severity}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch active alerts");
-  return await res.json();
-}
+const get = (path) => request(path, { method: "GET" });
 
-export async function fetchCycloneTrack() {
-  const res = await fetch(`${API_BASE_URL}/alerts/cyclone-track`);
-  if (!res.ok) throw new Error("Failed to fetch cyclone track");
-  return await res.json();
-}
+export const sendChatQuery = (query, persona = "general", language = "auto", locationName = "") =>
+  request("/chat/query", {
+    method: "POST",
+    body: JSON.stringify({ query, persona, language, location_name: locationName }),
+  });
 
-export async function fetchCropAdvisory(crop = "paddy", district = "Nagpur", state = "Maharashtra") {
-  const res = await fetch(`${API_BASE_URL}/advisory/crop?crop=${encodeURIComponent(crop)}&district=${encodeURIComponent(district)}&state=${encodeURIComponent(state)}`);
-  if (!res.ok) throw new Error("Failed to fetch crop advisory");
-  return await res.json();
-}
+export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null) => {
+  let path = `/weather/current?location=${encodeURIComponent(location)}`;
+  if (lat !== null && lon !== null) path += `&lat=${lat}&lon=${lon}`;
+  return get(path);
+};
 
-export async function fetchAviationBriefing(airport = "VIDP") {
-  const res = await fetch(`${API_BASE_URL}/aviation/briefing?airport=${encodeURIComponent(airport)}`);
-  if (!res.ok) throw new Error("Failed to fetch aviation briefing");
-  return await res.json();
-}
+export const fetchActiveAlerts = (severity = null) =>
+  get(severity ? `/alerts/active?severity=${severity}` : "/alerts/active");
 
-export async function fetchMarineAdvisory(location = "Mumbai") {
-  const res = await fetch(`${API_BASE_URL}/marine/advisory?location=${encodeURIComponent(location)}`);
-  if (!res.ok) throw new Error("Failed to fetch marine advisory");
-  return await res.json();
-}
+export const fetchCycloneTrack = () => get("/alerts/cyclone-track");
 
-export async function fetchClimateTrends(region = "All India") {
-  const res = await fetch(`${API_BASE_URL}/climate/trends?region=${encodeURIComponent(region)}`);
-  if (!res.ok) throw new Error("Failed to fetch climate trends");
-  return await res.json();
-}
+export const fetchCropAdvisory = (crop = "paddy", district = "Nagpur", state = "Maharashtra") =>
+  get(`/advisory/crop?crop=${encodeURIComponent(crop)}&district=${encodeURIComponent(district)}&state=${encodeURIComponent(state)}`);
 
-export async function fetchCityComparison(city1 = "Mumbai", city2 = "Delhi") {
-  const res = await fetch(`${API_BASE_URL}/weather/compare?city1=${encodeURIComponent(city1)}&city2=${encodeURIComponent(city2)}`);
-  if (!res.ok) throw new Error("Failed to fetch city comparison");
-  return await res.json();
-}
+export const fetchAviationBriefing = (airport = "VIDP") =>
+  get(`/aviation/briefing?airport=${encodeURIComponent(airport)}`);
 
-export async function searchLocations(query = "", limit = 8) {
-  if (!query || query.trim().length < 1) return [];
-  const res = await fetch(`${API_BASE_URL}/locations/search?q=${encodeURIComponent(query.trim())}&limit=${limit}`);
-  if (!res.ok) return [];
-  return await res.json();
-}
+export const fetchMarineAdvisory = (location = "Mumbai") =>
+  get(`/marine/advisory?location=${encodeURIComponent(location)}`);
 
-export async function fetchRegionalTalukas(region = "pune") {
-  const res = await fetch(`${API_BASE_URL}/locations/regional-explorer?region=${encodeURIComponent(region)}`);
-  if (!res.ok) return [];
-  return await res.json();
-}
+export const fetchClimateTrends = (region = "All India") =>
+  get(`/climate/trends?region=${encodeURIComponent(region)}`);
 
-export async function fetchRiskAssessment(location = "Pune", lat = null, lon = null) {
-  let url = `${API_BASE_URL}/risk/assess?location=${encodeURIComponent(location)}`;
-  if (lat !== null && lon !== null) url += `&lat=${lat}&lon=${lon}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed to fetch risk assessment");
-  return await res.json();
-}
+export const fetchCityComparison = (city1 = "Mumbai", city2 = "Delhi") =>
+  get(`/weather/compare?city1=${encodeURIComponent(city1)}&city2=${encodeURIComponent(city2)}`);
 
-export async function fetchNwpStatus() {
-  const res = await fetch(`${API_BASE_URL}/nwp/status`);
-  if (!res.ok) throw new Error("Failed to fetch NWP status");
-  return await res.json();
-}
+export const searchLocations = async (query = "", limit = 8) => {
+  if (!query || query.trim().length < 2) return [];
+  try {
+    return await get(`/locations/search?q=${encodeURIComponent(query.trim())}&limit=${limit}`);
+  } catch {
+    return [];
+  }
+};
 
-export async function fetchSatelliteInfo(lat = 20.0, lon = 78.0) {
-  const res = await fetch(`${API_BASE_URL}/satellite/info?lat=${lat}&lon=${lon}`);
-  if (!res.ok) throw new Error("Failed to fetch satellite info");
-  return await res.json();
-}
+export const fetchRegionalTalukas = async (region = "pune") => {
+  try {
+    return await get(`/locations/regional-explorer?region=${encodeURIComponent(region)}`);
+  } catch {
+    return [];
+  }
+};
 
-export async function fetchIndianSources() {
-  const res = await fetch(`${API_BASE_URL}/sources/indian`);
-  if (!res.ok) throw new Error("Failed to fetch Indian sources");
-  return await res.json();
-}
+export const fetchRiskAssessment = (location = "Pune", lat = null, lon = null) => {
+  let path = `/risk/assess?location=${encodeURIComponent(location)}`;
+  if (lat !== null && lon !== null) path += `&lat=${lat}&lon=${lon}`;
+  return get(path);
+};
 
-export async function fetchAgentTools() {
-  const res = await fetch(`${API_BASE_URL}/agent/tools`);
-  if (!res.ok) throw new Error("Failed to fetch agent tools");
-  return await res.json();
-}
+export const fetchNwpStatus = () => get("/nwp/status");
 
-export async function fetchDeveloperMeta() {
-  const res = await fetch(`${API_BASE_URL}/meta/developer`);
-  if (!res.ok) throw new Error("Failed to fetch developer meta");
-  return await res.json();
-}
+export const fetchSatelliteInfo = (lat = 20.0, lon = 78.0) =>
+  get(`/satellite/info?lat=${lat}&lon=${lon}`);
 
+export const fetchIndianSources = () => get("/sources/indian");
+
+export const fetchAgentTools = () => get("/agent/tools");
+
+export const fetchDeveloperMeta = () => get("/meta/developer");

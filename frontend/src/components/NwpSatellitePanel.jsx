@@ -30,8 +30,8 @@ export default function NwpSatellitePanel({ location, lat, lon }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3 space-y-5 animate-fadeIn">
-      <div className="glass-card p-6 border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-slate-900/90 to-slate-900/90">
+    <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div className="wg-card p-6 border border-indigo-500/30 bg-gradient-to-r from-indigo-950/40 via-slate-900/90 to-slate-900/90">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 text-indigo-300 font-bold text-xs uppercase tracking-wider mb-1">
@@ -42,7 +42,7 @@ export default function NwpSatellitePanel({ location, lat, lon }) {
               GFS is LIVE via Open-Meteo. WRF and MOSDAC are NOT CONFIGURED until feeds are provisioned.
             </p>
           </div>
-          <button onClick={load} disabled={loading} className="btn-primary text-xs py-2 px-3.5">
+          <button onClick={load} disabled={loading} className="wg-btn text-xs py-2 px-3.5">
             {loading ? <Loader2 size={14} className="animate-spin" /> : "Load provenance"}
           </button>
         </div>
@@ -51,7 +51,7 @@ export default function NwpSatellitePanel({ location, lat, lon }) {
       {error && <p className="text-xs text-red-300">{error}</p>}
 
       {nwp && (
-        <div className="glass-card p-5 border border-slate-800 space-y-2">
+        <div className="wg-card p-5 border border-slate-800 space-y-2">
           <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">NWP integration: {nwp.integration}</h3>
           <SourceBadge source={nwp.gfs?.provider} dataType="Forecast" status={nwp.gfs?.status} />
           <p className="text-xs text-slate-400">{nwp.gfs?.notes}</p>
@@ -64,7 +64,7 @@ export default function NwpSatellitePanel({ location, lat, lon }) {
       )}
 
       {sat && (
-        <div className="glass-card p-5 border border-slate-800 space-y-2">
+        <div className="wg-card p-5 border border-slate-800 space-y-2">
           <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
             <Satellite size={14} className="text-sky-400" /> Satellite information ({location || "India"})
           </h3>
@@ -85,7 +85,7 @@ export default function NwpSatellitePanel({ location, lat, lon }) {
       )}
 
       {sources && (
-        <div className="glass-card p-5 border border-slate-800 space-y-2">
+        <div className="wg-card p-5 border border-slate-800 space-y-2">
           <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
             <Database size={14} className="text-emerald-400" /> Indian authoritative sources
           </h3>

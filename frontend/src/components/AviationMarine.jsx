@@ -1,233 +1,112 @@
-import React, { useState, useEffect } from "react";
-import { Plane, Anchor, AlertTriangle, CheckCircle, Wind, Compass, Waves } from "lucide-react";
+import React, { useEffect, useState } from "react";
 import { fetchAviationBriefing, fetchMarineAdvisory } from "../services/api";
 
-const AIRPORT_LIST = [
-  { icao: "VIDP", name: "Delhi (VIDP / DEL)", city: "Delhi" },
-  { icao: "VABB", name: "Mumbai (VABB / BOM)", city: "Mumbai" },
-  { icao: "VOBL", name: "Bengaluru (VOBL / BLR)", city: "Bengaluru" },
-  { icao: "VECC", name: "Kolkata (VECC / CCU)", city: "Kolkata" }
+const AIRPORTS = [
+  ["VIDP", "Delhi VIDP"],
+  ["VABB", "Mumbai VABB"],
+  ["VOBL", "Bengaluru VOBL"],
+  ["VECC", "Kolkata VECC"],
+];
+const COASTS = [
+  ["mumbai", "Mumbai / Konkan"],
+  ["goa", "Goa"],
+  ["kochi", "Kochi / Malabar"],
+  ["chennai", "Chennai / Coromandel"],
+  ["visakhapatnam", "Visakhapatnam"],
+  ["puri", "Puri / Odisha"],
 ];
 
-const COASTAL_LIST = [
-  { id: "mumbai", name: "Konkan Coast (Mumbai / Arabian Sea)" },
-  { id: "odisha", name: "North Odisha Coast (Bay of Bengal)" },
-  { id: "kerala", name: "Malabar Coast (Kochi / Kerala)" },
-  { id: "chennai", name: "Coromandel Coast (Chennai / Tamil Nadu)" }
-];
-
-export default function AviationMarine({ onAskAI }) {
-  const [selectedAirport, setSelectedAirport] = useState("VIDP");
-  const [selectedCoast, setSelectedCoast] = useState("mumbai");
-  const [aviation, setAviation] = useState(null);
-  const [marine, setMarine] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadError, setLoadError] = useState("");
+export default function AviationMarine({ onAsk }) {
+  const [airport, setAirport] = useState("VIDP");
+  const [coast, setCoast] = useState("mumbai");
+  const [briefing, setBriefing] = useState(null);
+  const [sea, setSea] = useState(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      setLoadError("");
+    let cancelled = false;
+    (async () => {
+      setError("");
       try {
-        const [avData, marData] = await Promise.all([
-          fetchAviationBriefing(selectedAirport),
-          fetchMarineAdvisory(selectedCoast)
-        ]);
-        setAviation(avData);
-        setMarine(marData);
-      } catch (e) {
-        console.error(e);
-        setLoadError("Aviation/marine data unavailable — backend unreachable or request timed out. Please retry.");
-      } finally {
-        setIsLoading(false);
+        const [av, mr] = await Promise.all([fetchAviationBriefing(airport), fetchMarineAdvisory(coast)]);
+        if (!cancelled) {
+          setBriefing(av);
+          setSea(mr);
+        }
+      } catch {
+        if (!cancelled) setError("Air/sea panels failed to load — please retry.");
       }
+    })();
+    return () => {
+      cancelled = true;
     };
-    loadData();
-  }, [selectedAirport, selectedCoast]);
+  }, [airport, coast]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-4 space-y-6 animate-fadeIn">
-      {loadError && (
-        <div role="alert" className="p-3.5 rounded-2xl border border-red-500/40 bg-red-950/40 text-xs text-red-200">
-          ⚠️ {loadError}
+    <section aria-label="Aviation and marine" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+      {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
+
+      <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
+        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem" }}>Aviation briefing</h2>
+        <p style={{ margin: "0 0 0.7rem", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
+          <span className="wg-chip demo">STATIC DEMO DATA</span> Sample reports for training display — not live observations, never for flight planning.
+        </p>
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.8rem" }} role="group" aria-label="Airport">
+          {AIRPORTS.map(([icao, label]) => (
+            <button key={icao} className="wg-tab" aria-selected={airport === icao} onClick={() => setAirport(icao)}>
+              {label}
+            </button>
+          ))}
         </div>
-      )}
-      {/* Aviation Section */}
-      <div className="glass-card p-6 border border-blue-500/30">
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-blue-500/20 text-blue-400">
-              <Plane size={24} />
+        {briefing && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(16rem,1fr))", gap: "0.7rem" }}>
+            <div>
+              <div className="wg-mono" style={{ fontSize: "0.72rem", color: "var(--wg-muted)" }}>SAMPLE METAR</div>
+              <p className="wg-mono" style={{ fontSize: "0.82rem" }}>{briefing.metar_raw}</p>
+              <div className="wg-mono" style={{ fontSize: "0.72rem", color: "var(--wg-muted)" }}>SAMPLE TAF</div>
+              <p className="wg-mono" style={{ fontSize: "0.82rem" }}>{briefing.taf_raw}</p>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Aviation Weather Briefing & METAR / TAF</h2>
-              <p className="text-xs text-gray-400">Decoded aerodrome reports for pilots and dispatchers.</p>
-              <p className="mt-1.5 inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/40">
-                STATIC DEMO DATA — sample METAR/TAF, not live observations. Not for flight planning.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {AIRPORT_LIST.map((ap) => (
-              <button
-                key={ap.icao}
-                onClick={() => setSelectedAirport(ap.icao)}
-                className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition ${
-                  selectedAirport === ap.icao
-                    ? "bg-blue-600 text-white shadow"
-                    : "bg-gray-900 text-gray-400 hover:text-white border border-gray-800"
-                }`}
-              >
-                {ap.icao}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {aviation && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            <div className="lg:col-span-2 space-y-4">
-              <div className="bg-gray-950/80 p-4 rounded-xl border border-gray-800 font-mono text-xs text-sky-300">
-                <div className="text-gray-500 mb-1">// RAW METAR</div>
-                {aviation.metar_raw}
-              </div>
-
-              <div className="bg-gray-950/80 p-4 rounded-xl border border-gray-800 font-mono text-xs text-indigo-300">
-                <div className="text-gray-500 mb-1">// RAW 24-HOUR TAF</div>
-                {aviation.taf_raw}
-              </div>
-
-              {/* Decoded Table */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 bg-gray-900/60 rounded-xl border border-gray-800">
-                  <div className="text-[10px] text-gray-400">Wind Direction & Speed</div>
-                  <div className="text-xs font-bold text-white mt-1">{aviation.metar_decoded.wind}</div>
-                </div>
-                <div className="p-3 bg-gray-900/60 rounded-xl border border-gray-800">
-                  <div className="text-[10px] text-gray-400">Prevailing Visibility</div>
-                  <div className="text-xs font-bold text-white mt-1">{aviation.metar_decoded.visibility}</div>
-                </div>
-                <div className="p-3 bg-gray-900/60 rounded-xl border border-gray-800">
-                  <div className="text-[10px] text-gray-400">Cloud Layers</div>
-                  <div className="text-xs font-bold text-white mt-1">{aviation.metar_decoded.clouds}</div>
-                </div>
-                <div className="p-3 bg-gray-900/60 rounded-xl border border-gray-800">
-                  <div className="text-[10px] text-gray-400">Altimeter (QNH)</div>
-                  <div className="text-xs font-bold text-white mt-1">{aviation.metar_decoded.altimeter_qnh}</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Flight Category & Hazards */}
-            <div className="glass-card p-5 border border-gray-800 space-y-4">
-              <div>
-                <div className="text-xs text-gray-400">Flight Rules Category</div>
-                <div className={`text-2xl font-black mt-1 ${
-                  aviation.flight_category === "VFR" ? "text-emerald-400" : (aviation.flight_category === "MVFR" ? "text-amber-400" : "text-red-400")
-                }`}>
-                  {aviation.flight_category} (Visual / Instrument)
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-2 border-t border-gray-800">
-                <div className="text-xs font-semibold text-gray-300">Observed Aerodrome Hazards:</div>
-                {aviation.hazards.map((h, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-xs text-amber-300 bg-amber-950/30 p-2 rounded-lg border border-amber-900/50">
-                    <AlertTriangle size={13} className="flex-shrink-0" />
-                    <span>{h}</span>
-                  </div>
+              <div style={{ fontSize: "0.75rem", color: "var(--wg-muted)" }}>Flight category (sample)</div>
+              <div style={{ fontSize: "1.6rem", fontWeight: 800 }}>{briefing.flight_category}</div>
+              <ul style={{ margin: "0.4rem 0 0", paddingLeft: "1.1rem", fontSize: "0.82rem" }}>
+                {briefing.hazards.map((h, i) => (
+                  <li key={i}>{h}</li>
                 ))}
-              </div>
+              </ul>
+              <p style={{ fontSize: "0.72rem", color: "var(--wg-muted)" }}>{briefing.station_name}</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Marine & INCOIS Section */}
-      <div className="glass-card p-6 border border-cyan-500/30">
-        <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="p-3 rounded-xl bg-cyan-500/20 text-cyan-400">
-              <Waves size={24} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-white">Ocean State Forecast & High Wave Alerts</h2>
-              <p className="text-xs text-gray-400">Swell surge, sea state, and deep sea fishing advisories for coastal communities.</p>
-              <p className="mt-1.5 inline-block text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/40">
-                MODEL-DEPENDENT estimate from live coastal wind — not an official INCOIS bulletin.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            {COASTAL_LIST.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => setSelectedCoast(c.id)}
-                className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition ${
-                  selectedCoast === c.id
-                    ? "bg-cyan-600 text-white shadow"
-                    : "bg-gray-900 text-gray-400 hover:text-white border border-gray-800"
-                }`}
-              >
-                {c.name.split(" ")[0]}
-              </button>
-            ))}
-          </div>
+      <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
+        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem" }}>Marine advisory</h2>
+        <p style={{ margin: "0 0 0.7rem", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
+          <span className="wg-chip estimated">MODEL-DEPENDENT ESTIMATE</span> Computed from live coastal wind — not an official INCOIS bulletin.
+        </p>
+        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.8rem" }} role="group" aria-label="Coastal sector">
+          {COASTS.map(([id, label]) => (
+            <button key={id} className="wg-tab" aria-selected={coast === id} onClick={() => setCoast(id)}>
+              {label}
+            </button>
+          ))}
         </div>
-
-        {marine && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            <div className="md:col-span-2 space-y-4">
-              <div className={`p-4 rounded-xl border ${
-                marine.fisherman_warning
-                  ? "bg-red-950/40 border-red-500/50 text-red-200"
-                  : "bg-emerald-950/30 border-emerald-500/40 text-emerald-200"
-              }`}>
-                <div className="flex items-center gap-2 font-bold text-sm mb-1">
-                  <AlertTriangle size={18} className={marine.fisherman_warning ? "text-red-400" : "text-emerald-400"} />
-                  <span>Fishermen Advisory Notification</span>
-                </div>
-                <p className="text-xs leading-relaxed">{marine.warning_message}</p>
-              </div>
-
-              <div className="grid grid-cols-3 gap-3">
-                <div className="p-3.5 bg-gray-950/60 rounded-xl border border-gray-800 text-center">
-                  <div className="text-[10px] text-gray-400">Significant Wave Height</div>
-                  <div className="text-xl font-extrabold text-cyan-400 font-mono mt-1">{marine.wave_height_m} m</div>
-                  <div className="text-[10px] text-gray-400 mt-0.5">{marine.sea_condition}</div>
-                </div>
-                <div className="p-3.5 bg-gray-950/60 rounded-xl border border-gray-800 text-center">
-                  <div className="text-[10px] text-gray-400">High Tide Timing</div>
-                  <div className="text-xs font-bold text-white font-mono mt-2">{marine.high_tide_time}</div>
-                </div>
-                <div className="p-3.5 bg-gray-950/60 rounded-xl border border-gray-800 text-center">
-                  <div className="text-[10px] text-gray-400">Low Tide Timing</div>
-                  <div className="text-xs font-bold text-white font-mono mt-2">{marine.low_tide_time}</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="glass-card p-5 border border-gray-800 flex flex-col justify-between">
-              <div>
-                <div className="text-xs text-gray-400">Monitored Coastal Sector</div>
-                <div className="text-sm font-bold text-white mt-1">{marine.coastal_zone}</div>
-                <div className="text-xs text-gray-400 mt-3">
-                  Wind Gusts: <span className="text-white font-semibold">{marine.wind_speed_knots} Knots</span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => onAskAI(`What is the marine and wave condition for ${marine.coastal_zone}?`)}
-                className="btn-primary w-full text-xs justify-center mt-4 bg-cyan-600 hover:bg-cyan-500"
-              >
-                Ask Marine Assistant →
-              </button>
-            </div>
+        {sea && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(9rem,1fr))", gap: "0.6rem", fontSize: "0.85rem" }}>
+            <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Waves</div><strong>{sea.wave_height_m} m · {sea.sea_condition}</strong></div>
+            <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Wind</div><strong>{sea.wind_speed_knots} kt</strong></div>
+            <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Zone</div><strong>{sea.coastal_zone}</strong></div>
+            <p style={{ gridColumn: "1/-1", margin: 0 }}>{sea.warning_message}</p>
+            <p className="wg-mono" style={{ gridColumn: "1/-1", margin: 0, fontSize: "0.7rem", color: "var(--wg-muted)" }}>
+              High tide {sea.high_tide_time} · Low tide {sea.low_tide_time} (indicative)
+            </p>
           </div>
         )}
+        <button className="wg-btn" style={{ marginTop: "0.7rem" }} onClick={() => onAsk(`Marine and wave conditions near ${coast}`)}>
+          Ask marine assistant →
+        </button>
       </div>
-    </div>
+    </section>
   );
 }

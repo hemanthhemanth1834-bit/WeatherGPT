@@ -29,13 +29,13 @@ export default function RiskPanel({ location }) {
   };
 
   return (
-    <div className="glass-card p-5 border border-slate-800 space-y-4">
+    <div className="wg-card p-5 border border-slate-800 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
           <ShieldAlert size={14} className="text-amber-400" />
           Deterministic Risk Engine (ESTIMATED — not an official warning)
         </h3>
-        <button onClick={load} disabled={loading} className="btn-primary text-xs py-1.5 px-3">
+        <button onClick={load} disabled={loading} className="wg-btn text-xs py-1.5 px-3">
           {loading ? <Loader2 size={13} className="animate-spin" /> : "Assess risk"}
         </button>
       </div>

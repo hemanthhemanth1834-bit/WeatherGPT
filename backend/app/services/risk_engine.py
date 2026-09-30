@@ -9,7 +9,7 @@ must not be presented as official IMD warnings. Official warnings always
 take precedence.
 """
 from typing import Dict, Any, List
-from ..schemas.models import WeatherData
+from ..models import WeatherData
 
 # Documented thresholds (conservative, transparent, non-validated)
 THRESHOLDS = {
