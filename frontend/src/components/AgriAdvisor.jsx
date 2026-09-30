@@ -57,6 +57,11 @@ export default function AgriAdvisor({ place, onAsk }) {
           Weather-driven field guidance in Meghdoot-style format (DEMO-grade).{" "}
           <strong>Informational only — not professional agronomic advice.</strong>
         </p>
+        {data && (
+          <p className="wg-mono" style={{ margin: "0.45rem 0 0", fontSize: "0.68rem", color: "var(--wg-muted)" }}>
+            INPUT: {data.weather_summary} · {data.district}, {data.state} · COMPUTED, not an official IMD advisory
+          </p>
+        )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginTop: "0.7rem", alignItems: "center" }}>
           <label style={{ display: "flex", gap: "0.4rem", alignItems: "center", fontSize: "0.78rem" }}>
             Crop

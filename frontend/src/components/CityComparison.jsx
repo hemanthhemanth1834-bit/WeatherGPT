@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchCityComparison } from "../services/api";
+import { fetchActiveAlerts, fetchCityComparison, fetchRiskAssessment } from "../services/api";
 
 const PRESETS = [
   ["Mumbai", "Delhi"],
@@ -25,13 +25,25 @@ export default function CityComparison({ onAsk }) {
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [extra, setExtra] = useState({});
 
   const load = async (a, b) => {
     if (!a.trim() || !b.trim()) return;
     setBusy(true);
     setError("");
     try {
-      setResult(await fetchCityComparison(a.trim(), b.trim()));
+      const data = await fetchCityComparison(a.trim(), b.trim());
+      setResult(data);
+      const [r1, r2, all] = await Promise.all([
+        fetchRiskAssessment(data.city1.location).catch(() => null),
+        fetchRiskAssessment(data.city2.location).catch(() => null),
+        fetchActiveAlerts().catch(() => []),
+      ]);
+      const hits = (city) => all.filter((x) => x.district.toLowerCase().includes(city.toLowerCase())).length;
+      setExtra({
+        risk1: r1?.overall, risk2: r2?.overall,
+        alerts1: hits(data.city1.location), alerts2: hits(data.city2.location),
+      });
     } catch {
       setError("Comparison failed — the backend may be unreachable. Please retry.");
     } finally {
@@ -83,6 +95,8 @@ export default function CityComparison({ onAsk }) {
           <Row label="Temperature" a={`${result.city1.current_temp}°C`} b={`${result.city2.current_temp}°C`} />
           <Row label="Humidity" a={`${result.city1.humidity}%`} b={`${result.city2.humidity}%`} />
           <Row label="Wind" a={`${result.city1.wind_speed} km/h ${result.city1.wind_direction}`} b={`${result.city2.wind_speed} km/h ${result.city2.wind_direction}`} />
+          <Row label="Risk (est.)" a={extra.risk1 || "…"} b={extra.risk2 || "…"} />
+          <Row label="Alerts" a={extra.alerts1 ?? "…"} b={extra.alerts2 ?? "…"} />
           <Row label="AQI (est.)" a={`${result.city1.aqi} ${result.city1.aqi_status}`} b={`${result.city2.aqi} ${result.city2.aqi_status}`} />
           <p style={{ fontSize: "0.85rem", margin: "0.3rem 0 0" }}>
             Warmer: <strong>{result.temp_warmer_city}</strong> ({result.temp_diff}°C) · Cleaner air:{" "}

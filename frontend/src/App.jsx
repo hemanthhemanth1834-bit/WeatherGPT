@@ -15,6 +15,7 @@ const CityComparison = lazy(() => import("./components/CityComparison"));
 const ClimateAnalytics = lazy(() => import("./components/ClimateAnalytics"));
 const RiskPanel = lazy(() => import("./components/RiskPanel"));
 const NwpSatellitePanel = lazy(() => import("./components/NwpSatellitePanel"));
+const SavedPlacesPanel = lazy(() => import("./components/SavedPlacesPanel"));
 const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
 
 const SAVED_KEY = "weathergpt.savedPlaces";
@@ -53,6 +54,7 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(loadSaved);
   const [notice, setNotice] = useState("");
+  const [micTick, setMicTick] = useState(0);
 
   const persistSaved = (next) => {
     setSaved(next);
@@ -183,6 +185,11 @@ export default function App() {
     setTab(map[name] || name);
   }, []);
 
+  const voiceToChat = useCallback(() => {
+    setTab("chat");
+    setMicTick((t) => t + 1);
+  }, []);
+
   const askFromTab = useCallback(
     (q) => {
       setTab("chat");
@@ -210,6 +217,8 @@ export default function App() {
         alertCount={alerts.length}
         saved={saved}
         onRemoveSaved={removeSaved}
+        weather={weather}
+        onVoice={voiceToChat}
       />
 
       {notice && (
@@ -225,7 +234,7 @@ export default function App() {
 
       <main className="wg-wrap" style={{ flex: 1, paddingTop: "0.9rem", paddingBottom: "1.2rem" }}>
         {tab === "chat" && (
-          <WeatherChat messages={messages} busy={busy} language={language} onAsk={ask} onTab={goTab} />
+          <WeatherChat messages={messages} busy={busy} language={language} persona={persona} onAsk={ask} onTab={goTab} micTick={micTick} />
         )}
         <Suspense
           fallback={
@@ -238,7 +247,7 @@ export default function App() {
             <HomePanel weather={weather} busy={busy} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} />
           )}
           {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
-          {tab === "map" && <GISMap onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
+          {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
           {tab === "agri" && <AgriAdvisor place={place} onAsk={askFromTab} />}
           {tab === "aviation_marine" && <AviationMarine onAsk={askFromTab} />}
           {tab === "alerts" && <AlertCenter onAsk={askFromTab} />}
@@ -246,7 +255,18 @@ export default function App() {
           {tab === "compare" && <CityComparison onAsk={askFromTab} />}
           {tab === "climate" && <ClimateAnalytics onAsk={askFromTab} />}
           {tab === "risk" && <RiskPanel location={place} />}
-          {tab === "nwp" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} />}
+          {tab === "nwp" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="nwp" />}
+          {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
+          {tab === "saved" && (
+            <SavedPlacesPanel
+              current={place}
+              saved={saved}
+              weather={weather}
+              onSelect={(name) => searchPlace(name)}
+              onAddCurrent={() => remember(place)}
+              onRemove={removeSaved}
+            />
+          )}
           {tab === "about" && <AboutDeveloper />}
         </Suspense>
       </main>
@@ -256,7 +276,7 @@ export default function App() {
           <span>
             <strong style={{ color: "var(--wg-ink)" }}>WeatherGPT</strong> · AI Weather Intelligence · SIH 2026
             <br />
-            Muchakarla Hemanth Kumar · SRK Institute of Technology
+            Muchakarla Hemanth Kumar · SRK Institute of Technology · B.Tech CSE–AI/ML · 2024–2028
           </span>
           <span style={{ display: "flex", gap: "0.9rem", flexWrap: "wrap" }}>
             <a href="https://github.com/hemanthhemanth1834-bit" target="_blank" rel="noreferrer">GitHub</a>

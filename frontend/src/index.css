@@ -5,21 +5,44 @@
 :root {
   --wg-bg: #070b16;
   --wg-bg-2: #0b1224;
+  --wg-surface: rgba(17, 26, 46, 0.62);
+  --wg-surface-elevated: rgba(24, 36, 64, 0.72);
   --wg-glass: rgba(17, 26, 46, 0.62);
   --wg-glass-2: rgba(13, 21, 38, 0.78);
   --wg-line: rgba(148, 163, 184, 0.16);
   --wg-line-soft: rgba(148, 163, 184, 0.09);
+  --wg-text-primary: #eaf1fb;
+  --wg-text-secondary: #c3cede;
+  --wg-text-muted: #93a1b8;
   --wg-ink: #eaf1fb;
   --wg-muted: #93a1b8;
   --wg-faint: #5b6b84;
   --wg-accent: #38bdf8;
   --wg-accent-deep: #0369a1;
   --wg-teal: #2dd4bf;
+  --wg-success: #34d399;
   --wg-good: #34d399;
+  --wg-warning: #fbbf24;
   --wg-warn: #fbbf24;
+  --wg-danger: #f87171;
   --wg-bad: #f87171;
+  --wg-info: #38bdf8;
   --wg-cold: #7dd3fc;
+  --wg-radius-sm: 0.6rem;
   --wg-radius: 1.1rem;
+  --wg-radius-lg: 1.5rem;
+  --wg-shadow: 0 18px 44px -22px rgba(0, 0, 0, 0.85);
+  --wg-shadow-glow: 0 18px 44px -20px rgba(14, 165, 233, 0.45);
+  --wg-blur: blur(16px) saturate(1.25);
+  --wg-space-1: 0.35rem;
+  --wg-space-2: 0.6rem;
+  --wg-space-3: 0.9rem;
+  --wg-space-4: 1.2rem;
+  --wg-fs-xs: 0.72rem;
+  --wg-fs-sm: 0.82rem;
+  --wg-fs-md: 0.95rem;
+  --wg-fs-lg: 1.15rem;
+  --wg-fs-xl: 1.5rem;
   --wg-font: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
   --wg-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
 }
@@ -250,7 +273,48 @@ input[type="checkbox"].wg-check { width: 1rem; height: 1rem; accent-color: var(-
 a { color: var(--wg-accent); }
 :focus-visible { outline: 2px solid var(--wg-accent); outline-offset: 2px; }
 
+/* ---- micro-interactions (restrained) ---- */
+.wg-card, .wg-btn, .wg-btn-ghost, .wg-tab {
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease,
+    border-color 0.16s ease, filter 0.16s ease;
+}
+.wg-card.hoverable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: var(--wg-shadow-glow), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.wg-btn:active { transform: translateY(1px) scale(0.99); }
+.wg-btn-ghost:active { transform: scale(0.98); }
+.wg-enter { animation: wg-rise 0.35s ease both; }
+@keyframes wg-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+.wg-shimmer {
+  background: linear-gradient(100deg, rgba(148,163,184,.08) 40%, rgba(148,163,184,.2) 50%, rgba(148,163,184,.08) 60%);
+  background-size: 200% 100%;
+  animation: wg-shimmer 1.4s linear infinite;
+  border-radius: 0.6rem;
+  min-height: 2.6rem;
+}
+@keyframes wg-shimmer { to { background-position: -200% 0; } }
+
+/* ---- layout guard ---- */
+html, body { overflow-x: clip; }
+.wg-shell { overflow-x: clip; }
+button, input, select, a { min-height: 0; }
+.wg-tab, .wg-btn, .wg-btn-ghost { min-height: 2.5rem; }
+
 @media (max-width: 640px) {
   .wg-wrap { padding-inline: 0.65rem; }
   .wg-hero-title { letter-spacing: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .wg-ticker > span { animation: none; padding-left: 0; }
 }

@@ -1,0 +1,12 @@
+{
+  "name": "WeatherGPT — AI Weather Intelligence",
+  "short_name": "WeatherGPT",
+  "description": "Conversational weather intelligence for India. SIH 2026.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b16",
+  "theme_color": "#070b16",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

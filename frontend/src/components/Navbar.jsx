@@ -13,7 +13,9 @@ const TABS = [
   ["aviation_marine", "Air · Sea"],
   ["compare", "Compare"],
   ["climate", "Climate"],
-  ["nwp", "NWP · Sat"],
+  ["nwp", "NWP"],
+  ["satellite", "Satellite"],
+  ["saved", "Saved"],
   ["about", "About"],
 ];
 
@@ -25,8 +27,6 @@ const PERSONAS = [
   ["marine", "Marine"],
   ["researcher", "Researcher"],
 ];
-
-const PERSONA_IDS = { general: "general", farmer: "farmer", disaster_manager: "disaster_manager", aviation: "aviation", marine: "marine", researcher: "researcher" };
 
 export function personaForApi(uiPersona) {
   return uiPersona === "researcher" ? "general" : uiPersona || "general";
@@ -47,7 +47,7 @@ const LANGS = [
   ["or", "ଓଡ଼ିଆ"],
 ];
 
-export default function Navbar({ tab, onTab, persona, onPersona, language, onLanguage, place, onPlace, onSearch, onLocate, alertCount, saved, onRemoveSaved }) {
+export default function Navbar({ tab, onTab, persona, onPersona, language, onLanguage, place, onPlace, onSearch, onLocate, alertCount, saved, onRemoveSaved, weather, onVoice }) {
   const [hints, setHints] = useState([]);
   const [open, setOpen] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -95,7 +95,16 @@ export default function Navbar({ tab, onTab, persona, onPersona, language, onLan
           </span>
         </button>
 
-        <div ref={boxRef} style={{ position: "relative", flex: "1 1 200px", maxWidth: "24rem" }}>
+        {weather && (
+          <button onClick={() => go("dashboard")} title="Open forecast" aria-label={`Current: ${weather.current_temp} degrees in ${weather.location}. Open forecast.`}
+            style={{ display: "flex", alignItems: "center", gap: "0.45rem", background: "rgba(56,189,248,.08)", border: "1px solid rgba(56,189,248,.3)", color: "inherit", borderRadius: "0.8rem", padding: "0.35rem 0.7rem", cursor: "pointer", fontSize: "0.78rem", fontWeight: 700 }}>
+            <span className="wg-pulse-dot" aria-hidden="true" style={{ background: "var(--wg-success)" }} />
+            {weather.location} · {weather.current_temp}°
+            <span style={{ color: "var(--wg-muted)", fontWeight: 500 }}>{weather.condition}</span>
+          </button>
+        )}
+
+        <div ref={boxRef} style={{ position: "relative", flex: "1 1 200px", maxWidth: "22rem" }}>
           <form onSubmit={submit} role="search" style={{ display: "flex", gap: "0.4rem" }}>
             <input className="wg-input" type="search" aria-label="Search for a city, district or locality" placeholder="Search city, district, locality…" value={place}
               onChange={(e) => { onPlace(e.target.value); setOpen(true); }} onFocus={() => hints.length && setOpen(true)} />
@@ -126,23 +135,24 @@ export default function Navbar({ tab, onTab, persona, onPersona, language, onLan
           )}
         </div>
 
-        <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
-          Language
-          <select className="wg-input" style={{ width: "auto" }} value={language} onChange={(e) => onLanguage(e.target.value)} aria-label="Response language">
-            {LANGS.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
-          </select>
-        </label>
-
-        <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
-          Profile
-          <select className="wg-input" style={{ width: "auto" }} value={persona} onChange={(e) => onPersona(e.target.value)} aria-label="User profile">
-            {PERSONAS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
-          </select>
-        </label>
-
-        <button className="wg-btn-ghost" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Toggle navigation menu" style={{ marginLeft: "auto" }}>
-          {menu ? "✕ Close" : "☰ Menu"}
-        </button>
+        <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", marginLeft: "auto" }}>
+          <button className="wg-btn-ghost" onClick={onVoice} aria-label="Ask WeatherGPT by voice" title="Ask by voice (opens chat)">🎙</button>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
+            <span className="wg-sr" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Response language</span>
+            <select className="wg-input" style={{ width: "auto" }} value={language} onChange={(e) => onLanguage(e.target.value)} aria-label="Response language">
+              {LANGS.map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+            </select>
+          </label>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
+            <span className="wg-sr" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>User profile</span>
+            <select className="wg-input" style={{ width: "auto" }} value={persona} onChange={(e) => onPersona(e.target.value)} aria-label="User profile">
+              {PERSONAS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+            </select>
+          </label>
+          <button className="wg-btn-ghost" onClick={() => setMenu(!menu)} aria-expanded={menu} aria-label="Toggle navigation menu">
+            {menu ? "✕" : "☰"}
+          </button>
+        </div>
       </div>
 
       <div className="wg-wrap" style={{ paddingBottom: "0.55rem" }}>
