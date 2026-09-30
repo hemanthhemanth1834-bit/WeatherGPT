@@ -110,3 +110,34 @@ def test_uv_endpoint():
     body = client.get("/api/uv", params={"location": "Pune"}).json()
     assert body["level"] in ("Low", "Moderate", "High", "Very High", "Extreme")
     assert body["advice"]
+
+
+def test_gdacs_normalize_pure():
+    from app.services import gdacs
+    feature = {"geometry": {"coordinates": [80.0, 15.0]},
+               "properties": {"eventtype": "TC", "name": "Cyclone over Bay of Bengal",
+                              "country": "India", "iso3": "IND", "alertlevel": "Orange",
+                              "fromdate": "2026-09-01", "todate": "", "iscurrent": True,
+                              "url": {"report": "https://www.gdacs.org/x"}}}
+    out = gdacs.normalize(feature)
+    assert out["event_label"] == "Tropical Cyclone"
+    assert out["near_india"] is True
+    assert out["status"] == "OFFICIAL third-party feed"
+
+
+def test_gdacs_endpoint_live():
+    needs_network()
+    body = client.get("/api/disasters/global", params={"region": "world"}).json()
+    assert body["status"] == "LIVE"
+    assert body["count"] >= 0
+    assert body["source"].startswith("GDACS")
+
+
+def test_gfs_model_label():
+    needs_network()
+    blend = client.get("/api/weather/current", params={"location": "Pune"}).json()
+    gfs = client.get("/api/weather/current",
+                     params={"location": "Pune", "model": "gfs"}).json()
+    assert "blend" in blend["nwp_model"].lower() or "Open-Meteo" in blend["nwp_model"]
+    assert gfs["nwp_model"].startswith("GFS")
+    assert isinstance(gfs["current_temp"], (int, float))

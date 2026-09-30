@@ -33,8 +33,8 @@ export const sendChatQuery = (query, persona = "general", language = "auto", loc
     body: JSON.stringify({ query, persona, language, location_name: locationName }),
   });
 
-export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null) => {
-  let path = `/weather/current?location=${encodeURIComponent(location)}`;
+export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null, model = "auto") => {
+  let path = `/weather/current?location=${encodeURIComponent(location)}&model=${model}`;
   if (lat !== null && lon !== null) path += `&lat=${lat}&lon=${lon}`;
   return get(path);
 };
@@ -112,3 +112,6 @@ export const fetchEngineStatus = () => get("/agent/engine");
 
 export const fetchUV = (location = "Pune") =>
   get(`/uv?location=${encodeURIComponent(location)}`);
+
+export const fetchDisasters = (region = "world") =>
+  get(`/disasters/global?region=${encodeURIComponent(region)}`);

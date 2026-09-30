@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchAirQuality, fetchRegionalTalukas, fetchUV } from "../services/api";
 import { glyphFor } from "./ModernWeatherCard";
+import WxIcon from "./WxIcon";
 
 function Metric({ label, value, sub }) {
   return (
@@ -99,9 +100,7 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
           </div>
           <div style={{ display: "flex", alignItems: "baseline", gap: "0.8rem", marginTop: "0.3rem" }}>
             <span style={{ fontSize: "3.2rem", fontWeight: 800 }}>{weather.current_temp}°</span>
-            <span style={{ fontSize: "2rem" }} aria-hidden="true">
-              {glyphFor(weather.icon)}
-            </span>
+            <WxIcon icon={weather.icon} size={52} />
           </div>
           <div style={{ fontWeight: 700 }}>{weather.condition}</div>
           <div style={{ fontSize: "0.8rem", color: "var(--wg-muted)" }}>

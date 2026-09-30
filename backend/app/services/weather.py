@@ -73,16 +73,24 @@ def estimate_aqi(state: str) -> int:
     return 78
 
 
-def get_weather(lat: float, lon: float, place: str, state: str) -> WeatherData:
-    """Cached entry point used by routes and the chat engine."""
-    key = f"wx:{round(lat, 3)}:{round(lon, 3)}:{place}:{state}"
+def get_weather(lat: float, lon: float, place: str, state: str,
+                model: str = "auto") -> WeatherData:
+    """Cached entry point used by routes and the chat engine.
+
+    model: 'auto' (Open-Meteo blend) or 'gfs' (GFS global via Open-Meteo).
+    """
+    selection = "gfs" if (model or "").lower() == "gfs" else "auto"
+    key = f"wx:{round(lat, 3)}:{round(lon, 3)}:{place}:{state}:{selection}"
     return cached(WEATHER_CACHE_TTL_SECONDS, key,
-                  lambda: _download(lat, lon, place, state))
+                  lambda: _download(lat, lon, place, state, selection))
 
 
-def _download(lat: float, lon: float, place: str, state: str) -> WeatherData:
+def _download(lat: float, lon: float, place: str, state: str, model: str = "auto") -> WeatherData:
     ist = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
     current_hour = datetime.datetime.now(ist).strftime("%Y-%m-%dT%H:00")
+    model_param = "&models=gfs_global" if model == "gfs" else ""
+    model_label = ("GFS global (via Open-Meteo)" if model == "gfs"
+                   else "Open-Meteo NWP blend (GFS + ICON + ECMWF HRES)")
     try:
         url = (
             "https://api.open-meteo.com/v1/forecast"
@@ -93,18 +101,20 @@ def _download(lat: float, lon: float, place: str, state: str) -> WeatherData:
             "weather_code,wind_speed_10m,relative_humidity_2m"
             "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
             "precipitation_sum,wind_speed_10m_max,sunrise,sunset,uv_index_max"
-            "&timezone=Asia%2FKolkata"
+            f"&timezone=Asia%2FKolkata{model_param}"
         )
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
-            return _from_api(response.json(), lat, lon, place, state, current_hour)
+            return _from_api(response.json(), lat, lon, place, state, current_hour,
+                             model_label)
     except Exception:
         pass
     return _fallback(lat, lon, place, state)
 
 
 def _from_api(payload: dict, lat: float, lon: float, place: str,
-              state: str, current_hour: str) -> WeatherData:
+              state: str, current_hour: str,
+              model_label: str = "Open-Meteo NWP blend (GFS + ICON + ECMWF HRES)") -> WeatherData:
     current = payload.get("current", {})
     hourly_raw = payload.get("hourly", {})
     daily_raw = payload.get("daily", {})
@@ -175,7 +185,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         sunrise=rise.split("T")[1] if "T" in rise else rise,
         sunset=fall.split("T")[1] if "T" in fall else fall,
         hourly=hourly, daily=daily,
-        nwp_model="Open-Meteo NWP blend (GFS + ICON + ECMWF HRES)",
+        nwp_model=model_label,
         data_source="Open-Meteo", data_type="Forecast", status="LIVE",
         updated_at_ist=ist_now_label(), confidence="Provider/model dependent",
     )

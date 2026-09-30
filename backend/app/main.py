@@ -22,6 +22,7 @@ from .services.air_quality import get_air_quality, uv_guidance
 from .services.alerts import active_alerts, cyclone_track
 from .services.chat import _compare as compare_places
 from .services.chat import answer
+from .services.gdacs import global_disasters
 from .services.history import climate_history
 from .services.indian_sources_service import get_indian_sources_status
 from .services.nwp_service import get_nwp_status
@@ -176,12 +177,13 @@ def explorer(region: str = Query("pune")) -> list:
 @app.get("/api/weather/current", response_model=WeatherData)
 def current(location: str = Query("Pune"),
             lat: Optional[float] = None,
-            lon: Optional[float] = None) -> WeatherData:
+            lon: Optional[float] = None,
+            model: str = Query("auto", description="'auto' blend or 'gfs'")) -> WeatherData:
     if lat is None or lon is None:
         lat, lon, proper, state = geo.geocode(location)
     else:
         proper, state = location, "India"
-    return get_weather(lat, lon, proper, state)
+    return get_weather(lat, lon, proper, state, model=model)
 
 
 @app.get("/api/weather/compare", response_model=CityComparisonData)
@@ -208,6 +210,12 @@ def alerts(state: Optional[str] = None, district: Optional[str] = None,
 @app.get("/api/alerts/cyclone-track")
 def cyclone() -> dict:
     return cyclone_track()
+
+
+@app.get("/api/disasters/global")
+def disasters(region: str = Query("world", description="'world' or 'india'")) -> dict:
+    """Recent global disaster events from the public GDACS feed (OFFICIAL third-party)."""
+    return global_disasters(region)
 
 
 @app.get("/api/advisory/crop", response_model=AgriCropAdvisory)

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchActiveAlerts, fetchCycloneTrack } from "../services/api";
+import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters } from "../services/api";
 import EmergencyContacts from "./EmergencyContacts";
 
 const CATS = ["Cyclone", "Heavy Rain", "Flood", "Thunderstorm", "Lightning", "Heatwave", "Cold Wave", "Strong Wind"];
@@ -25,15 +25,21 @@ export default function SevereWeatherPanel({ onAsk }) {
   const [cat, setCat] = useState("Cyclone");
   const [error, setError] = useState("");
   const [showContacts, setShowContacts] = useState(false);
+  const [global, setGlobal] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [al, tr] = await Promise.all([fetchActiveAlerts(), fetchCycloneTrack()]);
+        const [al, tr, gd] = await Promise.all([
+          fetchActiveAlerts(),
+          fetchCycloneTrack(),
+          fetchDisasters("world").catch(() => null),
+        ]);
         if (!cancelled) {
           setAlerts(al);
           setTrack(tr);
+          setGlobal(gd);
         }
       } catch {
         if (!cancelled) setError("Severe-weather feed failed to load — please retry.");
@@ -64,6 +70,43 @@ export default function SevereWeatherPanel({ onAsk }) {
       {showContacts && <EmergencyContacts onClose={() => setShowContacts(false)} />}
 
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
+
+      {global && global.events?.length > 0 && (
+        <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
+          <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.85rem" }}>
+            🌍 Global disaster events <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OFFICIAL · GDACS</span>
+          </h3>
+          <p style={{ fontSize: "0.72rem", color: "var(--wg-muted)", margin: "0 0 0.5rem" }}>
+            Read-only third-party feed (UN JRC). Context only — Indian warnings come from IMD/NDMA.{" "}
+            {global.events.some((e) => e.near_india) ? "Some events touch the Indian region." : "No current events touch the Indian region."}
+          </p>
+          <div className="wg-scrollrow">
+            {global.events.slice(0, 8).map((e, i) => (
+              <a key={i} href={e.report_url} target="_blank" rel="noreferrer" className="wg-card hoverable"
+                style={{ minWidth: "15rem", padding: "0.65rem 0.8rem", textDecoration: "none", color: "inherit" }}>
+                <span className={`wg-chip ${e.alert_level === "Red" ? "off" : e.alert_level === "Orange" ? "demo" : "static"}`}>{e.alert_level}</span>
+                <div style={{ fontWeight: 700, fontSize: "0.8rem", marginTop: "0.3rem" }}>{e.event_label}</div>
+                <div style={{ fontSize: "0.74rem", color: "var(--wg-muted)" }}>{e.name}</div>
+                <div className="wg-mono" style={{ fontSize: "0.64rem", color: "var(--wg-muted)" }}>
+                  {e.from ? e.from.slice(0, 10) : ""} → {e.to ? e.to.slice(0, 10) : "ongoing"}{e.near_india ? " · 🇮🇳 near India" : ""}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
+        <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.85rem" }}>
+          🛟 General preparedness <span className="wg-chip static" style={{ marginLeft: "0.4rem" }}>STATIC GUIDANCE</span>
+        </h3>
+        <div className="wg-grid-panels" style={{ fontSize: "0.78rem", lineHeight: 1.6 }}>
+          <div><strong>Before:</strong> charge phones, store water/documents, know high ground and the 112 helpline.</div>
+          <div><strong>During floods/storms:</strong> avoid underpasses and riverbanks, stay indoors away from windows, never drive through flowing water.</div>
+          <div><strong>During heat:</strong> hydrate, avoid 12–3 PM sun, check on elderly neighbours.</div>
+          <div><strong>After:</strong> avoid floodwater (electrical + contamination risk), report outages, follow official all-clear.</div>
+        </div>
+      </div>
 
       <div className="wg-grid-panels">
         <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>

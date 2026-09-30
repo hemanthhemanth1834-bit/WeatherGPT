@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
 import { glyphFor } from "./ModernWeatherCard";
+import WxIcon from "./WxIcon";
 
 const RISK_TONE = { LOW: "live", MODERATE: "static", HIGH: "demo", EXTREME: "off" };
 
@@ -65,7 +66,7 @@ export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, on
           <div className="wg-card" style={{ padding: "1.1rem 1.2rem", background: "rgba(8,13,26,.55)" }} aria-label="Current snapshot">
             {weather ? (
               <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "2.6rem" }} aria-hidden="true">{glyphFor(weather.icon)}</span>
+                <WxIcon icon={weather.icon} size={56} />
                 <div>
                   <div style={{ fontSize: "2rem", fontWeight: 800 }}>{weather.current_temp}°<span style={{ fontSize: "1rem", color: "var(--wg-muted)" }}>C</span></div>
                   <div style={{ fontWeight: 700, color: "var(--wg-accent)" }}>{weather.condition}</div>

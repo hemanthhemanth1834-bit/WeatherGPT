@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Satellite, Layers, Database, Loader2 } from "lucide-react";
-import { fetchNwpStatus, fetchSatelliteInfo, fetchIndianSources } from "../services/api";
+import { fetchCurrentWeather, fetchNwpStatus, fetchSatelliteInfo, fetchIndianSources } from "../services/api";
 import SourceBadge from "./SourceBadge";
 
 export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" }) {
   const [nwp, setNwp] = useState(null);
   const [sat, setSat] = useState(null);
   const [sources, setSources] = useState(null);
+  const [gfs, setGfs] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [checkedAt, setCheckedAt] = useState("");
@@ -15,14 +16,16 @@ export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" })
     setLoading(true);
     setError("");
     try {
-      const [n, s, src] = await Promise.all([
+      const [n, s, src, g] = await Promise.all([
         fetchNwpStatus(),
         fetchSatelliteInfo(lat, lon),
         fetchIndianSources(),
+        fetchCurrentWeather(location || "Pune", lat, lon, "gfs").catch(() => null),
       ]);
       setNwp(n);
       setSat(s);
       setSources(src);
+      setGfs(g);
       setCheckedAt(new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
     } catch (e) {
       setError("NWP / satellite metadata unavailable. Ensure the backend is running.");
@@ -46,6 +49,12 @@ export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" })
         <span className="text-slate-400"> — {nwp.wrf?.parser_architecture}</span>
       </div>
       <p className="text-[10px] text-slate-500">{nwp.disclaimer}</p>
+      {gfs && (
+        <div className="text-xs text-slate-300 bg-slate-950/60 border border-slate-800 rounded-xl p-3">
+          <span className="font-bold">GFS now ({gfs.location}): {gfs.current_temp}°C, {gfs.condition}</span>
+          <span className="text-slate-400"> — {gfs.nwp_model} · {gfs.updated_at_ist}</span>
+        </div>
+      )}
     </div>
   );
 

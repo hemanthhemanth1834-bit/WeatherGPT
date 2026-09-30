@@ -1,4 +1,5 @@
 import React from "react";
+import WxIcon from "./WxIcon";
 
 /* Compact weather summary used inside chat replies. Original component. */
 const GLYPH = {
@@ -35,11 +36,9 @@ export default function ModernWeatherCard({ weather }) {
             {weather.condition} · feels {weather.feels_like}°C · 💧 {weather.humidity}% · 💨 {weather.wind_speed} km/h {weather.wind_direction}
           </div>
         </div>
-        <div style={{ textAlign: "right" }}>
+        <div style={{ textAlign: "right", display: "flex", alignItems: "center", gap: "0.6rem" }}>
           <div style={{ fontSize: "1.9rem", fontWeight: 800 }}>{weather.current_temp}°</div>
-          <div style={{ fontSize: "1.2rem" }} aria-hidden="true">
-            {glyphFor(weather.icon)}
-          </div>
+          <WxIcon icon={weather.icon} size={44} />
         </div>
       </div>
       <div style={{ marginTop: "0.45rem", fontSize: "0.72rem", color: "var(--wg-muted)" }} className="wg-mono">
