@@ -92,24 +92,33 @@ export default function Earth3D({ weather }) {
       globe.add(new THREE.LineSegments(gratGeo, new THREE.LineBasicMaterial({ color: 0x1e3a5f, transparent: true, opacity: 0.5 })));
       disposables.push(gratGeo);
 
-      // Coastlines (Natural Earth, public domain, runtime fetch).
+      // Coastlines: Natural Earth 110m (public domain) via world-atlas.
+      // land is a GeometryCollection, so feature() yields a FeatureCollection.
       try {
         const res = await fetch(LAND_URL);
         if (!res.ok) throw new Error(`land ${res.status}`);
         const topo = await res.json();
         const land = feature(topo, topo.objects.land);
-        const polys = land.geometry.type === "MultiPolygon" ? land.geometry.coordinates : [land.geometry.coordinates];
+        const feats = land.type === "FeatureCollection" ? land.features : [land];
         const pts = [];
-        polys.forEach((poly) => {
-          (Array.isArray(poly[0][0][0]) ? poly : [poly]).forEach((ring) => {
-            const step = Math.max(1, Math.floor(ring.length / (small ? 60 : 140)));
-            for (let i = 0; i < ring.length; i += step) {
-              const a = ring[i];
-              const b = ring[(i + step) % ring.length];
-              pts.push(latLon(a[1], a[0], R + 0.003), latLon(b[1], b[0], R + 0.003));
-            }
+        feats.forEach((feat) => {
+          const geom = feat.geometry;
+          if (!geom) return;
+          const polys = geom.type === "MultiPolygon" ? geom.coordinates : [geom.coordinates];
+          polys.forEach((poly) => {
+            poly.forEach((ring) => {
+              if (!Array.isArray(ring) || ring.length < 2) return;
+              const step = Math.max(1, Math.floor(ring.length / (small ? 60 : 140)));
+              for (let i = 0; i < ring.length; i += step) {
+                const a = ring[i];
+                const b = ring[(i + step) % ring.length];
+                if (!Array.isArray(a) || !Array.isArray(b)) continue;
+                pts.push(latLon(a[1], a[0], R + 0.003), latLon(b[1], b[0], R + 0.003));
+              }
+            });
           });
         });
+        if (!pts.length) throw new Error("no coastline points");
         const coastGeo = new THREE.BufferGeometry().setFromPoints(pts);
         globe.add(new THREE.LineSegments(coastGeo, new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 })));
         disposables.push(coastGeo);

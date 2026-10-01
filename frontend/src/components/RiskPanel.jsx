@@ -28,7 +28,7 @@ export default function RiskPanel({ location }) {
       setRisk(r);
       setClimate(w);
       setTrip(t);
-    } catch (e) {
+    } catch {
       setError("Risk engine unavailable. Ensure the backend is running.");
     } finally {
       setLoading(false);

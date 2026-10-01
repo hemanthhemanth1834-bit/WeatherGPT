@@ -27,7 +27,7 @@ export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" })
       setSources(src);
       setGfs(g);
       setCheckedAt(new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
-    } catch (e) {
+    } catch {
       setError("NWP / satellite metadata unavailable. Ensure the backend is running.");
     } finally {
       setLoading(false);

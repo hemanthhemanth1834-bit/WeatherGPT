@@ -7,9 +7,12 @@ export default function SavedPlacesPanel({ current, saved, weather, onSelect, on
 
   useEffect(() => {
     let cancelled = false;
+    const names = saved.slice(0, 8);
+    const key = names.join("|");
+    if (!key) return undefined;
     (async () => {
       const entries = {};
-      for (const name of saved.slice(0, 8)) {
+      for (const name of names) {
         try {
           const w = await fetchCurrentWeather(name);
           entries[name] = { temp: w.current_temp, cond: w.condition, status: w.status };
@@ -20,7 +23,7 @@ export default function SavedPlacesPanel({ current, saved, weather, onSelect, on
       if (!cancelled) setPreviews(entries);
       try {
         const alerts = await fetchActiveAlerts();
-        const hit = alerts.filter((a) => saved.some((s) => a.district.toLowerCase().includes(s.toLowerCase())));
+        const hit = alerts.filter((a) => names.some((s) => a.district.toLowerCase().includes(s.toLowerCase())));
         if (!cancelled) setAlertNote(hit.length ? `${hit.length} active alert(s) touch your saved places.` : "No active alerts touch your saved places right now.");
       } catch {
         if (!cancelled) setAlertNote("");
@@ -29,7 +32,8 @@ export default function SavedPlacesPanel({ current, saved, weather, onSelect, on
     return () => {
       cancelled = true;
     };
-  }, [saved.join("|")]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
 
   return (
     <section aria-label="Saved places" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>

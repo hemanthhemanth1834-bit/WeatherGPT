@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
-import { glyphFor } from "./ModernWeatherCard";
+import { fetchRiskAssessment } from "../services/api";
 import WxIcon from "./WxIcon";
 
 const RISK_TONE = { LOW: "live", MODERATE: "static", HIGH: "demo", EXTREME: "off" };

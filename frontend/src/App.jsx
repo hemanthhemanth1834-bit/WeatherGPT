@@ -74,15 +74,6 @@ export default function App() {
     }
   });
 
-  const persistSaved = (next) => {
-    setSaved(next);
-    try {
-      localStorage.setItem(SAVED_KEY, JSON.stringify(next));
-    } catch {
-      /* storage unavailable */
-    }
-  };
-
   const remember = useCallback((name) => {
     const clean = (name || "").trim();
     if (!clean) return;

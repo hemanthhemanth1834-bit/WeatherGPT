@@ -1,8 +1,10 @@
-"""Indian authoritative weather data sources registry (SIH 2026 addition).
+"""Indian authoritative weather data sources registry.
 
-Design integrations are documented; no scraping, no fabricated government warnings.
+Every entry reflects probed reality (portal reachability checked Sep–Oct 2026;
+guessed API paths returned 404, so no open API is claimed). No scraping,
+no fabricated government warnings.
 """
-from typing import Dict, Any
+from typing import Any, Dict
 
 
 def get_indian_sources_status() -> Dict[str, Any]:
@@ -10,28 +12,45 @@ def get_indian_sources_status() -> Dict[str, Any]:
         "sources": [
             {
                 "name": "IMD (India Meteorological Department)",
-                "type": "API-DEPENDENT",
-                "portal": "https://mausam.imd.gov.in/ / https://www.imd.gov.in/",
-                "integration": "Live public bulletins to be consumed via official feeds where licensed; current alerts in this app are computed from live telemetry against IMD-style thresholds and are NOT official IMD bulletins.",
+                "type": "NOT CONFIGURED",
+                "portal": "https://mausam.imd.gov.in/",
+                "integration": "Portal reachable, but no documented public data API "
+                               "was found (probed paths returned 404). Computed alerts "
+                               "in this app use live telemetry against IMD-style "
+                               "thresholds and are NOT official IMD bulletins.",
             },
             {
                 "name": "MOSDAC / ISRO",
                 "type": "NOT CONFIGURED",
                 "portal": "https://www.mosdac.gov.in/",
-                "integration": "Interface ready; requires data access credentials. See satellite module.",
+                "integration": "Portal reachable, but data access requires "
+                               "credentials. Satellite needs are covered by NASA "
+                               "GIBS links instead.",
             },
             {
                 "name": "INCOIS (Ocean State Forecasts)",
-                "type": "MODEL-DEPENDENT estimate",
+                "type": "NOT CONFIGURED",
                 "portal": "https://incois.gov.in/",
-                "integration": "Marine advisories in this app use live coastal wind telemetry + empirical wave model; labelled as estimates, not official INCOIS bulletins.",
+                "integration": "Portal reachable, but no open feed found. Marine "
+                               "state comes from the live Open-Meteo wave model "
+                               "(labelled LIVE/MODEL), not INCOIS bulletins.",
+            },
+            {
+                "name": "NDMA / CWC / GSI / Bhuvan",
+                "type": "NOT CONFIGURED",
+                "portal": "https://ndma.gov.in/",
+                "integration": "Portals only; no documented keyless API evaluated. "
+                               "Emergency numbers 112/1078/1070 are published "
+                               "STATIC public information in the app.",
             },
             {
                 "name": "Open-Meteo (global NWP + geocoding, no key required)",
                 "type": "LIVE",
                 "portal": "https://open-meteo.com/",
-                "integration": "Active: current/hourly/daily forecast + geocoding. Free for non-commercial use with attribution.",
+                "integration": "Active: current/hourly/daily forecast + geocoding. "
+                               "Free for non-commercial use with attribution.",
             },
         ],
-        "policy": "Always display source. Never fabricate government warnings. Never scrape in violation of terms.",
+        "policy": "Always display source. Never fabricate government warnings. "
+                  "Never scrape in violation of terms. Never guess endpoints.",
     }

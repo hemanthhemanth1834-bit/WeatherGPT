@@ -14,12 +14,17 @@ const CROPS = [
 
 export default function AgriAdvisor({ place, onAsk }) {
   const [crop, setCrop] = useState("cotton");
-  const [district, setDistrict] = useState("Nagpur");
+  const [district, setDistrict] = useState(place || "Nagpur");
   const [data, setData] = useState(null);
   const [wx, setWx] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [voicing, setVoicing] = useState(false);
+
+  useEffect(() => {
+    if (place && place !== district) setDistrict(place);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [place]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,6 +97,11 @@ export default function AgriAdvisor({ place, onAsk }) {
             Ask AI agronomist →
           </button>
         </div>
+        {wx && (
+          <p className="wg-mono" style={{ margin: "0.5rem 0 0", fontSize: "0.68rem", color: "var(--wg-muted)" }}>
+            DISTRICT NOW: {wx.location} {wx.current_temp}°C · rain {wx.hourly?.[0]?.rain_prob ?? 0}% · wind {wx.wind_speed} km/h · {wx.updated_at_ist}
+          </p>
+        )}
       </div>
 
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
