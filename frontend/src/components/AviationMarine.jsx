@@ -124,7 +124,7 @@ export default function AviationMarine({ onAsk }) {
             <div><div style={{ color: "var(--wg-muted)", fontSize: "0.72rem" }}>Provenance</div><strong style={{ fontSize: "0.72rem" }}>{sea.provenance || "MODEL"}</strong></div>
             <p style={{ gridColumn: "1/-1", margin: 0 }}>{sea.warning_message}</p>
             <p className="wg-mono" style={{ gridColumn: "1/-1", margin: 0, fontSize: "0.7rem", color: "var(--wg-muted)" }}>
-              High tide {sea.high_tide_time} · Low tide {sea.low_tide_time} (indicative)
+              High tide {sea.high_tide_time} · Low tide {sea.low_tide_time}
             </p>
           </div>
         )}
