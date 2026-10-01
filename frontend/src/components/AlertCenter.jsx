@@ -124,7 +124,7 @@ export default function AlertCenter({ onAsk }) {
                 <div key={i} style={{ fontSize: "0.78rem", padding: "0.45rem 0.65rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
                   <strong>[{item.severity}]</strong> {item.headline}
                   <span className="wg-mono" style={{ display: "block", fontSize: "0.64rem", color: "var(--wg-muted)" }}>
-                    {item.source} · {item.source_type}{item.official ? " · OFFICIAL third-party" : " · unofficial"}
+                    {item.source} · {item.source_type}{item.official ? "" : " · unofficial"}
                   </span>
                 </div>
               ))}
