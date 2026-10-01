@@ -37,9 +37,10 @@ def test_matrix_has_464_unique_rows():
 def test_matrix_statuses_valid_and_complete():
     for row in _rows():
         cells = [c.strip() for c in row.strip().strip("|").split("|")]
-        assert len(cells) == 12, f"row must have 12 columns: {cells[0]}"
+        assert len(cells) == 13, f"row must have 13 columns: {cells[0]}"
         assert cells[8] in ALLOWED, f"{cells[0]} has invalid status {cells[8]!r}"
         assert cells[1] and cells[2], f"{cells[0]} missing category/capability"
+        assert cells[12] in ("YES", "INFRA"), f"{cells[0]} missing UI verdict"
 
 
 def test_matrix_live_claims_have_backend():

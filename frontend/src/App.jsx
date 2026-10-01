@@ -20,12 +20,13 @@ const NwpSatellitePanel = lazy(() => import("./components/NwpSatellitePanel"));
 const ProvidersPanel = lazy(() => import("./components/ProvidersPanel"));
 const SavedPlacesPanel = lazy(() => import("./components/SavedPlacesPanel"));
 const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
+const CapabilitiesHub = lazy(() => import("./components/CapabilitiesHub"));
 
 const GROUPS = [
   ["Overview", [["home", "🏠", "Command"], ["chat", "💬", "AI Chat"], ["dashboard", "📊", "Forecast"]]],
   ["Intelligence", [["map", "🗺", "Radar · GIS"], ["earth", "🌍", "3D Earth"], ["severe", "🌀", "Severe"], ["alerts", "🚨", "Alerts"], ["risk", "⚠", "Risk"], ["climate", "🌡", "Climate"], ["compare", "⚖", "Compare"]]],
   ["Sectors", [["agri", "🌾", "Agriculture"], ["aviation_marine", "✈", "Air · Sea"], ["nwp", "🛰", "NWP"], ["satellite", "📡", "Satellite"], ["saved", "★", "Saved"]]],
-  ["Project", [["about", "ℹ", "About"]]],
+  ["Project", [["about", "ℹ", "About"], ["capabilities", "🧭", "Capabilities"]]],
 ];
 
 const SAVED_KEY = "weathergpt.savedPlaces";
@@ -392,6 +393,7 @@ export default function App() {
                   onSelect={(name) => searchPlace(name)} onAddCurrent={() => remember(place)} onRemove={removeSaved} />
               )}
               {tab === "about" && <AboutDeveloper />}
+          {tab === "capabilities" && <CapabilitiesHub onOpen={(t) => setTab(t)} />}
             </Suspense>
           </main>
 
