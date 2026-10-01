@@ -264,3 +264,34 @@ def metro_areas(region: str) -> List[Dict[str, str]]:
         if metro in key or key in metro:
             return [{"name": a, "desc": f"{metro.title()} area"} for a in areas]
     return [{"name": a, "desc": "Pune area"} for a in METRO_AREAS["pune"]]
+
+
+def reverse(lat: float, lon: float) -> Dict[str, Any]:
+    """Reverse-geocode via free BigDataCloud client API (no key).
+
+    Falls back to coordinates when unreachable. Low-volume GPS use only.
+    """
+    def lookup() -> Dict[str, Any]:
+        url = ("https://api.bigdatacloud.net/data/reverse-geocode-client"
+               f"?latitude={lat}&longitude={lon}&localityLanguage=en")
+        response = requests.get(url, timeout=6)
+        if response.status_code != 200:
+            raise RuntimeError(f"reverse HTTP {response.status_code}")
+        data = response.json()
+        city = data.get("city") or data.get("locality") or ""
+        state = data.get("principalSubdivision") or ""
+        if not city:
+            raise RuntimeError("no locality in reverse response")
+        return {"city": city, "state": state,
+                "country": data.get("countryName", ""),
+                "lat": lat, "lon": lon,
+                "data_source": "BigDataCloud reverse-geocode",
+                "status": "LIVE"}
+    try:
+        from .cache import cached
+        return cached(86400, f"rev:{round(lat, 3)}:{round(lon, 3)}", lookup)
+    except RuntimeError:
+        return {"city": f"{lat:.2f}, {lon:.2f}", "state": "",
+                "country": "", "lat": lat, "lon": lon,
+                "data_source": "coordinates (reverse lookup unavailable)",
+                "status": "FALLBACK"}

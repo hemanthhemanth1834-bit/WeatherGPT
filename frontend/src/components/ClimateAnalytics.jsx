@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { fetchClimateHistory, fetchClimateTrends } from "../services/api";
+import { Thermometer } from "lucide-react";
+import { fetchClimateHistory, fetchClimateMonthly, fetchClimateTrends } from "../services/api";
 
 function Bars({ values, color, format }) {
   const peak = Math.max(...values.map((v) => Math.abs(v)), 1);
@@ -21,6 +22,8 @@ export default function ClimateAnalytics({ onAsk }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [observed, setObserved] = useState(null);
+  const [monthly, setMonthly] = useState(null);
+  const [year, setYear] = useState(new Date().getFullYear() - 1);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,6 +36,9 @@ export default function ClimateAnalytics({ onAsk }) {
         fetchClimateHistory(region === "All India" ? "New Delhi" : region, 5)
           .then((h) => !cancelled && setObserved(h))
           .catch(() => !cancelled && setObserved(null));
+        fetchClimateMonthly(region === "All India" ? "New Delhi" : region, year)
+          .then((m) => !cancelled && setMonthly(m))
+          .catch(() => !cancelled && setMonthly(null));
       } catch {
         if (!cancelled) setError("Climate reference failed to load — please retry.");
       } finally {
@@ -42,7 +48,7 @@ export default function ClimateAnalytics({ onAsk }) {
     return () => {
       cancelled = true;
     };
-  }, [region]);
+  }, [region, year]);
 
   return (
     <section aria-label="Climate analytics" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
@@ -58,7 +64,27 @@ export default function ClimateAnalytics({ onAsk }) {
           Region
           <input className="wg-input" style={{ width: "10rem" }} value={region} onChange={(e) => setRegion(e.target.value)} aria-label="Climate region" />
         </label>
+        <label style={{ display: "flex", gap: "0.4rem", alignItems: "center", fontSize: "0.78rem" }}>
+          Observed year
+          <input className="wg-input" style={{ width: "6rem" }} type="number" value={year} min={1940} max={new Date().getFullYear() - 1}
+            onChange={(e) => setYear(Number(e.target.value))} aria-label="Observed year" />
+        </label>
       </div>
+
+      {monthly && (
+        <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+          <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.82rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+            <Thermometer size={14} /> Monthly {monthly.year} — {monthly.location}{" "}
+            <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OBSERVED · ERA5</span>
+          </h3>
+          <Bars values={monthly.months.map((m) => m.total_rain_mm)} color="#38bdf8" format={(v) => `${Math.round(v)}`} />
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem 0.9rem", fontSize: "0.7rem", color: "var(--wg-muted)", marginTop: "0.3rem" }}>
+            {monthly.months.map((m) => (
+              <span key={m.month} className="wg-mono">{m.month}: {m.mean_max_c}°C · {Math.round(m.total_rain_mm)}mm{m.mean_humidity_pct != null ? ` · ${m.mean_humidity_pct}%` : ""}</span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
       {busy && <div role="status" style={{ color: "var(--wg-muted)" }}>Loading…</div>}

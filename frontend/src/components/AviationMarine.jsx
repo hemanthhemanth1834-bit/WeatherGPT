@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Plane, Waves } from "lucide-react";
 import { fetchAviationBriefing, fetchMarineAdvisory } from "../services/api";
 
 const AIRPORTS = [
@@ -6,6 +7,8 @@ const AIRPORTS = [
   ["VABB", "Mumbai VABB"],
   ["VOBL", "Bengaluru VOBL"],
   ["VECC", "Kolkata VECC"],
+  ["VOMM", "Chennai VOMM"],
+  ["VOHS", "Hyderabad VOHS"],
 ];
 const COASTS = [
   ["mumbai", "Mumbai / Konkan"],
@@ -47,9 +50,11 @@ export default function AviationMarine({ onAsk }) {
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
 
       <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
-        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem" }}>Aviation briefing</h2>
+        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem", display: "flex", alignItems: "center", gap: "0.45rem" }}>
+          <Plane size={19} color="#38bdf8" /> Aviation briefing
+        </h2>
         <p style={{ margin: "0 0 0.7rem", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
-          <span className="wg-chip demo">STATIC DEMO DATA</span> Sample reports for training display — not live observations, never for flight planning.
+          Live NOAA ADDS reports where the feed responds; STATIC samples otherwise — never for flight planning.
         </p>
         <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginBottom: "0.8rem" }} role="group" aria-label="Airport">
           {AIRPORTS.map(([icao, label]) => (
@@ -61,14 +66,29 @@ export default function AviationMarine({ onAsk }) {
         {briefing && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(16rem,1fr))", gap: "0.7rem" }}>
             <div>
-              <div className="wg-mono" style={{ fontSize: "0.72rem", color: "var(--wg-muted)" }}>SAMPLE METAR</div>
+              <div style={{ marginBottom: "0.4rem" }}>
+                {String(briefing.metar_decoded?.provenance || "").startsWith("LIVE") ? (
+                  <span className="wg-chip live">LIVE · NOAA ADDS</span>
+                ) : (
+                  <span className="wg-chip demo">STATIC DEMO DATA</span>
+                )}
+              </div>
+              <div className="wg-mono" style={{ fontSize: "0.72rem", color: "var(--wg-muted)" }}>METAR</div>
               <p className="wg-mono" style={{ fontSize: "0.82rem" }}>{briefing.metar_raw}</p>
-              <div className="wg-mono" style={{ fontSize: "0.72rem", color: "var(--wg-muted)" }}>SAMPLE TAF</div>
+              <div className="wg-mono" style={{ fontSize: "0.72rem", color: "var(--wg-muted)" }}>TAF</div>
               <p className="wg-mono" style={{ fontSize: "0.82rem" }}>{briefing.taf_raw}</p>
             </div>
             <div>
-              <div style={{ fontSize: "0.75rem", color: "var(--wg-muted)" }}>Flight category (sample)</div>
+              <div style={{ fontSize: "0.75rem", color: "var(--wg-muted)" }}>Flight category</div>
               <div style={{ fontSize: "1.6rem", fontWeight: 800 }}>{briefing.flight_category}</div>
+              {(briefing.metar_decoded?.temperature_c != null || briefing.metar_decoded?.observed_at) && (
+                <div className="wg-mono" style={{ fontSize: "0.7rem", color: "var(--wg-muted)", marginTop: "0.25rem" }}>
+                  {briefing.metar_decoded.temperature_c != null && <>🌡 {briefing.metar_decoded.temperature_c}°C / dew {briefing.metar_decoded.dewpoint_c}°C · </>}
+                  {briefing.metar_decoded.visibility && <>👁 {briefing.metar_decoded.visibility} · </>}
+                  {briefing.metar_decoded.ceiling_ft != null && <>☁ ceiling {briefing.metar_decoded.ceiling_ft} ft · </>}
+                  {briefing.metar_decoded.observed_at && <>obs {String(briefing.metar_decoded.observed_at).slice(0, 16).replace("T", " ")}Z</>}
+                </div>
+              )}
               <ul style={{ margin: "0.4rem 0 0", paddingLeft: "1.1rem", fontSize: "0.82rem" }}>
                 {briefing.hazards.map((h, i) => (
                   <li key={i}>{h}</li>
@@ -81,7 +101,9 @@ export default function AviationMarine({ onAsk }) {
       </div>
 
       <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
-        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem" }}>Marine advisory</h2>
+        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem", display: "flex", alignItems: "center", gap: "0.45rem" }}>
+          <Waves size={19} color="#2dd4bf" /> Marine advisory
+        </h2>
         <p style={{ margin: "0 0 0.7rem", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
           <span className="wg-chip estimated">MODEL · Open-Meteo wave model</span> Computed from live model output — not an official INCOIS bulletin.
         </p>

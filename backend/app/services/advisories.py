@@ -134,6 +134,7 @@ def aviation_briefing(query: str) -> AviationBriefing:
         "clouds": "Broken low cloud with higher overcast" if icao in ("VABB", "VECC") else "Few low, scattered high",
         "altimeter_qnh": "Near 1010 hPa (see raw report)",
         "trend": "As per attached TAF; samples are illustrative, not live observations",
+        "provenance": "STATIC sample",
     }
     return AviationBriefing(
         station_icao=icao, station_name=info["name"], metar_raw=info["metar"],

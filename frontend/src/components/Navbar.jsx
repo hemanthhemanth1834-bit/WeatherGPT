@@ -29,7 +29,7 @@ const LANGS = [
   ["or", "ଓଡ଼ିଆ"],
 ];
 
-export default function Navbar({ onHome, persona, onPersona, language, onLanguage, place, onPlace, onSearch, onLocate, alertCount, onAlerts, saved, onRemoveSaved, weather, onVoice, onMenu }) {
+export default function Navbar({ onHome, persona, onPersona, language, onLanguage, place, onPlace, onSearch, onLocate, locating, gpsLabel, alertCount, onAlerts, saved, onRemoveSaved, weather, onVoice, onMenu }) {
   const [hints, setHints] = useState([]);
   const [open, setOpen] = useState(false);
   const boxRef = useRef(null);
@@ -87,7 +87,9 @@ export default function Navbar({ onHome, persona, onPersona, language, onLanguag
             <form onSubmit={submit} role="search" style={{ display: "flex", gap: "0.35rem" }}>
               <input className="wg-input" type="search" aria-label="Search for a city, district or locality" placeholder="📍 Search place…" value={place}
                 onChange={(e) => { onPlace(e.target.value); setOpen(true); }} onFocus={() => hints.length && setOpen(true)} style={{ padding: "0.5rem 0.7rem" }} />
-              <button type="button" className="wg-util" onClick={onLocate} aria-label="Use my current location" title="Use my current location" style={{ padding: "0.4rem 0.6rem" }}>◎</button>
+              <button type="button" className="wg-util" onClick={onLocate} disabled={locating} aria-label={locating ? "Detecting your location" : "Use my current location"} title="Use my current location (GPS)" style={{ padding: "0.4rem 0.6rem" }}>
+              {locating ? "…" : "◎"}
+            </button>
               <button type="submit" className="wg-btn" aria-label="Load weather for this place" style={{ padding: "0.45rem 0.8rem" }}>Go</button>
             </form>
             {open && hints.length > 0 && (
@@ -104,6 +106,14 @@ export default function Navbar({ onHome, persona, onPersona, language, onLanguag
             )}
           </div>
 
+          {gpsLabel && !locating && (
+            <span className="wg-chip live" title="Last successful GPS fix (stored only in this browser)">
+              📍 Current Location — {gpsLabel.name}{gpsLabel.state ? `, ${gpsLabel.state}` : ""}
+            </span>
+          )}
+          {locating && (
+            <span className="wg-chip static" role="status">Detecting location…</span>
+          )}
           {weather && (
             <span className="wg-util wg-livepill" style={{ cursor: "default" }} aria-label={`Current: ${weather.current_temp} degrees in ${weather.location}`}>
               <span className="wg-pulse-dot" aria-hidden="true" style={{ background: "var(--wg-success)" }} />

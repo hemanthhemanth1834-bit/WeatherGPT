@@ -1,7 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import Navbar, { personaForApi } from "./components/Navbar";
 import WeatherChat from "./components/WeatherChat";
-import { fetchActiveAlerts, fetchCurrentWeather, sendChatQuery } from "./services/api";
+import { fetchActiveAlerts, fetchCurrentWeather, fetchReverseGeocode, sendChatQuery } from "./services/api";
 
 /* Secondary views ride in lazy chunks; home + chat entry stays lean. */
 const HomePanel = lazy(() => import("./components/HomePanel"));
@@ -64,6 +64,14 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [micTick, setMicTick] = useState(0);
   const [drawer, setDrawer] = useState(false);
+  const [locating, setLocating] = useState(false);
+  const [gpsLabel, setGpsLabel] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("weathergpt.lastGps") || "null");
+    } catch {
+      return null;
+    }
+  });
 
   const persistSaved = (next) => {
     setSaved(next);
@@ -166,12 +174,12 @@ export default function App() {
   );
 
   const searchPlace = useCallback(
-    async (name, lat = null, lon = null) => {
+    async (name, lat = null, lon = null, state = null) => {
       const target = (name || "").trim();
       if (!target) return;
       setBusy(true);
       try {
-        const data = await fetchCurrentWeather(target, lat, lon);
+        const data = await fetchCurrentWeather(target, lat, lon, "auto", state);
         setWeather(data);
         setPlace(data.location);
         remember(data.location);
@@ -189,10 +197,34 @@ export default function App() {
       setNotice("Geolocation is not available in this browser.");
       return;
     }
+    setLocating(true);
+    setNotice("Detecting location…");
     navigator.geolocation.getCurrentPosition(
-      (pos) => searchPlace("My Location", pos.coords.latitude, pos.coords.longitude),
-      () => setNotice("Location permission denied — using saved or searched places instead."),
-      { timeout: 8000 }
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const rev = await fetchReverseGeocode(latitude, longitude);
+          const name = rev.city || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+          await searchPlace(name, latitude, longitude, rev.state || null);
+          const label = { name, state: rev.state || "", at: Date.now() };
+          setGpsLabel(label);
+          try {
+            localStorage.setItem("weathergpt.lastGps", JSON.stringify(label));
+          } catch {
+            /* noop */
+          }
+          setNotice(`📍 Current Location — ${name}${rev.state ? `, ${rev.state}` : ""}`);
+        } catch {
+          setNotice("Location detected, but place lookup failed — keeping your current location.");
+        } finally {
+          setLocating(false);
+        }
+      },
+      () => {
+        setLocating(false);
+        setNotice("Location permission denied — keeping your current manual location.");
+      },
+      { timeout: 10000 }
     );
   }, [searchPlace]);
 
@@ -235,6 +267,8 @@ export default function App() {
         onPlace={setPlace}
         onSearch={searchPlace}
         onLocate={locateMe}
+        locating={locating}
+        gpsLabel={gpsLabel}
         alertCount={alerts.length}
         onAlerts={() => goTab("alerts")}
         saved={saved}

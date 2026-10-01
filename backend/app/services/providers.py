@@ -100,6 +100,7 @@ STATUS_UNAVAILABLE = {"OPENWEATHER": "not implemented (key-gated; OM covers need
 
 def health_snapshot(check_live: bool = True) -> Dict[str, Any]:
     """Build the provider health table. Set check_live=False for instant metadata."""
+    import datetime
     rows = []
     for entry in PROVIDERS:
         probe: Callable[[], Dict[str, Any]] | None = entry["probe"]
@@ -121,5 +122,8 @@ def health_snapshot(check_live: bool = True) -> Dict[str, Any]:
             "error": result.get("error"),
         })
     return {"providers": rows, "evaluated_not_used": STATUS_UNAVAILABLE,
+            "checked_at_ist": datetime.datetime.now(
+                datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+            ).strftime("%d %b %Y, %H:%M IST"),
             "policy": "LIVE means probed OK now. ERROR means probe failed. "
                       "NOT_CONFIGURED needs credentials or a feed."}

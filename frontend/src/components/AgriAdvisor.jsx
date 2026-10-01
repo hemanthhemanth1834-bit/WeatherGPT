@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Sprout } from "lucide-react";
 import { fetchCropAdvisory, fetchCurrentWeather } from "../services/api";
 import { speechEngine } from "../services/voice";
 
@@ -59,7 +60,9 @@ export default function AgriAdvisor({ place, onAsk }) {
   return (
     <section aria-label="Farm advisories" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
       <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
-        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem" }}>Farm advisories</h2>
+        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem", display: "flex", alignItems: "center", gap: "0.45rem" }}>
+          <Sprout size={19} color="#34d399" /> Farm advisories
+        </h2>
         <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--wg-muted)" }}>
           Weather-driven field guidance in Meghdoot-style format (DEMO-grade).{" "}
           <strong>Informational only — not professional agronomic advice.</strong>

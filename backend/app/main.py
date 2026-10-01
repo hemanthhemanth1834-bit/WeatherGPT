@@ -88,15 +88,17 @@ def tools() -> dict:
 def engine() -> dict:
     """How answers are produced: deterministic tools; LLM only if configured."""
     import os
+    from .services.llm import configured_providers
     provider = os.getenv("AI_PROVIDER", "auto").lower()
-    llm_key = bool(os.getenv("OPENAI_API_KEY") or os.getenv("GEMINI_API_KEY"))
+    available = configured_providers()
     active = "RULE-BASED TOOL-GROUNDED"
-    if provider not in ("auto", "none", "") and llm_key:
+    if provider not in ("auto", "none", "") and available:
         active = "LLM-ASSISTED (key configured)"
     return {
         "engine": active,
         "ai_provider_setting": provider,
-        "llm_configured": llm_key,
+        "llm_configured": bool(available),
+        "configured_providers": available,
         "fallback": "deterministic WeatherGPT tools (always available)",
         "note": "Figures always originate from data tools, never invented.",
     }
@@ -146,6 +148,30 @@ def history_years(location: str = Query("Pune"), years: int = Query(5)) -> dict:
     return climate_history(lat, lon, proper, state, years)
 
 
+@app.get("/api/climate/monthly")
+def history_monthly(location: str = Query("Pune"), year: int = Query(2025)) -> dict:
+    """Observed monthly means for one year (LIVE archive)."""
+    from .services.history import monthly_means
+    lat, lon, proper, state = geo.geocode(location)
+    return monthly_means(lat, lon, proper, state, year)
+
+
+@app.post("/api/assistant/explain")
+def assistant_explain(payload: dict) -> dict:
+    """Optional LLM explanation grounded in live context (deterministic fallback)."""
+    from .services.llm import explain
+    topic = str(payload.get("topic", "current weather"))[:200]
+    location = str(payload.get("location", "Pune"))[:80]
+    lat, lon, proper, state = geo.geocode(location)
+    data = get_weather(lat, lon, proper, state)
+    context = (f"{proper}, {state}: {data.condition}, {data.current_temp}C "
+               f"(feels {data.feels_like}C), humidity {data.humidity}%, "
+               f"wind {data.wind_speed} km/h {data.wind_direction}, "
+               f"precipitation {data.precipitation} mm, pressure {data.pressure} hPa. "
+               f"Source {data.data_source}, {data.status}, updated {data.updated_at_ist}.")
+    return explain(topic, context)
+
+
 @app.get("/api/uv")
 def uv(location: str = Query("Pune")) -> dict:
     """Live UV index with protection guidance."""
@@ -174,15 +200,24 @@ def explorer(region: str = Query("pune")) -> list:
     return geo.metro_areas(region)
 
 
+@app.get("/api/locations/reverse")
+def reverse_geocode(lat: float = Query(...), lon: float = Query(...)) -> dict:
+    """GPS coordinates to nearest city/state (BigDataCloud, free, no key)."""
+    return geo.reverse(lat, lon)
+
+
 @app.get("/api/weather/current", response_model=WeatherData)
 def current(location: str = Query("Pune"),
             lat: Optional[float] = None,
             lon: Optional[float] = None,
-            model: str = Query("auto", description="'auto' blend or 'gfs'")) -> WeatherData:
+            model: str = Query("auto", description="'auto' blend or 'gfs'"),
+            state: Optional[str] = Query(None, description="State override for coords")) -> WeatherData:
     if lat is None or lon is None:
-        lat, lon, proper, state = geo.geocode(location)
+        lat, lon, proper, resolved = geo.geocode(location)
+        state = state or resolved
     else:
-        proper, state = location, "India"
+        proper = location
+        state = state or "India"
     return get_weather(lat, lon, proper, state, model=model)
 
 
@@ -234,7 +269,35 @@ def crops() -> list:
 
 @app.get("/api/aviation/briefing", response_model=AviationBriefing)
 def aviation(airport: str = Query("VIDP")) -> AviationBriefing:
-    return aviation_briefing(airport)
+    """Live ADDS METAR/TAF first; STATIC sample fallback (labelled)."""
+    from .services.aviation_live import KNOWN as LIVE_AIRPORTS, live_briefing
+    code = (airport or "VIDP").upper()
+    if code in LIVE_AIRPORTS or len(code) == 4:
+        live = live_briefing(code)
+        if live is not None:
+            info = {"name": live["station_icao"]}
+            decoded = {
+                "station": live["station_icao"],
+                "temperature_c": live["temperature_c"],
+                "dewpoint_c": live["dewpoint_c"],
+                "wind": f"{live['wind_dir_deg']}° at {live['wind_speed_kt']} kt"
+                        + (f" gusting {live['wind_gust_kt']} kt" if live["wind_gust_kt"] else ""),
+                "visibility": f"{live['visibility_sm']} SM" if live["visibility_sm"] is not None else "not reported",
+                "ceiling_ft": live["ceiling_ft"],
+                "altimeter_hpa": live["altimeter_hpa"],
+                "observed_at": live["observed_at"],
+                "provenance": "LIVE (NOAA ADDS)",
+            }
+            return AviationBriefing(
+                station_icao=live["station_icao"],
+                station_name=f"{live['station_icao']} (live ADDS report)",
+                metar_raw=live["metar_raw"],
+                metar_decoded=decoded,
+                taf_raw=live["taf_raw"] or "No current TAF in feed",
+                flight_category=live["flight_category"],
+                hazards=live["hazards"],
+            )
+    return aviation_briefing(code)
 
 
 @app.get("/api/marine/advisory", response_model=MarineAdvisory)

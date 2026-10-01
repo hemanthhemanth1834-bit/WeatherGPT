@@ -406,8 +406,30 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         extra += (f"\n\n**Farm note ({advisory.crop}):** {advisory.irrigation_advice} "
                   f"{advisory.pesticide_advice}")
     if wants_air:
-        briefing = aviation_briefing(proper)
-        extra += (f"\n\n**Aviation (STATIC sample, {briefing.station_icao}):** "
+        briefing = None
+        origin = "STATIC sample"
+        try:
+            from .aviation_live import live_briefing
+            city_to_icao = {"MUMBAI": "VABB", "DELHI": "VIDP", "NEW DELHI": "VIDP",
+                            "BENGALURU": "VOBL", "BANGALORE": "VOBL",
+                            "KOLKATA": "VECC", "CHENNAI": "VOMM", "HYDERABAD": "VOHS"}
+            code = city_to_icao.get(proper.upper(), "VIDP")
+            live = live_briefing(code)
+            if live is not None:
+                origin = "LIVE (NOAA ADDS)"
+                briefing = aviation_briefing(code)
+                briefing.station_icao = live["station_icao"]
+                briefing.metar_raw = live["metar_raw"]
+                briefing.taf_raw = live["taf_raw"] or briefing.taf_raw
+                briefing.flight_category = live["flight_category"]
+                briefing.hazards = live["hazards"]
+                briefing.metar_decoded = {**briefing.metar_decoded,
+                                          "provenance": "LIVE (NOAA ADDS)"}
+        except Exception:
+            briefing = None
+        if briefing is None:
+            briefing = aviation_briefing(proper)
+        extra += (f"\n\n**Aviation ({briefing.station_icao}, {origin}):** "
                   f"{briefing.flight_category} — {briefing.metar_raw}")
     if wants_sea:
         sea = marine_advisory(proper)

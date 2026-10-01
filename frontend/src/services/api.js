@@ -33,9 +33,10 @@ export const sendChatQuery = (query, persona = "general", language = "auto", loc
     body: JSON.stringify({ query, persona, language, location_name: locationName }),
   });
 
-export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null, model = "auto") => {
+export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null, model = "auto", state = null) => {
   let path = `/weather/current?location=${encodeURIComponent(location)}&model=${model}`;
   if (lat !== null && lon !== null) path += `&lat=${lat}&lon=${lon}`;
+  if (state) path += `&state=${encodeURIComponent(state)}`;
   return get(path);
 };
 
@@ -104,6 +105,12 @@ export const fetchTravelSafety = (location = "Pune") =>
 
 export const fetchClimateHistory = (location = "Pune", years = 5) =>
   get(`/climate/history?location=${encodeURIComponent(location)}&years=${years}`);
+
+export const fetchClimateMonthly = (location = "Pune", year = 2025) =>
+  get(`/climate/monthly?location=${encodeURIComponent(location)}&year=${year}`);
+
+export const fetchReverseGeocode = (lat, lon) =>
+  get(`/locations/reverse?lat=${lat}&lon=${lon}`);
 
 export const fetchProvidersHealth = (live = true) =>
   get(`/providers/health?live=${live ? "true" : "false"}`);
