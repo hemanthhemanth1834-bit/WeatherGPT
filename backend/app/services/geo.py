@@ -14,6 +14,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
+from .http import http_get
+
 # Gazetteer: name -> (latitude, longitude, state, area label).
 # Coordinates are public geographic facts; selection and labels are our own.
 GAZETTEER: Dict[str, Tuple[float, float, str, str]] = {
@@ -182,7 +184,7 @@ def _geocode_live(query: str) -> Optional[Tuple[float, float, str, str]]:
             "https://geocoding-api.open-meteo.com/v1/search"
             f"?name={requests.utils.quote(query)}&count=5&language=en&format=json"
         )
-        response = requests.get(url, timeout=4)
+        response = http_get(url, timeout=4)
         if response.status_code != 200:
             return None
         results = response.json().get("results") or []
@@ -237,7 +239,7 @@ def autocomplete(query: str, limit: int = 8) -> List[Dict[str, Any]]:
                 "https://geocoding-api.open-meteo.com/v1/search"
                 f"?name={requests.utils.quote(text)}&count=6&language=en&format=json"
             )
-            response = requests.get(url, timeout=3)
+            response = http_get(url, timeout=3)
             if response.status_code == 200:
                 for item in response.json().get("results", []):
                     country = (item.get("country_code") or "").upper()
@@ -274,7 +276,7 @@ def reverse(lat: float, lon: float) -> Dict[str, Any]:
     def lookup() -> Dict[str, Any]:
         url = ("https://api.bigdatacloud.net/data/reverse-geocode-client"
                f"?latitude={lat}&longitude={lon}&localityLanguage=en")
-        response = requests.get(url, timeout=6)
+        response = http_get(url, timeout=6)
         if response.status_code != 200:
             raise RuntimeError(f"reverse HTTP {response.status_code}")
         data = response.json()

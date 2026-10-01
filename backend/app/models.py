@@ -148,7 +148,7 @@ class CityComparisonData(BaseModel):
 
 
 class WeatherQueryRequest(BaseModel):
-    query: str = ""
+    query: str = Field(default="", max_length=500)
     persona: Optional[str] = "general"
     language: Optional[str] = "auto"
     location_name: Optional[str] = None

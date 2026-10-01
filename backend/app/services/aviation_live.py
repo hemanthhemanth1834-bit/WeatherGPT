@@ -6,9 +6,8 @@ Falls back to STATIC samples when unreachable — never labelled live.
 """
 from typing import Any, Dict, List, Optional
 
-import requests
-
 from .cache import cached
+from .http import http_get
 
 BASE = "https://aviationweather.gov/api/data"
 HEADERS = {"User-Agent": "WeatherGPT-SIH2026/2.0 (education project)"}
@@ -19,7 +18,7 @@ KNOWN = ("VIDP", "VABB", "VOBL", "VECC", "VOMM", "VOHS")
 
 def _fetch(kind: str, icao: str) -> Optional[Dict[str, Any]]:
     try:
-        response = requests.get(f"{BASE}/{kind}", params={"ids": icao, "format": "json"},
+        response = http_get(f"{BASE}/{kind}", params={"ids": icao, "format": "json"},
                                 headers=HEADERS, timeout=8)
         if response.status_code != 200:
             return None

@@ -170,10 +170,14 @@ cd frontend && npm run dev   # http://localhost:5173
 ## Testing
 
 ```bash
-cd backend && python -m pytest -q     # 27 tests: risk, geo, chat, API, CORS
+cd backend && python -m pytest -q     # 60+ tests: risk, geo, chat, intents, providers, API, CORS, hardening
 cd frontend && npm run build          # production bundle check
 cd frontend && npx oxlint src         # lint (0 errors)
 ```
+
+Outbound provider calls use timeout + retry with backoff (`services/http.py`).
+A best-effort per-IP rate limit (`RATE_LIMIT_PER_MINUTE`, default 300/min)
+returns JSON 429 with `Retry-After`.
 
 ## Production
 

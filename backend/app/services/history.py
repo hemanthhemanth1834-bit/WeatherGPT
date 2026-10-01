@@ -4,9 +4,8 @@ Free, no key. Labelled OBSERVED (reanalysis), with location + period.
 """
 from typing import Any, Dict, List
 
-import requests
-
 from .cache import cached
+from .http import http_get
 
 
 def climate_history(lat: float, lon: float, place: str, state: str,
@@ -29,7 +28,7 @@ def _download(lat: float, lon: float, place: str, state: str, years: int) -> Dic
                "&daily=temperature_2m_max,temperature_2m_min,precipitation_sum"
                "&timezone=Asia%2FKolkata")
         try:
-            response = requests.get(url, timeout=12)
+            response = http_get(url, timeout=12)
             if response.status_code != 200:
                 continue
             daily = response.json().get("daily", {})
@@ -85,7 +84,7 @@ def _download_monthly(lat: float, lon: float, place: str, state: str, year: int)
                "relative_humidity_2m_mean"
                "&timezone=Asia%2FKolkata")
         try:
-            response = requests.get(url, timeout=15)
+            response = http_get(url, timeout=15)
             if response.status_code != 200:
                 continue
             daily = response.json().get("daily", {})

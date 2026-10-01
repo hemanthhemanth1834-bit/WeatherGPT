@@ -9,9 +9,8 @@ when no station crosses a threshold, so the feed is never empty.
 import datetime
 from typing import List, Optional
 
-import requests
-
 from ..models import CAPAlert
+from .http import http_get
 
 # Reference stations sampled for hazards (our own selection).
 STATIONS = [
@@ -42,7 +41,7 @@ def _sample(lat: float, lon: float) -> dict:
             "precipitation_probability_max,wind_speed_10m_max"
             "&timezone=Asia%2FKolkata"
         )
-        response = requests.get(url, timeout=4)
+        response = http_get(url, timeout=4)
         if response.status_code == 200:
             data = response.json()
             current = data.get("current", {})

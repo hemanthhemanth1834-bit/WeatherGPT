@@ -6,9 +6,8 @@ into IMD bulletins. India-relevant items are flagged, not fabricated.
 """
 from typing import Any, Dict, List
 
-import requests
-
 from .cache import cached
+from .http import http_get
 
 API = ("https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH")
 HEADERS = {"User-Agent": "WeatherGPT-SIH2026/2.0 (education project)"}
@@ -59,7 +58,7 @@ def normalize(feature: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _download() -> List[Dict[str, Any]]:
-    response = requests.get(API, timeout=12, headers=HEADERS)
+    response = http_get(API, timeout=12, headers=HEADERS)
     if response.status_code != 200:
         raise RuntimeError(f"GDACS HTTP {response.status_code}")
     features = response.json().get("features", [])

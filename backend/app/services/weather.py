@@ -7,11 +7,10 @@ an error, so the UI never crashes — but it is never presented as observed.
 import datetime
 from typing import List
 
-import requests
-
 from ..config import WEATHER_CACHE_TTL_SECONDS
 from ..models import DailyPoint, HourlyPoint, WeatherData
 from .cache import cached
+from .http import http_get
 
 # WMO weather-code interpretation. Codes themselves are the WMO standard;
 # labels below are our own short descriptions.
@@ -103,7 +102,7 @@ def _download(lat: float, lon: float, place: str, state: str, model: str = "auto
             "precipitation_sum,wind_speed_10m_max,sunrise,sunset,uv_index_max"
             f"&timezone=Asia%2FKolkata{model_param}"
         )
-        response = requests.get(url, timeout=5)
+        response = http_get(url, timeout=5)
         if response.status_code == 200:
             return _from_api(response.json(), lat, lon, place, state, current_hour,
                              model_label)

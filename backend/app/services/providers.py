@@ -8,13 +8,13 @@ credentials/access), ERROR (probe failed). Probes never raise.
 import time
 from typing import Any, Callable, Dict, List
 
-import requests
+from .http import http_get
 
 
 def _get(url: str, timeout: float = 5.0) -> Dict[str, Any]:
     start = time.time()
     try:
-        response = requests.get(url, timeout=timeout)
+        response = http_get(url, timeout=timeout, retries=1)
         latency = round((time.time() - start) * 1000)
         if response.status_code == 200:
             return {"ok": True, "latency_ms": latency, "status": response.status_code}

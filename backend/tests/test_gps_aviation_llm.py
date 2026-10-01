@@ -85,13 +85,15 @@ def test_llm_uses_mocked_provider(monkeypatch):
     import app.services.llm as llm_module
 
     class FakeResp:
+        status_code = 200
+
         def raise_for_status(self):
             pass
 
         def json(self):
             return {"choices": [{"message": {"content": "Mocked clear explanation."}}]}
 
-    monkeypatch.setattr("requests.post", lambda *a, **k: FakeResp())
+    monkeypatch.setattr("requests.request", lambda *a, **k: FakeResp())
     out = llm_module.explain("heat", "42C heatwave context")
     assert out["engine"] == "LLM (openai-compatible)"
     assert "Mocked" in out["explanation"]

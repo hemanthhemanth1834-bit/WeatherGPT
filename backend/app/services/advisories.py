@@ -8,9 +8,8 @@ estimates, and climate series are STATIC references.
 import datetime
 from typing import Dict, List
 
-import requests
-
 from ..models import (AgriCropAdvisory, AviationBriefing, MarineAdvisory)
+from .http import http_get
 
 # ---------------------------------------------------------------------------
 # Agriculture
@@ -168,7 +167,7 @@ def _live_marine(lat: float, lon: float) -> dict | None:
                "&current=wave_height,wave_direction,wave_period,"
                "sea_surface_temperature,wind_wave_height,swell_wave_height"
                "&timezone=Asia%2FKolkata")
-        response = requests.get(url, timeout=5)
+        response = http_get(url, timeout=5)
         if response.status_code != 200:
             return None
         current = response.json().get("current", {})
@@ -206,7 +205,7 @@ def marine_advisory(place: str) -> MarineAdvisory:
             url = ("https://api.open-meteo.com/v1/forecast"
                    f"?latitude={coast['lat']}&longitude={coast['lon']}"
                    "&current=wind_speed_10m&timezone=Asia%2FKolkata")
-            response = requests.get(url, timeout=4)
+            response = http_get(url, timeout=4)
             if response.status_code == 200:
                 wind_kmh = float(response.json().get("current", {}).get("wind_speed_10m", 16.0))
         except Exception:
@@ -221,7 +220,7 @@ def marine_advisory(place: str) -> MarineAdvisory:
             url = ("https://api.open-meteo.com/v1/forecast"
                    f"?latitude={coast['lat']}&longitude={coast['lon']}"
                    "&current=wind_speed_10m&timezone=Asia%2FKolkata")
-            response = requests.get(url, timeout=4)
+            response = http_get(url, timeout=4)
             if response.status_code == 200:
                 wind_kmh = float(response.json().get("current", {}).get("wind_speed_10m", 16.0))
         except Exception:

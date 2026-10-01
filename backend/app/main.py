@@ -49,6 +49,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Best-effort per-IP rate limiting (in-memory sliding window; per worker).
+# Generous default so normal use and the test-suite never trip it.
+import os as _os
+import time as _time
+from collections import deque as _deque
+from fastapi import Request as _Request
+from fastapi.responses import JSONResponse as _JSONResponse
+
+_RATE_LIMIT = int(_os.getenv("RATE_LIMIT_PER_MINUTE", "300"))
+_RATE_WINDOW = 60.0
+_rate_hits: dict = {}
+
+
+@app.middleware("http")
+async def rate_limit_middleware(request: _Request, call_next):
+    if request.url.path.startswith("/api/"):
+        ip = request.client.host if request.client else "unknown"
+        now = _time.time()
+        hits = _rate_hits.get(ip)
+        if hits is None:
+            hits = _rate_hits[ip] = _deque()
+        while hits and now - hits[0] > _RATE_WINDOW:
+            hits.popleft()
+        if len(hits) >= _RATE_LIMIT:
+            return _JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit exceeded. Please slow down and retry."},
+                headers={"Retry-After": "30", "Access-Control-Allow-Origin": "*"},
+            )
+        hits.append(now)
+    return await call_next(request)
+
+
 watchers: List[WebSocket] = []
 
 
@@ -134,26 +167,38 @@ def air_quality(location: str = Query("Pune"), lat: Optional[float] = None,
 def travel(location: str = Query("Pune"), lat: Optional[float] = None,
            lon: Optional[float] = None) -> dict:
     """LOW / MODERATE / HIGH trip read with drivers (ESTIMATED)."""
-    if lat is None or lon is None:
-        lat, lon, proper, state = geo.geocode(location)
-    else:
-        proper, state = location, "India"
-    return travel_safety(get_weather(lat, lon, proper, state))
+    from fastapi import HTTPException
+    try:
+        if lat is None or lon is None:
+            lat, lon, proper, state = geo.geocode(location)
+        else:
+            proper, state = location, "India"
+        return travel_safety(get_weather(lat, lon, proper, state))
+    except Exception:
+        raise HTTPException(status_code=502, detail="Travel engine temporarily unavailable")
 
 
 @app.get("/api/climate/history")
 def history_years(location: str = Query("Pune"), years: int = Query(5)) -> dict:
     """Observed yearly means from ERA5 reanalysis (LIVE archive)."""
+    from fastapi import HTTPException
     lat, lon, proper, state = geo.geocode(location)
-    return climate_history(lat, lon, proper, state, years)
+    try:
+        return climate_history(lat, lon, proper, state, years)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=f"Archive unavailable: {exc}")
 
 
 @app.get("/api/climate/monthly")
 def history_monthly(location: str = Query("Pune"), year: int = Query(2025)) -> dict:
     """Observed monthly means for one year (LIVE archive)."""
+    from fastapi import HTTPException
     from .services.history import monthly_means
     lat, lon, proper, state = geo.geocode(location)
-    return monthly_means(lat, lon, proper, state, year)
+    try:
+        return monthly_means(lat, lon, proper, state, year)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=f"Archive unavailable: {exc}")
 
 
 @app.post("/api/assistant/explain")
@@ -187,7 +232,21 @@ def uv(location: str = Query("Pune")) -> dict:
 
 @app.post("/api/chat/query", response_model=ChatResponse)
 def chat(request: WeatherQueryRequest) -> ChatResponse:
-    return answer(request)
+    """Never 500s on data failure: honest error reply instead."""
+    try:
+        return answer(request)
+    except Exception:
+        return ChatResponse(
+            query=request.query[:200],
+            detected_language="en",
+            persona=request.persona or "general",
+            speech_text="Weather data is temporarily unavailable. Please try again.",
+            markdown_response=("⚠️ **Data temporarily unavailable** — the weather engine "
+                               "could not retrieve live data. No values are shown rather "
+                               "than guessed. Please retry shortly."),
+            quick_suggestions=["Retry my question", "Active alerts"],
+            suggested_actions=[{"label": "Check alerts", "action": "open_alerts"}],
+        )
 
 
 @app.get("/api/locations/search")
@@ -313,11 +372,15 @@ def climate(region: str = Query("All India")) -> dict:
 @app.get("/api/risk/assess")
 def risk(location: str = Query("Pune"), lat: Optional[float] = None,
          lon: Optional[float] = None) -> dict:
-    if lat is None or lon is None:
-        lat, lon, proper, state = geo.geocode(location)
-    else:
-        proper, state = location, "India"
-    return assess_risk(get_weather(lat, lon, proper, state))
+    from fastapi import HTTPException
+    try:
+        if lat is None or lon is None:
+            lat, lon, proper, state = geo.geocode(location)
+        else:
+            proper, state = location, "India"
+        return assess_risk(get_weather(lat, lon, proper, state))
+    except Exception:
+        raise HTTPException(status_code=502, detail="Risk engine temporarily unavailable")
 
 
 @app.get("/api/nwp/status")

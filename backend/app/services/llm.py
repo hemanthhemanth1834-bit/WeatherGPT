@@ -8,7 +8,7 @@ variables — never in frontend code, never committed.
 import os
 from typing import Any, Dict, List, Optional
 
-import requests
+from .http import http_post
 
 
 def configured_providers() -> List[str]:
@@ -30,7 +30,7 @@ def configured_providers() -> List[str]:
 
 def _openai_compatible(prompt: str, system: str, base_url: str, key: str,
                        model: str) -> str:
-    response = requests.post(
+    response = http_post(
         f"{base_url.rstrip('/')}/chat/completions",
         headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
         json={"model": model, "temperature": 0.2, "max_tokens": 400,
@@ -44,7 +44,7 @@ def _openai_compatible(prompt: str, system: str, base_url: str, key: str,
 
 def _gemini(prompt: str, system: str, key: str) -> str:
     model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
-    response = requests.post(
+    response = http_post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
         headers={"Content-Type": "application/json", "x-goog-api-key": key},
         json={"system_instruction": {"parts": [{"text": system}]},
@@ -58,7 +58,7 @@ def _gemini(prompt: str, system: str, key: str) -> str:
 
 
 def _ollama(prompt: str, system: str, host: str) -> str:
-    response = requests.post(
+    response = http_post(
         f"{host.rstrip('/')}/api/generate",
         json={"model": os.getenv("OLLAMA_MODEL", "llama3.1"), "system": system,
               "prompt": prompt, "stream": False,

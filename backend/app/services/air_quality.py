@@ -6,9 +6,8 @@ Pollutant units come from the provider and are passed through.
 import datetime
 from typing import Any, Dict
 
-import requests
-
 from .cache import cached
+from .http import http_get
 
 FIELDS = ("us_aqi,pm2_5,pm10,nitrogen_dioxide,ozone,sulphur_dioxide,carbon_monoxide,"
           "us_aqi_pm2_5,us_aqi_pm10,us_aqi_nitrogen_dioxide,us_aqi_ozone")
@@ -45,7 +44,7 @@ def _download(lat: float, lon: float) -> Dict[str, Any]:
     url = ("https://air-quality-api.open-meteo.com/v1/air-quality"
            f"?latitude={lat}&longitude={lon}&current={FIELDS}"
            "&timezone=Asia%2FKolkata")
-    response = requests.get(url, timeout=5)
+    response = http_get(url, timeout=5)
     if response.status_code != 200:
         raise RuntimeError(f"AQI upstream HTTP {response.status_code}")
     current = response.json().get("current", {})
