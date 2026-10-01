@@ -101,17 +101,19 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
             {global.events.some((e) => e.near_india) ? "Some events touch the Indian region." : "No current events touch the Indian region."}
           </p>
           <div className="wg-scrollrow">
-            {global.events.slice(0, 8).map((e, i) => (
+            {global.events.slice(0, 8).map((e, i) => {
+              const title = e.name.startsWith(e.event_label) ? e.name : `${e.event_label} — ${e.name}`;
+              return (
               <a key={i} href={e.report_url} target="_blank" rel="noreferrer" className="wg-card hoverable"
                 style={{ minWidth: "15rem", padding: "0.65rem 0.8rem", textDecoration: "none", color: "inherit" }}>
                 <span className={`wg-chip ${e.alert_level === "Red" ? "off" : e.alert_level === "Orange" ? "demo" : "static"}`}>{e.alert_level}</span>
-                <div style={{ fontWeight: 700, fontSize: "0.8rem", marginTop: "0.3rem" }}>{e.event_label}</div>
-                <div style={{ fontSize: "0.74rem", color: "var(--wg-muted)" }}>{e.name}</div>
+                <div style={{ fontWeight: 700, fontSize: "0.8rem", marginTop: "0.3rem" }}>{title}</div>
                 <div className="wg-mono" style={{ fontSize: "0.64rem", color: "var(--wg-muted)" }}>
                   {e.from ? e.from.slice(0, 10) : ""} → {e.to ? e.to.slice(0, 10) : "ongoing"}{e.near_india ? " · 🇮🇳 near India" : ""}
                 </div>
               </a>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
