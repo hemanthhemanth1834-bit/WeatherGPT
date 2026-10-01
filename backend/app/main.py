@@ -312,6 +312,28 @@ def disasters(region: str = Query("world", description="'world' or 'india'")) ->
     return global_disasters(region)
 
 
+@app.get("/api/disasters/earthquakes")
+def quakes(min_magnitude: float = Query(4.5), days: int = Query(7)) -> dict:
+    """Recent earthquakes from USGS (OFFICIAL third-party, geological)."""
+    from fastapi import HTTPException
+    from .services.disasters import earthquakes
+    try:
+        return earthquakes(min_magnitude, days)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=f"USGS unavailable: {exc}")
+
+
+@app.get("/api/disasters/wildfires")
+def fires(limit: int = Query(20)) -> dict:
+    """Open wildfire detections from NASA EONET (OFFICIAL third-party)."""
+    from fastapi import HTTPException
+    from .services.disasters import wildfires
+    try:
+        return wildfires(limit)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=f"EONET unavailable: {exc}")
+
+
 @app.get("/api/advisory/crop", response_model=AgriCropAdvisory)
 def crop(crop: str = Query("paddy"), district: str = Query("Nagpur"),
          state: str = Query("Maharashtra")) -> AgriCropAdvisory:

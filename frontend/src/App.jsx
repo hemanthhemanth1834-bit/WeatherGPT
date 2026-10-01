@@ -7,6 +7,7 @@ import { fetchActiveAlerts, fetchCurrentWeather, fetchReverseGeocode, sendChatQu
 const HomePanel = lazy(() => import("./components/HomePanel"));
 const WeatherDashboard = lazy(() => import("./components/WeatherDashboard"));
 const GISMap = lazy(() => import("./components/GISMap"));
+const Earth3D = lazy(() => import("./components/Earth3D"));
 const AgriAdvisor = lazy(() => import("./components/AgriAdvisor"));
 const AviationMarine = lazy(() => import("./components/AviationMarine"));
 const AlertCenter = lazy(() => import("./components/AlertCenter"));
@@ -21,7 +22,7 @@ const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
 
 const GROUPS = [
   ["Overview", [["home", "🏠", "Command"], ["chat", "💬", "AI Chat"], ["dashboard", "📊", "Forecast"]]],
-  ["Intelligence", [["map", "🗺", "Radar · GIS"], ["severe", "🌀", "Severe"], ["alerts", "🚨", "Alerts"], ["risk", "⚠", "Risk"], ["climate", "🌡", "Climate"], ["compare", "⚖", "Compare"]]],
+  ["Intelligence", [["map", "🗺", "Radar · GIS"], ["earth", "🌍", "3D Earth"], ["severe", "🌀", "Severe"], ["alerts", "🚨", "Alerts"], ["risk", "⚠", "Risk"], ["climate", "🌡", "Climate"], ["compare", "⚖", "Compare"]]],
   ["Sectors", [["agri", "🌾", "Agriculture"], ["aviation_marine", "✈", "Air · Sea"], ["nwp", "🛰", "NWP"], ["satellite", "📡", "Satellite"], ["saved", "★", "Saved"]]],
   ["Project", [["about", "ℹ", "About"]]],
 ];
@@ -316,6 +317,7 @@ export default function App() {
               )}
               {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
               {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
+          {tab === "earth" && <Earth3D weather={weather} />}
               {tab === "agri" && <AgriAdvisor place={place} onAsk={askFromTab} />}
               {tab === "aviation_marine" && <AviationMarine onAsk={askFromTab} />}
               {tab === "alerts" && <AlertCenter onAsk={askFromTab} />}

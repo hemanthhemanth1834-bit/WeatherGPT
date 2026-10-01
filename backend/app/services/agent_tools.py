@@ -19,6 +19,8 @@ TOOL_REGISTRY: List[Dict[str, Any]] = [
     {"name": "satellite_information", "description": "Satellite imagery/service pointers with acquisition time.", "source": "NASA GIBS LIVE links + MOSDAC NOT CONFIGURED", "handler": "satellite_service.get_satellite_info"},
     {"name": "air_quality_live", "description": "Live US AQI + PM2.5/PM10/NO2/O3/SO2/CO.", "source": "Open-Meteo Air Quality (LIVE)", "handler": "air_quality.get_air_quality"},
     {"name": "travel_safety", "description": "LOW/MODERATE/HIGH trip read with drivers.", "source": "Weather + risk + alerts (ESTIMATED)", "handler": "travel.travel_safety"},
+    {"name": "earthquake_watch", "description": "Recent USGS earthquakes, largest first.", "source": "USGS (OFFICIAL third-party)", "handler": "disasters.earthquakes"},
+    {"name": "wildfire_watch", "description": "Open NASA EONET wildfire detections.", "source": "NASA EONET (OFFICIAL third-party)", "handler": "disasters.wildfires"},
     {"name": "provider_health", "description": "Live status/latency of every provider.", "source": "Runtime probes", "handler": "providers.health_snapshot"},
 ]
 

@@ -141,3 +141,33 @@ def test_gfs_model_label():
     assert "blend" in blend["nwp_model"].lower() or "Open-Meteo" in blend["nwp_model"]
     assert gfs["nwp_model"].startswith("GFS")
     assert isinstance(gfs["current_temp"], (int, float))
+
+
+def test_earthquakes_live():
+    needs_network()
+    body = client.get("/api/disasters/earthquakes",
+                      params={"min_magnitude": 4.5, "days": 7}).json()
+    assert body["status"] == "LIVE"
+    assert body["count"] >= 0
+    assert "USGS" in body["source"]
+    if body["events"]:
+        assert body["events"][0]["magnitude"] >= 4.5
+
+
+def test_wildfires_live():
+    needs_network()
+    body = client.get("/api/disasters/wildfires", params={"limit": 10}).json()
+    assert body["status"] == "LIVE"
+    assert "EONET" in body["source"]
+
+
+def test_quake_feature_normalize_pure():
+    from app.services.disasters import _quake_feature
+    out = _quake_feature({"properties": {"mag": 6.1, "place": "Nicobar Islands",
+                                         "time": 1790000000000, "felt": 12, "tsunami": 1,
+                                         "url": "https://example.invalid/x"},
+                          "geometry": {"coordinates": [93.0, 7.0, 10.0]}})
+    assert out["magnitude"] == 6.1
+    assert out["depth_km"] == 10.0
+    assert out["tsunami"] is True
+    assert out["status"] == "OFFICIAL third-party feed"

@@ -185,8 +185,18 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
           <form onSubmit={send} style={{ display: "flex", gap: "0.5rem" }}>
             <input className="wg-input" aria-label="Type your weather question" placeholder={recording ? "Listening… speak now" : "Ask anything about weather, risks, crops, flights, seas…"}
               value={draft} onChange={(e) => setDraft(e.target.value)} style={recording ? { borderColor: "var(--wg-bad)" } : undefined} />
-            <button type="button" className="wg-btn-ghost" onClick={toggleMic} aria-label={recording ? "Stop recording" : "Ask by voice"} title={support.stt ? "Ask by voice (Web Speech API)" : "Voice unsupported here"}>
-              {recording ? "⏹" : "🎙"}
+            <button
+              type="button"
+              className={`wg-btn-ghost${recording ? " wg-mic-live" : ""}`}
+              onClick={toggleMic}
+              aria-label={recording ? "Stop recording" : "Ask by voice"}
+              title={support.stt ? "Ask by voice (Web Speech API)" : "Voice unsupported here"}
+            >
+              {recording ? (
+                <span className="wg-waves" aria-hidden="true"><span /><span /><span /><span /></span>
+              ) : (
+                "🎙"
+              )}
             </button>
             <button type="submit" className="wg-btn" disabled={busy || !draft.trim()} aria-label="Send question">Send</button>
           </form>

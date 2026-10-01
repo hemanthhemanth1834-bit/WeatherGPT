@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Circle, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
+import { Circle, CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
-import { fetchActiveAlerts, fetchCycloneTrack } from "../services/api";
+import { fetchActiveAlerts, fetchCycloneTrack, fetchEarthquakes, fetchWildfires } from "../services/api";
 
 function dot(color, glyph) {
   return L.divIcon({
@@ -38,10 +38,12 @@ const SEVERITY_COLOR = { Red: "#ef4444", Orange: "#f97316", Yellow: "#eab308" };
 export default function GISMap({ weather, onAsk }) {
   const [alerts, setAlerts] = useState([]);
   const [track, setTrack] = useState(null);
+  const [quakes, setQuakes] = useState([]);
+  const [fires, setFires] = useState([]);
   const [frames, setFrames] = useState([]);
   const [frameIdx, setFrameIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [layers, setLayers] = useState({ radar: true, alerts: true, track: true });
+  const [layers, setLayers] = useState({ radar: true, alerts: true, track: true, quakes: true, fires: false });
   const [focus, setFocus] = useState(null);
   const [problem, setProblem] = useState("");
   const timer = useRef(null);
@@ -49,9 +51,16 @@ export default function GISMap({ weather, onAsk }) {
   useEffect(() => {
     (async () => {
       try {
-        const [al, tr] = await Promise.all([fetchActiveAlerts(), fetchCycloneTrack()]);
+        const [al, tr, qk, fr] = await Promise.all([
+          fetchActiveAlerts(),
+          fetchCycloneTrack(),
+          fetchEarthquakes(5, 7).catch(() => null),
+          fetchWildfires(25).catch(() => null),
+        ]);
         setAlerts(al);
         setTrack(tr);
+        setQuakes(qk?.events || []);
+        setFires((fr?.events || []).filter((e) => e.lat != null));
       } catch {
         setProblem("Alert/track overlays failed to load — the base map still works.");
       }
@@ -90,7 +99,7 @@ export default function GISMap({ weather, onAsk }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center" }}>
           <span className="wg-chip live">LIVE RADAR{frame ? ` · ${stampLabel(frame.time)}` : ""}</span>
           <span className="wg-chip demo">DEMO: zones + cyclone line</span>
-          {["radar", "alerts", "track"].map((key) => (
+          {["radar", "alerts", "track", "quakes", "fires"].map((key) => (
             <label key={key} style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
               <input type="checkbox" className="wg-check" checked={layers[key]} onChange={(e) => setLayers({ ...layers, [key]: e.target.checked })} />
               {key}
@@ -127,6 +136,8 @@ export default function GISMap({ weather, onAsk }) {
           <span style={{ color: "#ef4444" }}>━ ━</span><span>DEMO track</span>
           <span style={{ color: "#f97316" }}>◯</span><span>alert zone</span>
           <span>📍 selected place</span>
+          <span>🟣 quake (USGS)</span>
+          <span>🟠 wildfire (EONET)</span>
         </div>
       </div>
 
@@ -159,6 +170,28 @@ export default function GISMap({ weather, onAsk }) {
               </Popup>
             </Marker>
           )}
+          {layers.quakes && quakes.map((q, i) => (
+            q.lat != null && (
+              <CircleMarker key={`q${i}`} center={[q.lat, q.lon]}
+                radius={4 + Math.min(10, (q.magnitude || 0))}
+                pathOptions={{ color: "#c084fc", fillColor: "#c084fc", fillOpacity: 0.55, weight: 1 }}>
+                <Popup>
+                  <strong>M{q.magnitude} — {q.place}</strong>
+                  <br />Depth {q.depth_km} km · USGS (official third-party)
+                  <br /><a href={q.url} target="_blank" rel="noreferrer">USGS event page</a>
+                </Popup>
+              </CircleMarker>
+            )
+          ))}
+          {layers.fires && fires.map((f, i) => (
+            <Marker key={`f${i}`} position={[f.lat, f.lon]} icon={dot("#fb923c", "🔥")}>
+              <Popup>
+                <strong>{f.title}</strong>
+                <br />{f.date ? f.date.slice(0, 10) : ""} · NASA EONET
+                <br /><a href={f.report_url} target="_blank" rel="noreferrer">Event report</a>
+              </Popup>
+            </Marker>
+          ))}
           {layers.alerts && alerts.map((a) => (
             <Circle key={a.id} center={[a.lat, a.lon]} radius={70000}
               pathOptions={{ color: SEVERITY_COLOR[a.severity] || "#eab308", fillOpacity: 0.22, weight: 2 }}>

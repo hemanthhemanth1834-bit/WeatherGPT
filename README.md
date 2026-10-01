@@ -37,6 +37,9 @@ NOT CONFIGURED`).
 - Computed CAP-style alerts with severity filters and audio broadcast
 - Deterministic LOW–EXTREME risk engine with published thresholds
 - Leaflet GIS: live RainViewer radar, illustrative alert zones and cyclone line
+- **3D Earth (lazy tab)**: procedural three.js globe, Natural Earth coastlines,
+  day/night terminator, live markers (place, alerts, DEMO track, USGS quakes,
+  EONET fires); adaptive quality, reduced-motion aware
 - Farm advisories (6 crops), STATIC sample aviation briefings, estimated marine advisories
 - STATIC decadal climate reference with bar visualisations
 - City-vs-city comparison, saved places, NWP/satellite provenance panels
@@ -80,9 +83,11 @@ evaluated and deliberately not used (see `THIRD_PARTY_NOTICES.md`).
 
 ## GIS
 
-Leaflet + CARTO/OSM basemap, **LIVE** RainViewer radar toggle,
-**DEMO** alert circles and cyclone line, layer switches, quick-focus
-buttons. Provenance strip distinguishes live from illustrative layers.
+Leaflet + OSM basemap, **LIVE** RainViewer radar toggle,
+**DEMO** alert circles and cyclone line, layer switches (incl. USGS quakes,
+EONET wildfires), quick-focus buttons. Provenance strip distinguishes live from
+illustrative layers. A lazy **3D Earth** tab adds a three.js globe with the
+same live markers; simplified automatically on small screens.
 
 ## Satellite
 
@@ -170,8 +175,8 @@ cd frontend && npm run dev   # http://localhost:5173
 ## Testing
 
 ```bash
-cd backend && python -m pytest -q     # 60+ tests: risk, geo, chat, intents, providers, API, CORS, hardening
-cd frontend && npm run build          # production bundle check
+cd backend && python -m pytest -q     # 68 tests: risk, geo, chat, intents, providers, disasters, API, CORS, hardening
+cd frontend && npm run build          # production bundle check (entry ~374KB; Earth/Leaflet lazy)
 cd frontend && npx oxlint src         # lint (0 errors)
 ```
 

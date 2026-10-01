@@ -15,6 +15,8 @@ Verified live on 30 Sep–01 Oct 2026 (see `/api/providers/health`).
 | NOAA ADDS | METAR/TAF 6 Indian airports | LIVE | Free, no key | US source; outages fall back STATIC |
 | BigDataCloud | GPS reverse-geocode | LIVE | Free, no key | Low-volume fair use |
 | GDACS (UN JRC) | global disaster events | OFFICIAL third-party | Free, no key | Global context, not Indian warnings |
+| USGS | earthquakes M4.5+, 7-day | OFFICIAL third-party | Free, no key | Geological, worldwide |
+| NASA EONET | open wildfires | OFFICIAL third-party | Free, no key | Satellite detections, verify locally |
 | OpenStreetMap | basemap tiles | LIVE | Free (ODbL) | Tile fair-use policy |
 | Web Speech API | STT/TTS 11 languages | LIVE | Browser-native | Chrome/Edge best; mic permission |
 | WRF feed | — | NOT CONFIGURED | would need feed | No free live source; interface ready |

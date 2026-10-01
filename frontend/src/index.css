@@ -244,6 +244,17 @@ input[type="checkbox"].wg-check { width: 1rem; height: 1rem; accent-color: var(-
 .wg-pulse-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--wg-bad); animation: wg-blink 1.6s ease-in-out infinite; }
 @keyframes wg-blink { 50% { opacity: 0.35; } }
 
+.wg-waves { display: inline-flex; align-items: flex-end; gap: 2px; height: 1rem; }
+.wg-waves > span { width: 3px; border-radius: 2px; background: var(--wg-bad); animation: wg-wave 0.9s ease-in-out infinite; }
+.wg-waves > span:nth-child(2) { animation-delay: 0.15s; }
+.wg-waves > span:nth-child(3) { animation-delay: 0.3s; }
+.wg-waves > span:nth-child(4) { animation-delay: 0.45s; }
+@keyframes wg-wave { 0%, 100% { height: 4px; } 50% { height: 1rem; } }
+.wg-mic-live {
+  border-color: rgba(248, 113, 113, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.22);
+}
+
 .wg-ticker { overflow: hidden; white-space: nowrap; }
 .wg-ticker > span { display: inline-block; padding-left: 100%; animation: wg-tick 45s linear infinite; }
 .wg-ticker:hover > span { animation-play-state: paused; }

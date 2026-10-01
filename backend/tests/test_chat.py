@@ -59,3 +59,13 @@ def test_aqi_intent_labels_source(monkeypatch):
     response = chat.answer(WeatherQueryRequest(query="What is the AQI and air quality?"))
     assert "Air quality (LIVE" in response.markdown_response
     assert "88" in response.markdown_response
+
+
+def test_quake_fire_intents_offline_safe(monkeypatch):
+    from app.models import WeatherData
+    fake = WeatherData(location="Pune", state="Maharashtra", hourly=[], daily=[])
+    monkeypatch.setattr(chat, "get_weather", lambda *a: fake)
+    monkeypatch.setattr("app.services.disasters.earthquakes",
+                        lambda *a, **k: (_ for _ in ()).throw(RuntimeError("down")))
+    response = chat.answer(WeatherQueryRequest(query="Any earthquakes lately?"))
+    assert "USGS feed unreachable" in response.markdown_response

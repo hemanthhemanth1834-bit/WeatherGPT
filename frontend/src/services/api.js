@@ -122,3 +122,9 @@ export const fetchUV = (location = "Pune") =>
 
 export const fetchDisasters = (region = "world") =>
   get(`/disasters/global?region=${encodeURIComponent(region)}`);
+
+export const fetchEarthquakes = (min_magnitude = 5, days = 7) =>
+  get(`/disasters/earthquakes?min_magnitude=${min_magnitude}&days=${days}`);
+
+export const fetchWildfires = (limit = 25) =>
+  get(`/disasters/wildfires?limit=${limit}`);

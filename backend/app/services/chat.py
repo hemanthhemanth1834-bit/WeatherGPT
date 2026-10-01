@@ -391,6 +391,8 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
                                               "is it safe", "commute", "drive"))
     wants_aqi = any(w in lowered for w in ("aqi", "air quality", "pollution", "smog",
                                            "pm2", "pm10", "haze"))
+    wants_quake = any(w in lowered for w in ("earthquake", "tremor", "seismic", "quake"))
+    wants_fire = any(w in lowered for w in ("wildfire", "forest fire", "fire hotspot", "burning forest"))
 
     advisory = None
     briefing = None
@@ -462,6 +464,29 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         except RuntimeError:
             extra += (f"\n\n**Air quality (ESTIMATED fallback):** AQI **{data.aqi}** "
                       f"({data.aqi_status}). Live feed unavailable right now.")
+    if wants_quake:
+        try:
+            from .disasters import earthquakes
+            quakes = earthquakes(4.5, 7).get("events", [])[:3]
+            if quakes:
+                lines = "\n".join(f"- **M{q['magnitude']}** {q['place']}" for q in quakes)
+                extra += (f"\n\n**Recent earthquakes (USGS, OFFICIAL third-party):**\n{lines}\n"
+                          f"Geological events — not Indian government alerts.")
+            else:
+                extra += "\n\n**Earthquakes (USGS):** feed reachable, no M4.5+ events in the window."
+        except RuntimeError:
+            extra += "\n\n**Earthquakes:** USGS feed unreachable right now — showing nothing rather than guessing."
+    if wants_fire:
+        try:
+            from .disasters import wildfires
+            fires = wildfires(12).get("events", [])[:3]
+            if fires:
+                lines = "\n".join(f"- **{f['title']}**" for f in fires)
+                extra += (f"\n\n**Open wildfires (NASA EONET, OFFICIAL third-party):**\n{lines}")
+            else:
+                extra += "\n\n**Wildfires (EONET):** feed reachable, no open fires listed."
+        except RuntimeError:
+            extra += "\n\n**Wildfires:** EONET feed unreachable right now — showing nothing rather than guessing."
 
     speech, markdown = _render_weather(proper, state, data, lang)
     markdown += extra

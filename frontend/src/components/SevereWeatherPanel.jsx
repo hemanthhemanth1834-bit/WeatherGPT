@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters, fetchRiskAssessment } from "../services/api";
+import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters, fetchEarthquakes, fetchRiskAssessment, fetchWildfires } from "../services/api";
 import BlueprintBuilder from "./BlueprintBuilder";
 import EmergencyContacts from "./EmergencyContacts";
 
@@ -28,20 +28,26 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
   const [showContacts, setShowContacts] = useState(false);
   const [global, setGlobal] = useState(null);
   const [risk, setRisk] = useState(null);
+  const [quakes, setQuakes] = useState(null);
+  const [fires, setFires] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [al, tr, gd] = await Promise.all([
+        const [al, tr, gd, qk, fr] = await Promise.all([
           fetchActiveAlerts(),
           fetchCycloneTrack(),
           fetchDisasters("world").catch(() => null),
+          fetchEarthquakes(4.5, 7).catch(() => null),
+          fetchWildfires(12).catch(() => null),
         ]);
         if (!cancelled) {
           setAlerts(al);
           setTrack(tr);
           setGlobal(gd);
+          setQuakes(qk);
+          setFires(fr);
         }
       } catch {
         if (!cancelled) setError("Severe-weather feed failed to load — please retry.");
@@ -88,6 +94,53 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
       {showContacts && <EmergencyContacts onClose={() => setShowContacts(false)} />}
 
       <BlueprintBuilder risk={risk} weather={weather} />
+
+      <div className="wg-grid-panels">
+        <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
+          <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.85rem" }}>
+            🟣 Recent earthquakes <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OFFICIAL · USGS</span>
+          </h3>
+          {!quakes ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Loading USGS feed…</p>
+          ) : quakes.events?.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "14rem", overflowY: "auto" }}>
+              {quakes.events.slice(0, 8).map((q, i) => (
+                <div key={i} style={{ fontSize: "0.78rem", padding: "0.4rem 0.6rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
+                  <strong>M{q.magnitude}</strong> — {q.place}
+                  <span className="wg-mono" style={{ display: "block", fontSize: "0.64rem", color: "var(--wg-muted)" }}>
+                    depth {q.depth_km} km{q.tsunami ? " · TSUNAMI FLAG (see USGS)" : ""}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Feed unreachable — showing nothing rather than guessing.</p>
+          )}
+          <p style={{ fontSize: "0.68rem", color: "var(--wg-muted)" }}>Geological events, global. Not Indian government alerts.</p>
+        </div>
+        <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
+          <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.85rem" }}>
+            🔥 Open wildfires <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OFFICIAL · EONET</span>
+          </h3>
+          {!fires ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Loading EONET feed…</p>
+          ) : fires.events?.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "14rem", overflowY: "auto" }}>
+              {fires.events.slice(0, 8).map((f, i) => (
+                <div key={i} style={{ fontSize: "0.78rem", padding: "0.4rem 0.6rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
+                  <strong>{f.title}</strong>
+                  <span className="wg-mono" style={{ display: "block", fontSize: "0.64rem", color: "var(--wg-muted)" }}>
+                    {f.date ? f.date.slice(0, 10) : ""} · {f.satellite || "satellite detection"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Feed unreachable — showing nothing rather than guessing.</p>
+          )}
+          <p style={{ fontSize: "0.68rem", color: "var(--wg-muted)" }}>Satellite hotspot detections. Verify with local authorities.</p>
+        </div>
+      </div>
 
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
 

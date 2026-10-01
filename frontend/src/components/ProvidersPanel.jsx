@@ -3,6 +3,13 @@ import { fetchProvidersHealth } from "../services/api";
 
 const TONE = { LIVE: "live", AVAILABLE: "live", FALLBACK: "estimated", ESTIMATED: "estimated", STATIC: "static", DEMO: "demo", NOT_CONFIGURED: "off", ERROR: "off" };
 
+function displayStatus(p) {
+  if (p.status === "LIVE" && (p.latency_ms || 0) > 8000) {
+    return { label: "DEGRADED", tone: "demo" };
+  }
+  return { label: p.status, tone: TONE[p.status] || "static" };
+}
+
 export default function ProvidersPanel() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
@@ -24,15 +31,18 @@ export default function ProvidersPanel() {
       {!data && !error && <div className="wg-shimmer" role="status" aria-label="Checking providers" />}
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem" }}>
-          {data.providers.map((p) => (
+          {data.providers.map((p) => {
+            const shown = displayStatus(p);
+            return (
             <div key={p.provider} style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem 0.8rem", alignItems: "center", fontSize: "0.76rem", padding: "0.4rem 0.6rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
               <strong style={{ minWidth: "11rem" }}>{p.provider}</strong>
-              <span className={`wg-chip ${TONE[p.status] || "static"}`}>{p.status}</span>
+              <span className={`wg-chip ${shown.tone}`}>{shown.label}</span>
               <span className="wg-mono" style={{ color: "var(--wg-muted)", fontSize: "0.66rem" }}>
                 {p.latency_ms != null ? `${p.latency_ms} ms` : "—"} · {p.coverage}
               </span>
             </div>
-          ))}
+            );
+          })}
           <p style={{ fontSize: "0.68rem", color: "var(--wg-muted)", margin: "0.2rem 0 0" }}>{data.policy}</p>
         </div>
       )}

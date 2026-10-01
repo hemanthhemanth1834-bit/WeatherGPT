@@ -28,16 +28,17 @@ statement and the public API contracts — not paraphrased or renamed:
 
 Backend (`backend/app/`): `models.py`, `main.py`, services `geo.py`,
 `weather.py`, `chat.py`, `alerts.py`, `advisories.py` (crops, aviation,
-marine, climate), plus `run.py` and `api/index.py`.
+marine, climate), `gdacs.py`, `disasters.py` (USGS/EONET), `history.py`,
+`travel.py`, `llm.py`, `http.py`, `providers.py`, plus `run.py` and `api/index.py`.
 Kept as original transformation work: `config.py`, `services/cache.py`,
 `risk_engine.py`, `nwp_service.py`, `satellite_service.py`,
 `indian_sources_service.py`, `agent_tools.py`, `tests/`.
 
 Frontend (`frontend/src/`): `App.jsx`, `main.jsx`, `index.css`,
 `index.html`, services `api.js`/`voice.js`, components `Navbar`,
-`WeatherChat`, `WeatherDashboard`, `GISMap`, `AlertCenter`,
-`ClimateAnalytics`, `CityComparison`, `AgriAdvisor`, `AviationMarine`,
-`ModernWeatherCard`. Kept: `SourceBadge`, `RiskPanel`, `AboutDeveloper`,
+`WeatherChat`, `WeatherDashboard`, `GISMap`, `Earth3D` (three.js globe),
+`AlertCenter`, `ClimateAnalytics`, `CityComparison`, `AgriAdvisor`,
+`AviationMarine`, `ModernWeatherCard`, `WxIcon` (Lucide). Kept: `SourceBadge`, `RiskPanel`, `AboutDeveloper`,
 `NwpSatellitePanel`. Removed dead/unused: `App.css`, template art
 (`hero.png`, `react.svg`, `vite.svg`), third-party logo `favicon.svg`
 (replaced with an original mark), unused sprite `icons.svg`, unused

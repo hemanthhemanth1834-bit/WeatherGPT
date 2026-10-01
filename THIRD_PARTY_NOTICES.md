@@ -17,6 +17,8 @@ vendored into this repository.
 | react-leaflet | 5.0.0 | Hippocratic-2.1 | React bindings for Leaflet — ethical-source terms; review if your policy requires pure OSI licensing (map use is isolated in `GISMap.jsx`) |
 | lucide-react | 1.38.0 | ISC | Icons (About/Risk/NWP panels) |
 | react-markdown, remark-gfm | 10.1.0 / 4.0.1 | MIT | Chat markdown rendering |
+| three | 0.x (npm) | MIT | Lazy 3D globe (Earth tab only) |
+| topojson-client | 3.x (npm) | BSD-3-Clause | Decode Natural Earth TopoJSON at runtime |
 | oxlint (dev) | 1.80.0 | MIT | Linting |
 
 ## Backend (`backend/requirements.txt`)
@@ -48,6 +50,12 @@ against the version you install if your compliance process requires it.)
 - **NASA GIBS / Worldview**: satellite viewer links + one verified WMTS tile
   pattern (tile fetch probed HTTP 200 on 30 Sep 2026); no imagery
   redistributed; NASA open-data policies apply at the provider.
+- **USGS Earthquake Hazards Program**: FDSN event feed (GeoJSON), official US
+  public data, no key. Displayed as geological events, never as Indian alerts.
+- **NASA EONET**: open natural-event feed (wildfires etc.), no key.
+  Displayed with source links; verify locally.
+- **Natural Earth coastlines** (via world-atlas TopoJSON, public domain),
+  fetched at runtime for the 3D globe; wireframe fallback when offline.
 - **Web Speech API**: browser-native; no key, no redistribution.
 - Fonts via Google Fonts (Inter, JetBrains Mono) under their own licenses.
 - Evaluated but not used: OpenWeather/WeatherAPI key tiers (unneeded —
