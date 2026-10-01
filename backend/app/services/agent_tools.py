@@ -21,6 +21,9 @@ TOOL_REGISTRY: List[Dict[str, Any]] = [
     {"name": "travel_safety", "description": "LOW/MODERATE/HIGH trip read with drivers.", "source": "Weather + risk + alerts (ESTIMATED)", "handler": "travel.travel_safety"},
     {"name": "earthquake_watch", "description": "Recent USGS earthquakes, largest first.", "source": "USGS (OFFICIAL third-party)", "handler": "disasters.earthquakes"},
     {"name": "wildfire_watch", "description": "Open NASA EONET wildfire detections.", "source": "NASA EONET (OFFICIAL third-party)", "handler": "disasters.wildfires"},
+    {"name": "flood_analysis", "description": "COMPUTED flood proxy from rain + elevation.", "source": "Rain + elevation (COMPUTED, unofficial)", "handler": "flood.flood_risk"},
+    {"name": "shelter_search", "description": "Nearby hospitals/police/fire/assembly from OSM.", "source": "Overpass API, OSM (LIVE lookup)", "handler": "places.emergency_places"},
+    {"name": "solar_analysis", "description": "ESTIMATED rooftop yield from UV + cloud.", "source": "Textbook proxy (ESTIMATED)", "handler": "solar.solar_estimate"},
     {"name": "provider_health", "description": "Live status/latency of every provider.", "source": "Runtime probes", "handler": "providers.health_snapshot"},
 ]
 

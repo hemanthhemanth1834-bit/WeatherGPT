@@ -344,6 +344,9 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
                                            "pm2", "pm10", "haze"))
     wants_quake = any(w in lowered for w in ("earthquake", "tremor", "seismic", "quake"))
     wants_fire = any(w in lowered for w in ("wildfire", "forest fire", "fire hotspot", "burning forest"))
+    wants_flood = any(w in lowered for w in ("flood", "inundation", "waterlogging", "flooded"))
+    wants_shelter = any(w in lowered for w in ("shelter", "hospital nearby", "evacuat", "safe place", "assembly point"))
+    wants_solar = any(w in lowered for w in ("solar", "rooftop", "photovoltaic", "pv output", "sunshine hours"))
 
     advisory = None
     briefing = None
@@ -438,6 +441,36 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
                 extra += "\n\n**Wildfires (EONET):** feed reachable, no open fires listed."
         except RuntimeError:
             extra += "\n\n**Wildfires:** EONET feed unreachable right now — showing nothing rather than guessing."
+    if wants_flood:
+        try:
+            from .flood import flood_risk
+            flood = flood_risk(lat, lon, proper, state)
+            extra += (f"\n\n**Flood proxy ({flood['risk']}, COMPUTED — unofficial):** "
+                      f"score {flood['score']}/100. "
+                      + ("; ".join(flood["drivers"])) + f" {flood['limits']}")
+        except Exception:
+            extra += "\n\n**Flood proxy:** unavailable right now — showing nothing rather than guessing."
+    if wants_shelter:
+        try:
+            from .places import emergency_places
+            found = emergency_places(lat, lon)
+            hospitals = found["facilities"].get("hospital", [])[:3]
+            if hospitals:
+                lines = "\n".join(f"- **{h['name']}** ({h['distance_km']} km)" for h in hospitals)
+                extra += (f"\n\n**Nearest hospitals (OpenStreetMap, LIVE lookup):**\n{lines}\n"
+                          f"{found['note']}")
+            else:
+                extra += "\n\n**Nearby facilities (OpenStreetMap):** none mapped within 20 km. Call 112 for help."
+        except Exception:
+            extra += "\n\n**Nearby facilities:** lookup unavailable — call 112 for help."
+    if wants_solar:
+        try:
+            from .solar import solar_estimate
+            solar = solar_estimate(data.uv_index, data.cloud_cover, data.sunrise, data.sunset)
+            extra += (f"\n\n**Rooftop solar (ESTIMATED):** ~{solar['daily_kwh_per_kw']} kWh/day per kW "
+                      f"({solar['peak_sun_hours']} peak sun hours). {solar['formula']}")
+        except Exception:
+            extra += "\n\n**Solar estimate:** unavailable right now."
 
     speech, markdown = _render_weather(proper, state, data, lang)
     markdown += extra

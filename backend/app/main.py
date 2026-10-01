@@ -367,6 +367,47 @@ def fires(limit: int = Query(20)) -> dict:
         raise HTTPException(status_code=502, detail=f"EONET unavailable: {exc}")
 
 
+@app.get("/api/places/emergency")
+def emergency_places(lat: float = Query(...), lon: float = Query(...)) -> dict:
+    """Nearby hospitals/police/fire/assembly points (OSM, LIVE)."""
+    from fastapi import HTTPException
+    from .services.places import emergency_places as lookup
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        from fastapi import HTTPException as HE
+        raise HE(status_code=422, detail="Invalid coordinates")
+    try:
+        return lookup(lat, lon)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=f"Places lookup unavailable: {exc}")
+
+
+@app.get("/api/flood/risk")
+def flood(location: str = Query("Pune"), lat: float | None = None,
+          lon: float | None = None) -> dict:
+    """Computed flood-risk proxy from rain + elevation (COMPUTED, unofficial)."""
+    from fastapi import HTTPException
+    from .services.flood import flood_risk
+    try:
+        if lat is None or lon is None:
+            lat, lon, proper, state = geo.geocode(location)
+        else:
+            proper, state = location, "India"
+        return flood_risk(lat, lon, proper, state)
+    except Exception:
+        raise HTTPException(status_code=502, detail="Flood proxy temporarily unavailable")
+
+
+@app.get("/api/solar/estimate")
+def solar(location: str = Query("Pune"), rated_kw: float = Query(1.0)) -> dict:
+    """Estimated rooftop yield from live UV + cloud (ESTIMATED)."""
+    from .services.solar import solar_estimate
+    lat, lon, proper, state = geo.geocode(location)
+    data = get_weather(lat, lon, proper, state)
+    out = solar_estimate(data.uv_index, data.cloud_cover, data.sunrise, data.sunset, rated_kw)
+    out.update({"location": proper, "state": state, "updated_at_ist": data.updated_at_ist})
+    return out
+
+
 @app.get("/api/advisory/crop", response_model=AgriCropAdvisory)
 def crop(crop: str = Query("paddy"), district: str = Query("Nagpur"),
          state: str = Query("Maharashtra")) -> AgriCropAdvisory:

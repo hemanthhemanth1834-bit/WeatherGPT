@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { fetchAirQuality, fetchRegionalTalukas, fetchUV } from "../services/api";
+import { fetchAirQuality, fetchRegionalTalukas, fetchSolar, fetchUV } from "../services/api";
+import { download, provenanceFooter, toCSV } from "../services/exportData";
 import { speechEngine } from "../services/voice";
 import { glyphFor } from "../services/weatherGlyph";
 import WeatherBrief from "./WeatherBrief";
@@ -26,8 +27,26 @@ function SourceLine({ source, status, hint }) {
   );
 }
 
-function TempSpark({ hourly }) {
-  if (!hourly?.length) return null;
+function LifeTips({ weather }) {
+  if (!weather) return null;
+  const tips = [];
+  const rain = weather.hourly?.[0]?.rain_prob ?? 0;
+  if (rain >= 60) tips.push("☂ Carry an umbrella — rain likely within hours.");
+  else if (rain >= 30) tips.push("☂ Keep rainwear handy — showers possible.");
+  if (weather.uv_index >= 6) tips.push("🧴 High UV — sunscreen, hat, and midday shade.");
+  if (weather.current_temp >= 38) tips.push("💧 Heat — hydrate often, avoid 12–3 PM exertion.");
+  if (weather.current_temp <= 10) tips.push("🧥 Cold — layer up, especially morning/evening.");
+  if (weather.wind_speed >= 25) tips.push("💨 Gusty — secure loose items, ride carefully.");
+  if (weather.visibility < 5) tips.push("🌫 Low visibility — drive slow, lights on.");
+  if (!tips.length) tips.push("✅ Comfortable day for commute, errands, and outdoor plans.");
+  return (
+    <ul style={{ margin: 0, paddingLeft: "1.1rem", fontSize: "0.8rem", lineHeight: 1.7 }}>
+      {tips.map((t, i) => <li key={i}>{t}</li>)}
+    </ul>
+  );
+}
+
+function TempSpark({ hourly }) {  if (!hourly?.length) return null;
   const temps = hourly.slice(0, 24).map((h) => h.temp);
   const min = Math.min(...temps);
   const span = Math.max(...temps) - min || 1;
@@ -47,8 +66,30 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
   const [metric, setMetric] = useState("temp");
   const [aqi, setAqi] = useState(null);
   const [uv, setUv] = useState(null);
+  const [solar, setSolar] = useState(null);
   const [brief, setBrief] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+
+  const exportWeather = (format) => {
+    if (!weather) return;
+    const stamp = new Date().toISOString().slice(0, 10);
+    const base = `${weather.location}-weather-${stamp}`;
+    const payload = { ...weather, ...provenanceFooter(weather) };
+    if (format === "csv") {
+      const rows = [["metric", "value"]];
+      ["location", "state", "current_temp", "feels_like", "condition", "humidity",
+       "wind_speed", "wind_direction", "precipitation", "pressure", "uv_index",
+       "visibility", "aqi", "aqi_status", "sunrise", "sunset"].forEach((k) =>
+        rows.push([k, payload[k]])
+      );
+      (payload.hourly || []).slice(0, 24).forEach((h) =>
+        rows.push([`hourly ${h.time}`, `${h.temp}C, rain ${h.rain_prob}%, wind ${h.wind_speed} km/h`])
+      );
+      download(`${base}.csv`, toCSV(rows), "text/csv");
+    } else {
+      download(`${base}.json`, JSON.stringify(payload, null, 2));
+    }
+  };
 
   useEffect(() => {
     if (weather?.location) {
@@ -65,6 +106,9 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
       fetchUV(weather.location)
         .then((u) => !cancelled && setUv(u))
         .catch(() => !cancelled && setUv(null));
+      fetchSolar(weather.location)
+        .then((s) => !cancelled && setSolar(s))
+        .catch(() => !cancelled && setSolar(null));
     }
     return () => {
       cancelled = true;
@@ -99,6 +143,9 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
 
       <div className="wg-card" style={{ padding: "1.2rem 1.3rem", display: "flex", flexWrap: "wrap", gap: "1.2rem", justifyContent: "space-between", alignItems: "center" }}>
         <div>
+          <div className="wg-mono" style={{ fontSize: "0.66rem", color: "var(--wg-faint)" }} aria-label="Location hierarchy">
+            {weather.country || "India"} › {weather.state} › {weather.location}
+          </div>
           <div style={{ fontSize: "0.75rem", color: "var(--wg-accent)", fontWeight: 700 }}>
             {weather.location}, {weather.state} · {weather.lat.toFixed(2)}°N {weather.lon.toFixed(2)}°E
           </div>
@@ -202,6 +249,29 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
             <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>UV guidance loading…</p>
           )}
         </div>
+        <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+          <h3 style={{ margin: "0 0 0.5rem", fontSize: "0.8rem" }}>🔆 Solar rooftop (ESTIMATED)</h3>
+          {solar ? (
+            <>
+              <div style={{ fontSize: "1.4rem", fontWeight: 800 }}>{solar.daily_kwh_per_kw} <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>kWh/day per kW</span></div>
+              <p style={{ fontSize: "0.74rem", color: "var(--wg-muted)", margin: "0.3rem 0 0" }}>
+                {solar.peak_sun_hours} peak sun hours · {solar.daylight_hours} h daylight. Textbook proxy from live UV + cloud — not metered output.
+              </p>
+            </>
+          ) : (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Solar estimate loading…</p>
+          )}
+        </div>
+      </div>
+
+      <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+        <h3 style={{ margin: "0 0 0.5rem", fontSize: "0.8rem" }}>🧭 Today for you (COMPUTED tips)</h3>
+        <LifeTips weather={weather} />
+      </div>
+
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        <button className="wg-btn-ghost" onClick={() => exportWeather("json")}>⬇ Export JSON</button>
+        <button className="wg-btn-ghost" onClick={() => exportWeather("csv")}>⬇ Export CSV</button>
       </div>
 
       {areas.length > 0 && (

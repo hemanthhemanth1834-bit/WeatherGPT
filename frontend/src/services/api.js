@@ -126,6 +126,18 @@ export const fetchUV = (location = "Pune") =>
 export const fetchDisasters = (region = "world") =>
   get(`/disasters/global?region=${encodeURIComponent(region)}`);
 
+export const fetchFloodRisk = (location = "Pune", lat = null, lon = null) => {
+  let path = `/flood/risk?location=${encodeURIComponent(location)}`;
+  if (lat !== null && lon !== null) path += `&lat=${lat}&lon=${lon}`;
+  return get(path);
+};
+
+export const fetchSolar = (location = "Pune", rated_kw = 1) =>
+  get(`/solar/estimate?location=${encodeURIComponent(location)}&rated_kw=${rated_kw}`);
+
+export const fetchEmergencyPlaces = (lat, lon) =>
+  get(`/places/emergency?lat=${lat}&lon=${lon}`);
+
 export const fetchEarthquakes = (min_magnitude = 5, days = 7) =>
   get(`/disasters/earthquakes?min_magnitude=${min_magnitude}&days=${days}`);
 

@@ -14,6 +14,7 @@ export default function AlertCenter({ onAsk }) {
   const [error, setError] = useState("");
   const [voicing, setVoicing] = useState(null);
   const [showContacts, setShowContacts] = useState(false);
+  const [capFor, setCapFor] = useState(null);
 
   const load = async (level) => {
     setBusy(true);
@@ -160,14 +161,29 @@ export default function AlertCenter({ onAsk }) {
             <p className="wg-mono" style={{ margin: 0, fontSize: "0.68rem", color: "var(--wg-muted)" }}>
               {a.effective} → {a.expires} · {a.sender_name}
             </p>
-            <div style={{ display: "flex", gap: "0.4rem" }}>
+            <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
               <button className="wg-btn-ghost" onClick={() => broadcast(a)}>
                 {voicing === a.id ? "⏹ Stop" : "🔊 Broadcast"}
+              </button>
+              <button className="wg-btn-ghost" onClick={() => setCapFor(capFor?.id === a.id ? null : a)}>
+                {capFor?.id === a.id ? "Hide CAP" : "View CAP"}
               </button>
               <button className="wg-btn" onClick={() => onAsk(`Emergency response protocol for ${a.event} in ${a.district}`)}>
                 AI action plan →
               </button>
             </div>
+            {capFor?.id === a.id && (
+              <pre className="wg-mono" style={{ fontSize: "0.66rem", background: "rgba(0,0,0,.35)", padding: "0.6rem", borderRadius: "0.6rem", overflowX: "auto", margin: 0 }}>
+{JSON.stringify({
+  identifier: a.id, sender: a.sender_name, sent: a.effective,
+  status: "Actual", msgType: "Alert", scope: "Public",
+  info: [{ event: a.event, urgency: a.urgency, severity: a.severity,
+           certainty: a.certainty, effective: a.effective, expires: a.expires,
+           areaDesc: a.area_desc, instruction: a.instruction,
+           note: "COMPUTED by WeatherGPT from live telemetry — UNOFFICIAL, not an IMD bulletin." }],
+}, null, 2)}
+              </pre>
+            )}
           </article>
         ))}
       </div>

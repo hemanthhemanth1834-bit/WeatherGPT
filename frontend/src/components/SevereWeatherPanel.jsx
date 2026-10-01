@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters, fetchEarthquakes, fetchRiskAssessment, fetchWildfires } from "../services/api";
+import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters, fetchEarthquakes, fetchEmergencyPlaces, fetchFloodRisk, fetchRiskAssessment, fetchWildfires } from "../services/api";
 import BlueprintBuilder from "./BlueprintBuilder";
 import EmergencyContacts from "./EmergencyContacts";
 
@@ -30,6 +30,8 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
   const [risk, setRisk] = useState(null);
   const [quakes, setQuakes] = useState(null);
   const [fires, setFires] = useState(null);
+  const [flood, setFlood] = useState(null);
+  const [places, setPlaces] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +66,12 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
       fetchRiskAssessment(weather.location, weather.lat, weather.lon)
         .then((r) => !cancelled && setRisk(r))
         .catch(() => !cancelled && setRisk(null));
+      fetchFloodRisk(weather.location, weather.lat, weather.lon)
+        .then((f) => !cancelled && setFlood(f))
+        .catch(() => !cancelled && setFlood(null));
+      fetchEmergencyPlaces(weather.lat, weather.lon)
+        .then((p) => !cancelled && setPlaces(p))
+        .catch(() => !cancelled && setPlaces(null));
     }
     return () => {
       cancelled = true;
@@ -94,6 +102,50 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
       {showContacts && <EmergencyContacts onClose={() => setShowContacts(false)} />}
 
       <BlueprintBuilder risk={risk} weather={weather} />
+
+      <div className="wg-grid-panels">
+        <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
+          <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.85rem" }}>
+            🌊 FloodWatch proxy <span className="wg-chip estimated" style={{ marginLeft: "0.4rem" }}>COMPUTED</span>
+          </h3>
+          {!flood ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Computing rain + elevation proxy…</p>
+          ) : (
+            <>
+              <div style={{ fontSize: "1.1rem", fontWeight: 800 }}>
+                {flood.risk} <span style={{ fontSize: "0.75rem", fontWeight: 500, color: "var(--wg-muted)" }}>({flood.score}/100)</span>
+              </div>
+              <ul style={{ margin: "0.35rem 0 0", paddingLeft: "1.05rem", fontSize: "0.78rem", lineHeight: 1.6 }}>
+                {flood.drivers.map((d, i) => <li key={i}>{d}</li>)}
+              </ul>
+              <p className="wg-mono" style={{ fontSize: "0.64rem", color: "var(--wg-muted)" }}>
+                elev {flood.elevation_m != null ? `${flood.elevation_m} m` : "n/a"} · {flood.limits}
+              </p>
+            </>
+          )}
+        </div>
+        <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
+          <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.85rem" }}>
+            🏥 Nearby emergency services <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OSM LIVE LOOKUP</span>
+          </h3>
+          {!places ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Searching OpenStreetMap near you…</p>
+          ) : places.count === 0 ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>None mapped within 20 km. Call 112 for help.</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.3rem", maxHeight: "12rem", overflowY: "auto" }}>
+              {["hospital", "police", "fire_station", "assembly_point"].flatMap((kind) =>
+                (places.facilities[kind] || []).slice(0, 2).map((p, i) => (
+                  <div key={`${kind}-${i}`} style={{ fontSize: "0.78rem" }}>
+                    <strong>{p.name}</strong> <span style={{ color: "var(--wg-muted)" }}>· {kind.replace("_", " ")} · {p.distance_km} km</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+          <p style={{ fontSize: "0.66rem", color: "var(--wg-muted)" }}>Community-mapped data; verify critical needs by phone.</p>
+        </div>
+      </div>
 
       <div className="wg-grid-panels">
         <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>

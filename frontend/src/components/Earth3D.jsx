@@ -127,12 +127,21 @@ export default function Earth3D({ weather }) {
         if (!cancelled) setStatus("Coastlines offline — wireframe globe with live markers.");
       }
 
-      // Atmosphere glow (fresnel-style backside shell).
+      // Atmosphere glow, tinted by the live condition (COMPUTED styling).
+      const tintFor = (condition = "") => {
+        const text = condition.toLowerCase();
+        if (/thunder|storm|hail/.test(text)) return new THREE.Color(0xb48cff);
+        if (/rain|shower|drizzle/.test(text)) return new THREE.Color(0x2ea8ff);
+        if (/fog|haze|mist/.test(text)) return new THREE.Color(0x9fb3c8);
+        if (/clear|sun/.test(text)) return new THREE.Color(0xffc861);
+        if (/snow|ice|cold|frost/.test(text)) return new THREE.Color(0xbfe9ff);
+        return new THREE.Color(0x2ea8ff);
+      };
       const glow = new THREE.Mesh(
         new THREE.SphereGeometry(R * 1.14, 32, 32),
         new THREE.ShaderMaterial({
           side: THREE.BackSide, transparent: true, depthWrite: false,
-          uniforms: { tint: { value: new THREE.Color(0x2ea8ff) } },
+          uniforms: { tint: { value: tintFor(weather?.condition) } },
           vertexShader: "varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
           fragmentShader: "varying vec3 vN; uniform vec3 tint; void main(){ float i = pow(0.62 - dot(vN, vec3(0.,0.,1.)), 2.0); gl_FragColor = vec4(tint, 1.0) * i; }",
         })
