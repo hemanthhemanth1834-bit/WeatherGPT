@@ -13,6 +13,11 @@ export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" })
   const [checkedAt, setCheckedAt] = useState("");
 
   const load = async () => {
+    const target = (location || "").trim();
+    if (!target) {
+      setError("Search a location first — provenance needs a place.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -20,7 +25,7 @@ export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" })
         fetchNwpStatus(),
         fetchSatelliteInfo(lat, lon),
         fetchIndianSources(),
-        fetchCurrentWeather(location || "Pune", lat, lon, "gfs").catch(() => null),
+        fetchCurrentWeather(target, lat, lon, "gfs").catch(() => null),
       ]);
       setNwp(n);
       setSat(s);
@@ -35,6 +40,7 @@ export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" })
   };
 
   useEffect(() => {
+    if (!(location || "").trim()) return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

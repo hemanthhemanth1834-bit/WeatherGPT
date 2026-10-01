@@ -57,7 +57,7 @@ export default function App() {
   const [tab, setTab] = useState("home");
   const [persona, setPersona] = useState("general");
   const [language, setLanguage] = useState("auto");
-  const [place, setPlace] = useState("Pune");
+  const [place, setPlace] = useState("");
   const [weather, setWeather] = useState(null);
   const [alerts, setAlerts] = useState([]);
   const [messages, setMessages] = useState([OpeningMessage()]);
@@ -67,6 +67,12 @@ export default function App() {
   const [micTick, setMicTick] = useState(0);
   const [drawer, setDrawer] = useState(false);
   const [locating, setLocating] = useState(false);
+  // LocationState: { source: GPS|MANUAL|SAVED|UNKNOWN, status: DETECTING|LIVE|MANUAL|LAST_KNOWN|DENIED|UNAVAILABLE|ERROR|IDLE }
+  const [locState, setLocState] = useState({ source: "UNKNOWN", status: "IDLE" });
+  const locRequestId = React.useRef(0);
+  const initDone = React.useRef(false);
+  const savedRef = React.useRef([]);
+  savedRef.current = saved;
   const [gpsLabel, setGpsLabel] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("weathergpt.lastGps") || "null");
@@ -103,21 +109,22 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (initDone.current) return;
+    initDone.current = true;
     let cancelled = false;
     (async () => {
       try {
-        const [wx, al] = await Promise.all([fetchCurrentWeather("Pune"), fetchActiveAlerts()]);
-        if (!cancelled) {
-          setWeather(wx);
-          setAlerts(al);
-        }
+        const al = await fetchActiveAlerts();
+        if (!cancelled) setAlerts(al);
       } catch {
         if (!cancelled) setNotice("Starting offline: live data will load when the backend is reachable.");
       }
     })();
+    attemptGps(false);
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const ask = useCallback(
@@ -167,59 +174,113 @@ export default function App() {
   );
 
   const searchPlace = useCallback(
-    async (name, lat = null, lon = null, state = null) => {
+    async (name, lat = null, lon = null, state = null, source = "MANUAL") => {
       const target = (name || "").trim();
       if (!target) return;
+      const requestId = locRequestId.current;
       setBusy(true);
       try {
         const data = await fetchCurrentWeather(target, lat, lon, "auto", state);
+        if (locRequestId.current !== requestId) return;
         setWeather(data);
         setPlace(data.location);
+        setLocState({ source, status: source === "GPS" ? "LIVE" : source === "SAVED" ? "LAST_KNOWN" : "MANUAL" });
         remember(data.location);
       } catch {
+        if (locRequestId.current !== requestId) return;
         setNotice(`Could not load weather for "${target}". Try again shortly.`);
       } finally {
-        setBusy(false);
+        if (locRequestId.current === requestId) setBusy(false);
       }
     },
     [remember]
   );
 
-  const locateMe = useCallback(() => {
-    if (!navigator.geolocation) {
-      setNotice("Geolocation is not available in this browser.");
-      return;
-    }
-    setLocating(true);
-    setNotice("Detecting location…");
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        try {
-          const rev = await fetchReverseGeocode(latitude, longitude);
-          const name = rev.city || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-          await searchPlace(name, latitude, longitude, rev.state || null);
-          const label = { name, state: rev.state || "", at: Date.now() };
-          setGpsLabel(label);
-          try {
-            localStorage.setItem("weathergpt.lastGps", JSON.stringify(label));
-          } catch {
-            /* noop */
-          }
-          setNotice(`📍 Current Location — ${name}${rev.state ? `, ${rev.state}` : ""}`);
-        } catch {
-          setNotice("Location detected, but place lookup failed — keeping your current location.");
-        } finally {
-          setLocating(false);
+  const attemptGps = useCallback(
+    (manual, savedFallback) => {
+      if (!navigator.geolocation) {
+        if (manual) setNotice("Geolocation is not available in this browser.");
+        else {
+          setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
+          setNotice("Location unavailable. Search for a location manually.");
         }
-      },
-      () => {
-        setLocating(false);
-        setNotice("Location permission denied — keeping your current manual location.");
-      },
-      { timeout: 10000 }
-    );
-  }, [searchPlace]);
+        return;
+      }
+      const requestId = ++locRequestId.current;
+      setLocating(true);
+      setLocState({ source: "UNKNOWN", status: "DETECTING" });
+      if (manual) setNotice("Detecting location…");
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          if (locRequestId.current !== requestId) return;
+          const { latitude, longitude, accuracy } = pos.coords;
+          try {
+            const rev = await fetchReverseGeocode(latitude, longitude);
+            if (locRequestId.current !== requestId) return;
+            const name = rev.city || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+            await searchPlace(name, latitude, longitude, rev.state || null, "GPS");
+            if (locRequestId.current !== requestId) return;
+            const label = { name, state: rev.state || "", at: Date.now() };
+            setGpsLabel(label);
+            try {
+              localStorage.setItem("weathergpt.lastGps", JSON.stringify(label));
+            } catch {
+              /* noop */
+            }
+            setNotice(`📍 Current Location — ${name}${rev.state ? `, ${rev.state}` : ""}`);
+          } catch {
+            if (locRequestId.current !== requestId) return;
+            setLocState({ source: "UNKNOWN", status: "ERROR" });
+            setNotice("GPS detected, but city lookup failed. Search for a location manually.");
+          } finally {
+            if (locRequestId.current === requestId) setLocating(false);
+          }
+        },
+        (err) => {
+          if (locRequestId.current !== requestId) return;
+          setLocating(false);
+          if (err && err.code === err.TIMEOUT) {
+            setLocState({ source: "UNKNOWN", status: "ERROR" });
+            setNotice("Location request timed out. Search for a location manually.");
+          } else if (err && err.code === err.POSITION_UNAVAILABLE) {
+            setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
+            setNotice("Location unavailable. Search for a location manually.");
+          } else {
+            setLocState({ source: "UNKNOWN", status: "DENIED" });
+            setNotice("Location access was denied. Search for a location manually.");
+          }
+          if (!manual && savedFallback && savedFallback.length > 0) {
+            searchPlace(savedFallback[0], null, null, null, "SAVED");
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    },
+    [searchPlace]
+  );
+
+  const locateMe = useCallback(() => {
+    attemptGps(true, saved);
+  }, [attemptGps, saved]);
+
+  useEffect(() => {
+    if (initDone.current) return;
+    initDone.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const al = await fetchActiveAlerts();
+        if (!cancelled) setAlerts(al);
+      } catch {
+        if (!cancelled) setNotice("Starting offline: live data will load when the backend is reachable.");
+      }
+    })();
+    attemptGps(false, savedRef.current || []);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goTab = useCallback((name) => {
     const map = { open_map: "map", open_dashboard: "dashboard", open_agri: "agri", open_alerts: "alerts", open_compare: "compare" };
@@ -305,7 +366,7 @@ export default function App() {
               }
             >
               {tab === "home" && (
-                <HomePanel weather={weather} busy={busy} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} onRefresh={searchPlace} />
+                <HomePanel weather={weather} busy={busy} detecting={locating} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} onRefresh={searchPlace} />
               )}
               {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
               {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}

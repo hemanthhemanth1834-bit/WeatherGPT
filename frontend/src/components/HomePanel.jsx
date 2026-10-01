@@ -16,7 +16,7 @@ function agoLabel(ist) {
   return `${Math.floor(mins / 60)} h ${mins % 60} min ago`;
 }
 
-export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, onTab, onRefresh }) {
+export default function HomePanel({ weather, busy, detecting, alertCount, alerts, onAsk, onTab, onRefresh }) {
   const [risk, setRisk] = useState(null);
   const [auto, setAuto] = useState(false);
 
@@ -80,7 +80,7 @@ export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, on
               </div>
             ) : (
               <p style={{ color: "var(--wg-muted)", fontSize: "0.85rem", margin: 0 }}>
-                {busy ? "Loading live snapshot…" : "Search a place to load its live snapshot."}
+                {detecting ? "Detecting your location…" : busy ? "Loading live snapshot…" : "Search a place to load its live command snapshot."}
               </p>
             )}
             <div className="wg-mono" style={{ marginTop: "0.6rem", fontSize: "0.64rem", color: "var(--wg-muted)" }}>
@@ -90,10 +90,10 @@ export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, on
         </div>
       </div>
 
-      {!weather && !busy && (
-        <div className="wg-alert info" role="status">Search a place above to load its live command snapshot.</div>
+      {!weather && !busy && !detecting && (
+        <div className="wg-alert info" role="status">Search a place above, or tap ◎ to use your current location.</div>
       )}
-      {busy && !weather && (
+      {(busy || detecting) && !weather && (
         <div role="status" style={{ display: "flex", justifyContent: "center", padding: "2rem" }}>
           <div className="wg-spin" aria-label="Loading live weather" />
         </div>

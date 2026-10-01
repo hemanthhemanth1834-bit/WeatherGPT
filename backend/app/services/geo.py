@@ -292,7 +292,7 @@ def reverse(lat: float, lon: float) -> Dict[str, Any]:
     try:
         from .cache import cached
         return cached(86400, f"rev:{round(lat, 3)}:{round(lon, 3)}", lookup)
-    except RuntimeError:
+    except Exception:
         return {"city": f"{lat:.2f}, {lon:.2f}", "state": "",
                 "country": "", "lat": lat, "lon": lon,
                 "data_source": "coordinates (reverse lookup unavailable)",

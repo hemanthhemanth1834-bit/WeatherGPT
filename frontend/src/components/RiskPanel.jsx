@@ -17,13 +17,18 @@ export default function RiskPanel({ location }) {
   const [error, setError] = useState("");
 
   const load = async () => {
+    const target = (location || "").trim();
+    if (!target) {
+      setError("Search a location first — risk needs a place to assess.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
       const [r, w, t] = await Promise.all([
-        fetchRiskAssessment(location || "Pune"),
-        fetchCurrentWeather(location || "Pune"),
-        fetchTravelSafety(location || "Pune").catch(() => null),
+        fetchRiskAssessment(target),
+        fetchCurrentWeather(target),
+        fetchTravelSafety(target).catch(() => null),
       ]);
       setRisk(r);
       setClimate(w);

@@ -28,6 +28,50 @@ def test_reverse_endpoint():
     assert body["lat"] == 16.5
 
 
+def test_reverse_fallback_shape(monkeypatch):
+    import app.services.geo as geo_module
+
+    def boom(*a, **k):
+        raise ConnectionError("offline")
+
+    monkeypatch.setattr("requests.request", boom)
+    out = geo_module.reverse(12.34, 56.78)
+    assert out["status"] == "FALLBACK"
+    assert out["lat"] == 12.34 and out["lon"] == 56.78
+
+
+def test_reverse_failure_never_raises(monkeypatch):
+    import app.services.geo as geo_module
+
+    def bad_payload(*a, **k):
+        class Resp:
+            status_code = 200
+
+            def json(self):
+                return {"localityLanguageRequested": "en"}
+
+        return Resp()
+
+    monkeypatch.setattr("requests.request", bad_payload)
+    out = geo_module.reverse(0.0, 0.0)
+    assert out["status"] == "FALLBACK"
+
+
+def test_weather_state_override():
+    body = client.get("/api/weather/current",
+                      params={"location": "Testville", "lat": 18.5,
+                              "lon": 73.8, "state": "Test State"}).json()
+    assert body["location"] == "Testville"
+    assert body["state"] == "Test State"
+    assert body["status"] in ("LIVE", "SIMULATED")
+
+
+def test_no_hardcoded_default_blocks_empty_query():
+    body = client.get("/api/weather/current", params={"location": ""}).json()
+    assert body["status"] in ("LIVE", "SIMULATED")
+    assert body["location"]
+
+
 def test_live_aviation_endpoint():
     import requests
     try:

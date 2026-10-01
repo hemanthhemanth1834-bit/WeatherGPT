@@ -44,6 +44,11 @@ export default function SavedPlacesPanel({ current, saved, weather, onSelect, on
             Stored only in this browser (localStorage). Current: <strong>{current}</strong>
             {weather && <> · {weather.current_temp}° {weather.condition} · <span className="wg-mono">{weather.status}</span></>}
           </p>
+          <p style={{ margin: "0.35rem 0 0", fontSize: "0.7rem", color: "var(--wg-faint)" }}>
+            Privacy: your browser location is used to provide local weather and map information.
+            Location access is controlled by your browser. Only place names are stored here —
+            precise coordinates are sent solely to weather/geocoding providers to fetch your forecast.
+          </p>
         </div>
         <button className="wg-btn" onClick={onAddCurrent}>＋ Save current place</button>
       </div>

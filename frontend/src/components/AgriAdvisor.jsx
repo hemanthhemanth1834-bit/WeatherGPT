@@ -14,7 +14,7 @@ const CROPS = [
 
 export default function AgriAdvisor({ place, onAsk }) {
   const [crop, setCrop] = useState("cotton");
-  const [district, setDistrict] = useState(place || "Nagpur");
+  const [district, setDistrict] = useState(place || "");
   const [data, setData] = useState(null);
   const [wx, setWx] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -28,6 +28,11 @@ export default function AgriAdvisor({ place, onAsk }) {
 
   useEffect(() => {
     let cancelled = false;
+    if (!district.trim()) {
+      setData(null);
+      setWx(null);
+      return undefined;
+    }
     (async () => {
       setBusy(true);
       setError("");
