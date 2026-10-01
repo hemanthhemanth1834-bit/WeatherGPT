@@ -43,11 +43,19 @@ def prefix_of(cap_id):
     return re.match(r"^([A-Z]+)[0-9]+$", cap_id).group(1)
 
 
+def _strip_ui_suffix(line):
+    """Remove every previously appended UI marker, leaving the base row."""
+    pattern = re.compile(r" \| (YES|INFRA|UI Accessible) \|$")
+    previous = None
+    while previous != line:
+        previous, line = line, pattern.sub(" |", line)
+    return line
+
+
 def main():
     raw = MATRIX.read_text(encoding="utf-8").splitlines()
-    # Idempotent: strip a previously appended UI column before rebuilding.
-    lines = [re.sub(r" \| UI Accessible \|$", " |", l) if l.startswith("|") else l
-             for l in raw]
+    # Idempotent: strip any previously appended UI column before rebuilding.
+    lines = [_strip_ui_suffix(l) if l.startswith("|") else l for l in raw]
     rows = [l for l in lines if re.match(r"^\| [A-Z]+[0-9]+ \|", l)]
     assert len(rows) == 464, f"expected 464 rows, found {len(rows)}"
     entries = []
@@ -57,7 +65,7 @@ def main():
         cap_id, category, name = cells[0], cells[1], cells[2]
         frontend, source, provider, status = cells[4], cells[6], cells[7], cells[8]
         if frontend in ("", "—"):
-            tab, reason = None, f"No UI surface ({status.lower()}); verified by {cells[10]}"
+            tab, reason = None, f"No dedicated UI — status {status} (see matrix row {cap_id})"
             ui = "INFRA"
         else:
             tab = OVERRIDES.get(cap_id, PREFIX_TAB[prefix_of(cap_id)])

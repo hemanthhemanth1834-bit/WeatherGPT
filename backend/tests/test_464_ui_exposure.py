@@ -19,12 +19,12 @@ def _registry():
     entries = re.findall(
         r"\{ id: '([A-Z0-9]+)', category: '([^']*)', name: '((?:[^'\\]|\\.)*)', "
         r"status: '([^']*)', source: '((?:[^'\\]|\\.)*)', provider: '((?:[^'\\]|\\.)*)', "
-        r"tab: (None|'[a-z_]+'), reason: '((?:[^'\\]|\\.)*)' \},",
+        r"tab: (null|'[a-z_]+'), reason: '((?:[^'\\]|\\.)*)' \},",
         text)
     cleaned = []
     for e in entries:
         e = list(e)
-        e[6] = None if e[6] == "None" else e[6].strip("'")
+        e[6] = None if e[6] == "null" else e[6].strip("'")
         cleaned.append(tuple(e))
     return cleaned
 
