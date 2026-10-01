@@ -10,10 +10,6 @@ const PERSONAS = [
   ["researcher", "Researcher"],
 ];
 
-export function personaForApi(uiPersona) {
-  return uiPersona === "researcher" ? "general" : uiPersona || "general";
-}
-
 const LANGS = [
   ["auto", "Auto"],
   ["en", "English"],
@@ -35,10 +31,7 @@ export default function Navbar({ onHome, persona, onPersona, language, onLanguag
   const boxRef = useRef(null);
 
   useEffect(() => {
-    if (!place || place.trim().length < 2) {
-      setHints([]);
-      return;
-    }
+    if (!place || place.trim().length < 2) return undefined;
     const timer = setTimeout(async () => setHints(await searchLocations(place.trim(), 6)), 250);
     return () => clearTimeout(timer);
   }, [place]);
@@ -86,7 +79,15 @@ export default function Navbar({ onHome, persona, onPersona, language, onLanguag
           <div ref={boxRef} className="wg-hsearch" style={{ position: "relative", flex: "1 1 11rem", maxWidth: "21rem", minWidth: "10rem" }}>
             <form onSubmit={submit} role="search" style={{ display: "flex", gap: "0.35rem" }}>
               <input className="wg-input" type="search" aria-label="Search for a city, district or locality" placeholder="📍 Search place…" value={place}
-                onChange={(e) => { onPlace(e.target.value); setOpen(true); }} onFocus={() => hints.length && setOpen(true)} style={{ padding: "0.5rem 0.7rem" }} />
+                onChange={(e) => {
+                  onPlace(e.target.value);
+                  if (e.target.value.trim().length < 2) {
+                    setHints([]);
+                    setOpen(false);
+                  } else {
+                    setOpen(true);
+                  }
+                }} onFocus={() => hints.length && setOpen(true)} style={{ padding: "0.5rem 0.7rem" }} />
               <button type="button" className="wg-util" onClick={onLocate} disabled={locating} aria-label={locating ? "Detecting your location" : "Use my current location"} title="Use my current location (GPS)" style={{ padding: "0.4rem 0.6rem" }}>
               {locating ? "…" : "◎"}
             </button>

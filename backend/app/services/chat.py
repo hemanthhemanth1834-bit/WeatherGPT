@@ -14,27 +14,14 @@ from . import geo
 from .advisories import aviation_briefing, climate_reference, crop_advisory
 from .advisories import marine_advisory
 from .alerts import active_alerts
+from .langid import detect_language
 from .risk_engine import assess_risk
 from .weather import WMO_LABELS, get_weather
 
 # ---------------------------------------------------------------------------
-# Language detection
+# Native-script place names (our own compact map; language detection lives
+# in langid.py so native + romanized queries share one analyzer).
 # ---------------------------------------------------------------------------
-# Short keyword sets in our own selection per script.
-SCRIPT_KEYWORDS = {
-    "ta": ["வானிலை", "மழை", "வெப்பநிலை", "இன்று", "நாளை", "பெய்யுமா"],
-    "te": ["వాతావరణం", "వర్షం", "ఉష్ణోగ్రత", "రేపు", "ఈరోజు", "ఎలా"],
-    "bn": ["আবহাওয়া", "বৃষ্টি", "তাপমাত্রা", "আজ", "কাল", "কেমন"],
-    "gu": ["હવામાન", "વરસાદ", "તાપમાન", "આજે", "કાલે", "કેવું"],
-    "pa": ["ਮੌਸਮ", "ਮੀਂਹ", "ਤਾਪਮਾਨ", "ਅੱਜ", "ਕੱਲ੍ਹ", "ਕਿਵੇਂ"],
-    "kn": ["ಹವಾಮಾನ", "ಮಳೆ", "ತಾಪಮಾನ", "ಇಂದು", "ನಾಳೆ", "ಹೇಗಿದೆ"],
-    "ml": ["കാലാവസ്ഥ", "മഴ", "താപനില", "ഇന്ന്", "നാളെ", "പെയ്യുമോ"],
-    "or": ["ପାଣିପାଗ", "ବର୍ଷା", "ତାପମାତ୍ରା", "ଆଜି", "କାଲି", "ହେବ"],
-}
-MARATHI_MARKERS = ["हवामान", "पाऊस", "शेतकरी", "कापूस", "पुण्यात", "मुंबईत",
-                   "सांगा", "कसे", "मध्ये", "आहे", "ऊस", "गहू", "वादळ"]
-HINDI_MARKERS = ["मौसम", "बारिश", "किसान", "फसल", "गेहूं", "कैसे", "बताओ",
-                 "में", "है", "होगा", "सलाह", "दिल्ली"]
 
 # Major places written in native scripts (our own compact map).
 NATIVE_PLACES = {
@@ -53,42 +40,6 @@ NATIVE_PLACES = {
     "കൊച്ചി": "Kochi", "തിരുവനന്തപുരം": "Thiruvananthapuram",
     "ଭୁବନେଶ୍ୱର": "Bhubaneswar", "କଟକ": "Cuttack", "ପୁରୀ": "Puri",
 }
-
-
-def detect_language(text: str) -> str:
-    """Return a language code among en/hi/mr/ta/te/bn/gu/pa/kn/ml/or."""
-    if not (text or "").strip():
-        return "en"
-    for code, words in SCRIPT_KEYWORDS.items():
-        if any(w in text for w in words):
-            return code
-    if "ळ" in text:
-        return "mr"
-    mr_hits = sum(1 for w in MARATHI_MARKERS if w in text)
-    hi_hits = sum(1 for w in HINDI_MARKERS if w in text)
-    if mr_hits or hi_hits:
-        return "mr" if mr_hits >= hi_hits else "hi"
-    for char in text:
-        point = ord(char)
-        if 0x0B80 <= point <= 0x0BFF:
-            return "ta"
-        if 0x0C00 <= point <= 0x0C7F:
-            return "te"
-        if 0x0980 <= point <= 0x09FF:
-            return "bn"
-        if 0x0A80 <= point <= 0x0AFF:
-            return "gu"
-        if 0x0A00 <= point <= 0x0A7F:
-            return "pa"
-        if 0x0C80 <= point <= 0x0CFF:
-            return "kn"
-        if 0x0D00 <= point <= 0x0D7F:
-            return "ml"
-        if 0x0B00 <= point <= 0x0B7F:
-            return "or"
-        if 0x0900 <= point <= 0x097F:
-            return "hi"
-    return "en"
 
 
 # ---------------------------------------------------------------------------

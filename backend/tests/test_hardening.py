@@ -134,3 +134,48 @@ def test_no_unsupported_place_invention(monkeypatch):
     lat, lon, name, state = geo.geocode("Xyzzyplugh Nonexistent")
     assert isinstance(lat, float) and isinstance(lon, float)
     assert -90 <= lat <= 90 and -180 <= lon <= 180
+
+
+def test_tiered_limits_chat_stricter_than_default(monkeypatch):
+    import importlib
+    import app.main as reloaded
+    monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "100000")
+    monkeypatch.setenv("RATE_LIMIT_CHAT_PER_MINUTE", "2")
+    importlib.reload(reloaded)
+    from fastapi.testclient import TestClient as TC
+    limited = TC(reloaded.app, raise_server_exceptions=False)
+    try:
+        assert limited.get("/api/health").status_code == 200
+        assert limited.get("/api/health").status_code == 200
+        chat = limited.post("/api/chat/query", json={"query": "hi", "language": "en"})
+        assert chat.status_code == 200
+        assert limited.post("/api/chat/query", json={"query": "hi", "language": "en"}).status_code == 200
+        blocked = limited.post("/api/chat/query", json={"query": "hi", "language": "en"})
+        assert blocked.status_code == 429
+        assert blocked.headers.get("Retry-After") == "30"
+        # default tier untouched by chat usage
+        assert limited.get("/api/health").status_code == 200
+    finally:
+        monkeypatch.delenv("RATE_LIMIT_PER_MINUTE", raising=False)
+        monkeypatch.delenv("RATE_LIMIT_CHAT_PER_MINUTE", raising=False)
+        importlib.reload(main_module)
+
+
+def test_wrf_adapter_off_by_default(monkeypatch):
+    from app.services import wrf_adapter
+    for var in ("WRF_ENABLED", "WRF_GRIB_PATH", "WRF_NC_PATH"):
+        monkeypatch.delenv(var, raising=False)
+    status = wrf_adapter.wrf_status()
+    assert status["status"] == "NOT CONFIGURED"
+    assert "never labelled WRF" in status["note"] or "GFS" in status["note"]
+
+
+def test_wrf_adapter_needs_real_file(monkeypatch, tmp_path):
+    from app.services import wrf_adapter
+    monkeypatch.setenv("WRF_ENABLED", "true")
+    monkeypatch.setenv("WRF_GRIB_PATH", str(tmp_path / "missing.grib2"))
+    assert wrf_adapter.wrf_status()["status"] == "NOT CONFIGURED"
+    real = tmp_path / "wrfout_d01"
+    real.write_bytes(b"fake-bytes-are-not-parsed")
+    monkeypatch.setenv("WRF_GRIB_PATH", str(real))
+    assert wrf_adapter.wrf_status()["status"] == "CONFIGURED (local file)"

@@ -50,16 +50,33 @@ app.add_middleware(
 )
 
 # Best-effort per-IP rate limiting (in-memory sliding window; per worker).
-# Generous default so normal use and the test-suite never trip it.
+# Documented honestly: BEST-EFFORT PER INSTANCE, not globally distributed
+# (single serverless workers share no state; no paid store is used).
+# Tiers protect expensive routes more aggressively without blocking demos.
 import os as _os
 import time as _time
 from collections import deque as _deque
 from fastapi import Request as _Request
 from fastapi.responses import JSONResponse as _JSONResponse
 
-_RATE_LIMIT = int(_os.getenv("RATE_LIMIT_PER_MINUTE", "300"))
+_RATE_DEFAULT = int(_os.getenv("RATE_LIMIT_PER_MINUTE", "300"))
+_RATE_TIERS = {
+    "/api/chat/query": int(_os.getenv("RATE_LIMIT_CHAT_PER_MINUTE", "60")),
+    "/api/weather/compare": int(_os.getenv("RATE_LIMIT_COMPARE_PER_MINUTE", "60")),
+    "/api/climate/history": int(_os.getenv("RATE_LIMIT_CLIMATE_PER_MINUTE", "30")),
+    "/api/climate/monthly": int(_os.getenv("RATE_LIMIT_CLIMATE_PER_MINUTE", "30")),
+    "/api/assistant/explain": int(_os.getenv("RATE_LIMIT_EXPLAIN_PER_MINUTE", "30")),
+}
 _RATE_WINDOW = 60.0
+_MAX_TRACKED_IPS = 2000
 _rate_hits: dict = {}
+
+
+def _tier_limit(path: str) -> int:
+    for prefix, limit in _RATE_TIERS.items():
+        if path == prefix:
+            return limit
+    return _RATE_DEFAULT
 
 
 @app.middleware("http")
@@ -67,18 +84,20 @@ async def rate_limit_middleware(request: _Request, call_next):
     if request.url.path.startswith("/api/"):
         ip = request.client.host if request.client else "unknown"
         now = _time.time()
-        hits = _rate_hits.get(ip)
-        if hits is None:
-            hits = _rate_hits[ip] = _deque()
-        while hits and now - hits[0] > _RATE_WINDOW:
-            hits.popleft()
-        if len(hits) >= _RATE_LIMIT:
+        bucket = _rate_hits.get((ip, request.url.path))
+        if bucket is None:
+            if len(_rate_hits) >= _MAX_TRACKED_IPS:
+                _rate_hits.clear()
+            bucket = _rate_hits[(ip, request.url.path)] = _deque()
+        while bucket and now - bucket[0] > _RATE_WINDOW:
+            bucket.popleft()
+        if len(bucket) >= _tier_limit(request.url.path):
             return _JSONResponse(
                 status_code=429,
                 content={"detail": "Rate limit exceeded. Please slow down and retry."},
                 headers={"Retry-After": "30", "Access-Control-Allow-Origin": "*"},
             )
-        hits.append(now)
+        bucket.append(now)
     return await call_next(request)
 
 
@@ -115,6 +134,13 @@ def project() -> dict:
 @app.get("/api/agent/tools")
 def tools() -> dict:
     return list_tools()
+
+
+@app.post("/api/language/analyze")
+def language(payload: dict) -> dict:
+    """Deterministic language/script/intent analysis (no ML, no LLM)."""
+    from .services.langid import analyze_query
+    return analyze_query(str(payload.get("text", ""))[:500])
 
 
 @app.get("/api/agent/engine")

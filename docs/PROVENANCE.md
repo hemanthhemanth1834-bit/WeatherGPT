@@ -27,7 +27,8 @@ unknown provenance was independently reimplemented** from the SIH problem
 statement and the public API contracts — not paraphrased or renamed:
 
 Backend (`backend/app/`): `models.py`, `main.py`, services `geo.py`,
-`weather.py`, `chat.py`, `alerts.py`, `advisories.py` (crops, aviation,
+`weather.py`, `chat.py` (intent routing; language analysis in `langid.py`),
+`alerts.py`, `advisories.py` (crops, aviation,
 marine, climate), `gdacs.py`, `disasters.py` (USGS/EONET), `history.py`,
 `travel.py`, `llm.py`, `http.py`, `providers.py`, plus `run.py` and `api/index.py`.
 Kept as original transformation work: `config.py`, `services/cache.py`,

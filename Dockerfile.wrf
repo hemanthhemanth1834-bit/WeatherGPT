@@ -1,0 +1,15 @@
+# OPTIONAL local WRF runtime (OFF by default, not used in production).
+# This file documents how a WRF-ARW output could be served next to the app.
+# It is intentionally not referenced by any build or deployment config.
+# To try it: build a WRF image separately, mount your wrfout files at
+# /data/wrf, then run the API with WRF_ENABLED=true and
+# WRF_GRIB_PATH=/data/wrf/wrfout_d01 (or WRF_NC_PATH=...nc).
+# Parsing also needs: pip install cfgrib xarray netCDF4 eccodes
+# Production keeps using free GFS/Open-Meteo NWP instead.
+
+FROM python:3.14-slim
+WORKDIR /srv
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+ENV WRF_ENABLED=false
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

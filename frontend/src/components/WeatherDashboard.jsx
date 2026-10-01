@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchAirQuality, fetchRegionalTalukas, fetchUV } from "../services/api";
 import { speechEngine } from "../services/voice";
-import { glyphFor } from "./ModernWeatherCard";
+import { glyphFor } from "../services/weatherGlyph";
 import WeatherBrief from "./WeatherBrief";
 import WxIcon from "./WxIcon";
 

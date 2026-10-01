@@ -4,25 +4,26 @@ Status policy: never claim live GFS/WRF ingestion unless actually configured.
 - GFS: LIVE via Open-Meteo global NWP blend (clearly labelled, API-DEPENDENT).
 - WRF: NOT CONFIGURED in this environment (interface ready, needs GRIB/NetCDF pipeline).
 """
-import os
 from typing import Dict, Any
+
+from .wrf_adapter import wrf_status
 
 
 def get_nwp_status() -> Dict[str, Any]:
-    wrf_configured = os.getenv("WRF_ENABLED", "false").lower() == "true"
-    grib_path = os.getenv("WRF_GRIB_PATH", "")
+    wrf = wrf_status()
     return {
         "integration": "READY",
         "gfs": {
             "status": "LIVE",
-            "provider": "Open-Meteo (GFS + ICON + ECMWF blend, 0.125° ensemble grid)",
+            "provider": "Open-Meteo (GFS + ICON + ECMWF blend; explicit GFS via ?model=gfs)",
             "data_type": "Forecast",
             "notes": "Current forecast values in this app are served from this live NWP blend.",
         },
         "wrf": {
-            "status": "CONFIGURED" if wrf_configured else "NOT CONFIGURED",
+            "status": wrf["status"],
             "expected_inputs": ["GRIB2 via NOMADS", "NetCDF via local WRF-ARW output"],
-            "configured_path": grib_path or None,
+            "configured_path": wrf["path"],
+            "adapter_note": wrf["note"],
             "parser_architecture": (
                 "Ready interface: cfgrib/xarray ingestion -> subset by lat/lon box -> "
                 "extract T2m/RH/wind/precip -> cache -> serve via /api/nwp/forecast. "

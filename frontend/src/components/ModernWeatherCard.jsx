@@ -2,24 +2,6 @@ import React from "react";
 import WxIcon from "./WxIcon";
 
 /* Compact weather summary used inside chat replies. Original component. */
-const GLYPH = {
-  Sun: "☀️",
-  SunMedium: "🌤️",
-  CloudSun: "⛅",
-  Cloud: "☁️",
-  CloudFog: "🌫️",
-  CloudDrizzle: "🌦️",
-  CloudRain: "🌧️",
-  CloudRainWind: "⛈️",
-  CloudLightning: "🌩️",
-  CloudHail: "🌨️",
-  Snowflake: "❄️",
-};
-
-export function glyphFor(icon) {
-  return GLYPH[icon] || "🌤️";
-}
-
 export default function ModernWeatherCard({ weather }) {
   if (!weather) return null;
   const peak = weather.hourly?.length

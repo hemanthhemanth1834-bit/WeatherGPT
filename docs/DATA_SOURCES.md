@@ -19,7 +19,7 @@ Verified live on 30 Sep–01 Oct 2026 (see `/api/providers/health`).
 | NASA EONET | open wildfires | OFFICIAL third-party | Free, no key | Satellite detections, verify locally |
 | OpenStreetMap | basemap tiles | LIVE | Free (ODbL) | Tile fair-use policy |
 | Web Speech API | STT/TTS 11 languages | LIVE | Browser-native | Chrome/Edge best; mic permission |
-| WRF feed | — | NOT CONFIGURED | would need feed | No free live source; interface ready |
+| WRF feed | — | NOT CONFIGURED | would need feed | Optional local-file adapter (`wrf_adapter.py`, OFF); GFS is the production alternative |
 | MOSDAC / ISRO | — | NOT CONFIGURED | auth required | Portal reachable, no open data API |
 | IMD feed | — | NOT CONFIGURED | no open API found | Probed paths 404; portal only |
 | INCOIS feed | — | NOT CONFIGURED | no open API found | Portal reachable only |

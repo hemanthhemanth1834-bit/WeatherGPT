@@ -7,8 +7,9 @@ USER QUERY → INTENT DETECTION → LOCATION EXTRACTION → TOOL SELECTION
 → LIVE DATA RETRIEVAL → SOURCE/EVIDENCE → GROUNDED RESPONSE → PROVENANCE
 ```
 
-1. **Language** — script + keyword detection across 11 languages
-   (en, hi, mr, ta, te, bn, gu, pa, kn, ml, or); explicit UI override wins.
+1. **Language** — `services/langid.py`: Unicode script ranges plus
+   Romanized weather-vocabulary scoring (Hinglish-style) with confidence;
+   explicit UI override wins. Analysis at `POST /api/language/analyze`.
 2. **Location** — gazetteer → native-script map → `in/at/near <Place>` →
    fallback place. GPS path resolves via reverse-geocode first.
 3. **Intent** — compare / agri / aviation / marine / alerts / climate /

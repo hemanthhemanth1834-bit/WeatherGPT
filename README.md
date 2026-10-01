@@ -77,9 +77,9 @@ evaluated and deliberately not used (see `THIRD_PARTY_NOTICES.md`).
 ## GFS / WRF / NWP
 
 - **GFS: LIVE** via the Open-Meteo blend (`GET /api/nwp/status`).
-- **WRF: NOT CONFIGURED.** The interface documents the GRIB2/NetCDF
-  (`cfgrib`/`xarray`) ingestion design, enabled via `WRF_ENABLED` /
-  `WRF_GRIB_PATH` when a feed exists. No live WRF is claimed.
+- **WRF: NOT CONFIGURED.** Optional local-file adapter (`services/wrf_adapter.py`,
+  `Dockerfile.wrf` reference only, OFF by default) activates only when
+  `WRF_ENABLED=true` plus a real GRIB2/NetCDF path is present.
 
 ## GIS
 
@@ -131,9 +131,10 @@ insights. Not live station records.
 
 ## Multilingual Support
 
-Script + keyword detection across 11 languages, per-language reply
+Script + keyword detection across 11 languages — including Romanized
+(Hinglish-style) vocabulary scoring with confidence — per-language reply
 templates (figures never translated, only labelled), UI switcher,
-BCP-47 voice mapping.
+BCP-47 voice mapping. Analysis API: `POST /api/language/analyze`.
 
 ## Voice
 
@@ -181,8 +182,10 @@ cd frontend && npx oxlint src         # lint (0 errors)
 ```
 
 Outbound provider calls use timeout + retry with backoff (`services/http.py`).
-A best-effort per-IP rate limit (`RATE_LIMIT_PER_MINUTE`, default 300/min)
-returns JSON 429 with `Retry-After`.
+A best-effort per-IP rate limit (`RATE_LIMIT_PER_MINUTE`, default 300/min;
+chat/compare 60/min, climate/explain 30/min via `RATE_LIMIT_*` vars)
+returns JSON 429 with `Retry-After`. Documented honestly as BEST-EFFORT PER
+INSTANCE — no shared state on serverless, no paid store used.
 
 ## Production
 

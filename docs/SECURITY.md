@@ -8,8 +8,9 @@ Implemented and verified in production.
 - **CORS**: explicit allowlist from `CORS_ALLOW_ORIGINS`; wildcard `*`
   automatically disables credentials. Production sets the site origin.
   Verified: production origin echoed, foreign origin rejected.
-- **Rate limiting**: best-effort per-IP sliding window (default 300/min),
-  JSON 429 + `Retry-After` + ACAO header. Tested (pass + block paths).
+- **Rate limiting**: best-effort per-IP sliding window — 300/min default,
+  60/min chat+compare, 30/min climate+explain — JSON 429 + `Retry-After` + ACAO,
+  documented BEST-EFFORT PER INSTANCE. Tested (pass + block + tier paths).
 - **Validation**: pydantic models everywhere; chat query capped at 500 chars
   (422 beyond); query params typed (422 on bad types); guarded endpoints
   return honest 502s, never stack traces.

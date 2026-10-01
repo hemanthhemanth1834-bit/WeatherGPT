@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import Navbar, { personaForApi } from "./components/Navbar";
+import Navbar from "./components/Navbar";
+import { personaForApi } from "./services/persona";
 import WeatherChat from "./components/WeatherChat";
 import { fetchActiveAlerts, fetchCurrentWeather, fetchReverseGeocode, sendChatQuery } from "./services/api";
 
