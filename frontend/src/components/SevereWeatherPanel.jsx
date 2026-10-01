@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters } from "../services/api";
+import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters, fetchRiskAssessment } from "../services/api";
+import BlueprintBuilder from "./BlueprintBuilder";
 import EmergencyContacts from "./EmergencyContacts";
 
 const CATS = ["Cyclone", "Heavy Rain", "Flood", "Thunderstorm", "Lightning", "Heatwave", "Cold Wave", "Strong Wind"];
@@ -19,13 +20,14 @@ function matchesCategory(alert, cat) {
   return keys.some((k) => hay.includes(k));
 }
 
-export default function SevereWeatherPanel({ onAsk }) {
+export default function SevereWeatherPanel({ weather, onAsk }) {
   const [alerts, setAlerts] = useState([]);
   const [track, setTrack] = useState(null);
   const [cat, setCat] = useState("Cyclone");
   const [error, setError] = useState("");
   const [showContacts, setShowContacts] = useState(false);
   const [global, setGlobal] = useState(null);
+  const [risk, setRisk] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -50,6 +52,18 @@ export default function SevereWeatherPanel({ onAsk }) {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (weather?.location) {
+      fetchRiskAssessment(weather.location, weather.lat, weather.lon)
+        .then((r) => !cancelled && setRisk(r))
+        .catch(() => !cancelled && setRisk(null));
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [weather?.location, weather?.lat, weather?.lon]);
+
   const shown = alerts.filter((a) => matchesCategory(a, cat));
 
   return (
@@ -65,9 +79,15 @@ export default function SevereWeatherPanel({ onAsk }) {
             </p>
           </div>
           <button className="wg-btn" onClick={() => setShowContacts(true)}>📞 Emergency contacts</button>
+          <div style={{ display: "flex", gap: "0.35rem" }}>
+            <a className="wg-btn-ghost" href="tel:112" aria-label="Call national emergency 112">112</a>
+            <a className="wg-btn-ghost" href="tel:1078" aria-label="Call NDMA helpline 1078">1078</a>
+          </div>
         </div>
       </div>
       {showContacts && <EmergencyContacts onClose={() => setShowContacts(false)} />}
+
+      <BlueprintBuilder risk={risk} weather={weather} />
 
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
 

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { fetchAirQuality, fetchRegionalTalukas, fetchUV } from "../services/api";
+import { speechEngine } from "../services/voice";
 import { glyphFor } from "./ModernWeatherCard";
+import WeatherBrief from "./WeatherBrief";
 import WxIcon from "./WxIcon";
 
 function Metric({ label, value, sub }) {
@@ -45,6 +47,8 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
   const [metric, setMetric] = useState("temp");
   const [aqi, setAqi] = useState(null);
   const [uv, setUv] = useState(null);
+  const [brief, setBrief] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
   useEffect(() => {
     if (weather?.location) {
@@ -120,8 +124,34 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
           <button className="wg-btn" onClick={() => onAsk(`Full weather and hazard outlook for ${weather.location} this week`)}>
             Ask WeatherGPT →
           </button>
+          <div style={{ display: "flex", gap: "0.4rem" }}>
+            <button className="wg-btn-ghost" style={{ fontSize: "0.72rem" }} onClick={() => setBrief(true)}>
+              📄 Brief
+            </button>
+            <button
+              className="wg-btn-ghost"
+              style={{ fontSize: "0.72rem" }}
+              onClick={() => {
+                if (speaking) {
+                  speechEngine.stopSpeaking();
+                  setSpeaking(false);
+                } else {
+                  speechEngine.speak(
+                    `${weather.location}: ${weather.condition}, ${weather.current_temp} degrees. Feels like ${weather.feels_like}. Rain chance ${weather.hourly?.[0]?.rain_prob ?? 0} percent.`,
+                    "en",
+                    () => setSpeaking(false)
+                  );
+                  setSpeaking(true);
+                }
+              }}
+              aria-label={speaking ? "Stop audio briefing" : "Listen to audio briefing"}
+            >
+              {speaking ? "⏹ Stop" : "🔊 Audio"}
+            </button>
+          </div>
         </div>
       </div>
+      {brief && <WeatherBrief weather={weather} onClose={() => setBrief(false)} />}
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(9rem,1fr))", gap: "0.6rem" }}>
         <Metric label="Humidity" value={`${weather.humidity}%`} />
@@ -142,6 +172,13 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
           {aqi ? (
             <>
               <div style={{ fontSize: "1.4rem", fontWeight: 800 }}>{aqi.us_aqi} <span style={{ fontSize: "0.8rem", fontWeight: 600 }}>{aqi.band}</span></div>
+              <p style={{ fontSize: "0.74rem", color: "var(--wg-muted)", margin: "0.3rem 0 0", lineHeight: 1.55 }}>
+                {aqi.band === "Good" && "Air looks clean — normal outdoor activity is fine."}
+                {aqi.band === "Moderate" && "Air is acceptable; sensitive people should shorten long outdoor exertion."}
+                {aqi.band === "Unhealthy for Sensitive Groups" && "Sensitive groups should limit prolonged outdoor exertion."}
+                {aqi.band !== "Good" && aqi.band !== "Moderate" && aqi.band !== "Unhealthy for Sensitive Groups" && "Limit outdoor exertion; follow official health advisories."}
+                {(weather.hourly?.[0]?.rain_prob ?? 0) >= 40 && " Incoming rain may temporarily wash out particles."}
+              </p>
               <div className="wg-mono" style={{ fontSize: "0.66rem", color: "var(--wg-muted)" }}>{aqi.standard}{aqi.dominant_pollutant && aqi.dominant_pollutant !== "—" ? ` · worst: ${aqi.dominant_pollutant}` : ""}</div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "0.3rem", marginTop: "0.5rem", fontSize: "0.72rem" }}>
                 {[["PM2.5", aqi.pm2_5], ["PM10", aqi.pm10], ["NO₂", aqi.nitrogen_dioxide], ["O₃", aqi.ozone], ["SO₂", aqi.sulphur_dioxide], ["CO", aqi.carbon_monoxide]].map(([k, v]) => (

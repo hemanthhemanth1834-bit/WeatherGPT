@@ -319,7 +319,7 @@ export default function App() {
               {tab === "agri" && <AgriAdvisor place={place} onAsk={askFromTab} />}
               {tab === "aviation_marine" && <AviationMarine onAsk={askFromTab} />}
               {tab === "alerts" && <AlertCenter onAsk={askFromTab} />}
-              {tab === "severe" && <SevereWeatherPanel onAsk={askFromTab} />}
+              {tab === "severe" && <SevereWeatherPanel weather={weather} onAsk={askFromTab} />}
               {tab === "compare" && <CityComparison onAsk={askFromTab} />}
               {tab === "climate" && <ClimateAnalytics onAsk={askFromTab} />}
               {tab === "risk" && <RiskPanel location={place} />}
