@@ -4,11 +4,11 @@ import { fetchActiveAlerts, fetchCurrentWeather } from "../services/api";
 export default function SavedPlacesPanel({ current, saved, weather, onSelect, onAddCurrent, onRemove }) {
   const [previews, setPreviews] = useState({});
   const [alertNote, setAlertNote] = useState("");
+  const names = saved.slice(0, 8);
+  const key = names.join("|");
 
   useEffect(() => {
     let cancelled = false;
-    const names = saved.slice(0, 8);
-    const key = names.join("|");
     if (!key) return undefined;
     (async () => {
       const entries = {};

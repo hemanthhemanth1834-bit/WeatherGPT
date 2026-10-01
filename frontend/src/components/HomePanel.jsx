@@ -105,7 +105,7 @@ export default function HomePanel({ weather, busy, alertCount, alerts, onAsk, on
             <div>
               <div className="wg-section-title">Now · {weather.location}, {weather.state}</div>
               <div style={{ display: "flex", alignItems: "center", gap: "0.8rem", marginTop: "0.3rem" }}>
-                <span style={{ fontSize: "2.8rem" }} aria-hidden="true">{glyphFor(weather.icon)}</span>
+                <WxIcon icon={weather.icon} size={52} />
                 <span style={{ fontSize: "3rem", fontWeight: 800 }}>{weather.current_temp}°</span>
                 <span>
                   <strong>{weather.condition}</strong>
