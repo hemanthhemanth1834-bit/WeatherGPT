@@ -82,11 +82,13 @@ PROVIDERS: List[Dict[str, Any]] = [
     {"name": "NASA GIBS Tiles", "role": "satellite", "kind": "LIVE tiles",
      "needs_key": False, "probe": probe_gibs},
     {"name": "IMD Portal", "role": "india", "kind": "portal reachable; no open data API",
-     "needs_key": True, "probe": lambda: probe_portal("https://mausam.imd.gov.in/")},
+     "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
     {"name": "MOSDAC / ISRO", "role": "india", "kind": "auth required",
-     "needs_key": True, "probe": lambda: probe_portal("https://www.mosdac.gov.in/")},
+     "needs_key": True, "probe": None, "fixed": "REQUIRES_CREDENTIALS"},
     {"name": "INCOIS", "role": "india", "kind": "no open data API",
-     "needs_key": True, "probe": lambda: probe_portal("https://incois.gov.in/")},
+     "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
+    {"name": "NDMA / Bhuvan / Vedas", "role": "india", "kind": "portals reachable; login-gated data",
+     "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
     {"name": "WRF feed", "role": "nwp", "kind": "no feed provisioned",
      "needs_key": True, "probe": None},
     {"name": "LLM provider", "role": "ai", "kind": "none configured; deterministic tools",
@@ -104,9 +106,12 @@ def health_snapshot(check_live: bool = True) -> Dict[str, Any]:
     rows = []
     for entry in PROVIDERS:
         probe: Callable[[], Dict[str, Any]] | None = entry["probe"]
-        if probe is None or not check_live:
+        if entry.get("fixed"):
+            status = entry["fixed"]
+            result: Dict[str, Any] = {"ok": status == "LIVE", "latency_ms": None}
+        elif probe is None or not check_live:
             status = "NOT_CONFIGURED"
-            result: Dict[str, Any] = {"ok": False, "latency_ms": None}
+            result = {"ok": False, "latency_ms": None}
         else:
             result = probe()
             status = "LIVE" if result["ok"] else "ERROR"

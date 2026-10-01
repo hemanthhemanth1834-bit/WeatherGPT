@@ -332,6 +332,13 @@ def cyclone() -> dict:
     return cyclone_track()
 
 
+@app.get("/api/alerts/india")
+def india_alarms(state: str | None = None) -> dict:
+    """Fused India alert layer: computed + GDACS + tsunami-flagged USGS."""
+    from .services.india import india_alert_layer
+    return india_alert_layer(state)
+
+
 @app.get("/api/disasters/global")
 def disasters(region: str = Query("world", description="'world' or 'india'")) -> dict:
     """Recent global disaster events from the public GDACS feed (OFFICIAL third-party)."""

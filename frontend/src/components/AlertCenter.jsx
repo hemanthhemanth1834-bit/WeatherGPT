@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchActiveAlerts } from "../services/api";
+import { fetchActiveAlerts, fetchIndiaAlerts } from "../services/api";
 import { speechEngine } from "../services/voice";
 import EmergencyContacts from "./EmergencyContacts";
 
@@ -7,6 +7,8 @@ const FILTERS = ["All", "Red", "Orange", "Yellow"];
 
 export default function AlertCenter({ onAsk }) {
   const [alerts, setAlerts] = useState([]);
+  const [india, setIndia] = useState(null);
+  const [scope, setScope] = useState("telemetry");
   const [filter, setFilter] = useState("All");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -54,6 +56,19 @@ export default function AlertCenter({ onAsk }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (scope === "india" && !india) {
+      fetchIndiaAlerts()
+        .then((d) => !cancelled && setIndia(d))
+        .catch(() => !cancelled && setIndia({ items: [], disclaimer: "" }));
+    }
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scope]);
+
   const broadcast = (alert) => {
     if (voicing === alert.id) {
       speechEngine.stopSpeaking();
@@ -73,6 +88,13 @@ export default function AlertCenter({ onAsk }) {
             Computed from live telemetry against documented thresholds — <strong>not official IMD bulletins</strong>.
           </p>
         </div>
+        <div role="group" aria-label="Alert scope" style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+          {[["telemetry", "Telemetry alerts"], ["india", "India focus"]].map(([id, label]) => (
+            <button key={id} className="wg-tab" aria-selected={scope === id} onClick={() => setScope(id)}>
+              {label}
+            </button>
+          ))}
+        </div>
         <div role="group" aria-label="Filter by severity" style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
           {FILTERS.map((level) => (
             <button key={level} className="wg-tab" aria-selected={filter === level} onClick={() => setFilter(level)}>
@@ -88,6 +110,33 @@ export default function AlertCenter({ onAsk }) {
         </div>
       </div>
       {showContacts && <EmergencyContacts onClose={() => setShowContacts(false)} />}
+
+      {scope === "india" && (
+        <div className="wg-card" style={{ padding: "0.9rem 1.1rem" }}>
+          <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.85rem" }}>
+            🇮🇳 India focus <span className="wg-chip estimated" style={{ marginLeft: "0.4rem" }}>FUSED LAYER</span>
+          </h3>
+          {!india ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Loading fused layer…</p>
+          ) : india.items?.length ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", maxHeight: "18rem", overflowY: "auto" }}>
+              {india.items.slice(0, 10).map((item, i) => (
+                <div key={i} style={{ fontSize: "0.78rem", padding: "0.45rem 0.65rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
+                  <strong>[{item.severity}]</strong> {item.headline}
+                  <span className="wg-mono" style={{ display: "block", fontSize: "0.64rem", color: "var(--wg-muted)" }}>
+                    {item.source} · {item.source_type}{item.official ? " · OFFICIAL third-party" : " · unofficial"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>No India items right now.</p>
+          )}
+          {india?.disclaimer && (
+            <p style={{ fontSize: "0.66rem", color: "var(--wg-muted)", margin: "0.4rem 0 0" }}>{india.disclaimer}</p>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="wg-alert error" role="alert">⚠️ {error}</div>

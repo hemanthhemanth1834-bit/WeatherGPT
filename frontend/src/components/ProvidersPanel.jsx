@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { fetchProvidersHealth } from "../services/api";
 
-const TONE = { LIVE: "live", AVAILABLE: "live", FALLBACK: "estimated", ESTIMATED: "estimated", STATIC: "static", DEMO: "demo", NOT_CONFIGURED: "off", ERROR: "off" };
+const TONE = { LIVE: "live", AVAILABLE: "live", PORTAL_ONLY: "static", REQUIRES_CREDENTIALS: "off", FALLBACK: "estimated", ESTIMATED: "estimated", STATIC: "static", DEMO: "demo", NOT_CONFIGURED: "off", ERROR: "off" };
 
 function displayStatus(p) {
   if (p.status === "LIVE" && (p.latency_ms || 0) > 8000) {

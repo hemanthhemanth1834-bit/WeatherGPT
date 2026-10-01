@@ -74,10 +74,13 @@ def test_travel_scoring_pure():
 
 def test_provider_health_shape():
     body = client.get("/api/providers/health", params={"live": False}).json()
-    names = {p["provider"] for p in body["providers"]}
-    assert "Open-Meteo Air Quality" in names
-    assert "WRF feed" in names
-    assert all(p["status"] == "NOT_CONFIGURED" for p in body["providers"])
+    by_name = {p["provider"]: p["status"] for p in body["providers"]}
+    assert "Open-Meteo Air Quality" in by_name
+    assert "WRF feed" in by_name
+    assert by_name["WRF feed"] == "NOT_CONFIGURED"
+    assert by_name["IMD Portal"] == "PORTAL_ONLY"
+    assert by_name["MOSDAC / ISRO"] == "REQUIRES_CREDENTIALS"
+    assert by_name["INCOIS"] == "PORTAL_ONLY"
     assert "evaluated_not_used" in body
 
 
@@ -88,6 +91,23 @@ def test_provider_health_live():
     assert by_name["Open-Meteo Forecast"]["status"] == "LIVE"
     assert by_name["Open-Meteo Air Quality"]["status"] == "LIVE"
     assert by_name["WRF feed"]["status"] == "NOT_CONFIGURED"
+
+
+def test_india_alert_layer_shape():
+    body = client.get("/api/alerts/india").json()
+    assert body["status"] == "LIVE"
+    assert isinstance(body["items"], list)
+    for item in body["items"]:
+        for field in ("source", "source_type", "official", "event", "severity",
+                      "headline", "area", "geometry", "confidence"):
+            assert field in item, f"missing {field}"
+        assert isinstance(item["official"], bool)
+
+
+def test_india_layer_never_invents_official():
+    body = client.get("/api/alerts/india", params={"state": "Maharashtra"}).json()
+    official = [i for i in body["items"] if i["official"]]
+    assert all("IMD" not in i["source"] and "NDMA" not in i["source"] for i in official)
 
 
 def test_engine_status():

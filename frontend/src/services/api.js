@@ -43,6 +43,9 @@ export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null, m
 export const fetchActiveAlerts = (severity = null) =>
   get(severity ? `/alerts/active?severity=${severity}` : "/alerts/active");
 
+export const fetchIndiaAlerts = (state = null) =>
+  get(state ? `/alerts/india?state=${encodeURIComponent(state)}` : "/alerts/india");
+
 export const fetchCycloneTrack = () => get("/alerts/cyclone-track");
 
 export const fetchCropAdvisory = (crop = "paddy", district = "Nagpur", state = "Maharashtra") =>

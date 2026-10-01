@@ -20,6 +20,7 @@ Verified live on 30 Sep–01 Oct 2026 (see `/api/providers/health`).
 | OpenStreetMap | basemap tiles | LIVE | Free (ODbL) | Tile fair-use policy |
 | Web Speech API | STT/TTS 11 languages | LIVE | Browser-native | Chrome/Edge best; mic permission |
 | WRF feed | — | NOT CONFIGURED | would need feed | Optional local-file adapter (`wrf_adapter.py`, OFF); GFS is the production alternative |
+| IMD / MOSDAC / INCOIS / NDMA / Bhuvan | portals reachable; no open machine API found (probed 404/login-gated) | PORTAL_ONLY / REQUIRES_CREDENTIALS | portals free; data auth-gated | Computed alerts + GDACS + wave model used instead; see `/api/alerts/india` fused layer |
 | MOSDAC / ISRO | — | NOT CONFIGURED | auth required | Portal reachable, no open data API |
 | IMD feed | — | NOT CONFIGURED | no open API found | Probed paths 404; portal only |
 | INCOIS feed | — | NOT CONFIGURED | no open API found | Portal reachable only |
