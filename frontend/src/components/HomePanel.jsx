@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
 import WxIcon from "./WxIcon";
 import RealIndiaMap from "./RealIndiaMap";
@@ -66,27 +68,49 @@ function ExplainBlock({ title, children }) {
 }
 
 function LiveRadarPreview({ weather }) {
-  const [frame, setFrame] = useState(null);
+  const host = useRef(null);
+  const mapRef = useRef(null);
+  const radarRef = useRef(null);
+  const markerRef = useRef(null);
+  const [radarTime, setRadarTime] = useState(null);
+
   useEffect(() => {
+    if (!host.current || mapRef.current) return;
     const lat = Number(weather?.lat), lon = Number(weather?.lon);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-    let cancelled = false;
-    fetch("https://api.rainviewer.com/public/weather-maps.json")
-      .then(r => r.json())
-      .then(d => {
-        const latest = d?.radar?.past?.at(-1);
-        if (!latest || cancelled) return;
-        const host = d?.host || "https://tilecache.rainviewer.com";
-        setFrame(`${host}${latest.path}/512/5/${lat}/${lon}/2/1_1.png`);
-      })
-      .catch(() => !cancelled && setFrame(null));
-    return () => { cancelled = true; };
+    const map = L.map(host.current, { zoomControl:false, attributionControl:false, dragging:false, scrollWheelZoom:false, doubleClickZoom:false, boxZoom:false, keyboard:false, touchZoom:false }).setView([lat,lon],7);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom:19}).addTo(map);
+    markerRef.current = L.circleMarker([lat,lon], {radius:6,color:"#a5f3fc",weight:2,fillColor:"#22d3ee",fillOpacity:1}).addTo(map);
+    mapRef.current = map;
+    return () => { map.remove(); mapRef.current=null; radarRef.current=null; markerRef.current=null; };
   }, [weather?.lat, weather?.lon]);
+
+  useEffect(() => {
+    const map=mapRef.current;
+    const lat=Number(weather?.lat), lon=Number(weather?.lon);
+    if (!map || !Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    map.setView([lat,lon],7,{animate:false});
+    markerRef.current?.setLatLng([lat,lon]);
+    let cancelled=false;
+    fetch("https://api.rainviewer.com/public/weather-maps.json")
+      .then(r=>r.json())
+      .then(data=>{
+        if(cancelled || !map || !data?.radar?.past?.length) return;
+        const frame=data.radar.past[data.radar.past.length-1];
+        setRadarTime(frame.time);
+        if(radarRef.current) map.removeLayer(radarRef.current);
+        radarRef.current=L.tileLayer(`${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.78,maxNativeZoom:7,maxZoom:10}).addTo(map);
+      }).catch(()=>{});
+    return()=>{cancelled=true;};
+  },[weather?.lat,weather?.lon]);
 
   return (
     <div className="wg-explain-live">
-      {frame ? <img src={frame} alt="Live precipitation radar around the selected location" /> : <div className="wg-explain-live-empty">LIVE RADAR LOADING…</div>}
-      <div className="wg-explain-live-overlay"><span>● LIVE RADAR</span><small>{weather?.location || "Selected location"} · recent precipitation</small></div>
+      <div ref={host} className="wg-explain-live-map" />
+      <div className="wg-explain-live-overlay">
+        <span>● LIVE RADAR {radarTime ? `· ${new Date(radarTime*1000).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}` : ""}</span>
+        <small>{weather?.location || "Selected location"} · recent precipitation</small>
+      </div>
     </div>
   );
 }
