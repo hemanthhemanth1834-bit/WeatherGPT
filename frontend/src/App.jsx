@@ -207,14 +207,7 @@ export default function App() {
             const name = rev.city || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
             await searchPlace(name, latitude, longitude, rev.state || null, "GPS");
             if (locRequestId.current !== requestId) return;
-            const label = { name, state: rev.state || "", at: Date.now() };
-            setGpsLabel(label);
-            try {
-              localStorage.setItem("weathergpt.lastGps", JSON.stringify(label));
-            } catch {
-              /* noop */
-            }
-            setNotice(`📍 Current Location — ${name}${rev.state ? `, ${rev.state}` : ""}`);
+
           } catch {
             if (locRequestId.current !== requestId) return;
             setLocState({ source: "UNKNOWN", status: "ERROR" });
@@ -256,7 +249,6 @@ export default function App() {
   const goTab = useCallback((name) => {
     const map = { open_map: "map", open_dashboard: "dashboard", open_agri: "agri", open_alerts: "alerts", open_compare: "compare" };
     setTab(map[name] || name);
-    setDrawer(false);
   }, []);
 
   const voiceToChat = useCallback(() => {
@@ -274,17 +266,6 @@ export default function App() {
     <div className="wg-shell">
       <div className="wg-body">
         <div className="wg-maincol wg-reference-maincol">
-          {notice && (
-            <div className="wg-wrap" style={{ marginTop: "0.6rem" }}>
-              <div className="wg-alert warn" role="status">
-                {notice}{" "}
-                <button className="wg-btn-ghost" style={{ marginLeft: "0.5rem" }} onClick={() => setNotice("")}>
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          )}
-
           <main className="wg-wrap" style={{ flex: 1, paddingTop: "0.9rem", paddingBottom: "1.2rem", width: "100%" }}>
             {tab === "chat" && (
               <WeatherChat messages={messages} busy={busy} language={language} persona={persona} onAsk={ask} onTab={goTab} micTick={micTick} />
