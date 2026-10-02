@@ -610,3 +610,6 @@ button, input, select, a { min-height: 0; }
 .wg-ref-map-ocean.arabian{left:7%;top:49%;transform:rotate(-12deg)}
 .wg-ref-map-ocean.bay{right:4%;top:50%;transform:rotate(10deg)}
 .wg-ref-map-ocean.indian{left:35%;bottom:5%;font-size:.55rem}
+
+.wg-ref-station-active{display:inline-flex;align-items:center;gap:.35rem;margin-bottom:.25rem;font-size:.68rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.wg-ref-station-active::before{content:"";width:.42rem;height:.42rem;border-radius:50%;background:#4ade80;box-shadow:0 0 10px rgba(74,222,128,.55)}
