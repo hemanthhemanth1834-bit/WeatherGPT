@@ -26,11 +26,11 @@ function Section({ eyebrow, title, action, onClick, children }) {
   );
 }
 
-function FeatureCard({ icon, title, text, meta, onClick }) {
+function FeatureCard({ icon, title, text, meta, action, onClick }) {
   return (
     <button className="wg-ref-feature wg-card hoverable" onClick={onClick}>
       <span className="wg-ref-icon">{icon}</span>
-      <span className="wg-ref-feature-copy"><strong>{title}</strong><span>{text}</span>{meta && <small>{meta}</small>}</span>
+      <span className="wg-ref-feature-copy"><strong>{title}</strong><span>{text}</span>{action && <small className="wg-ref-feature-action">{action} →</small>}{meta && <small>{meta}</small>}</span>
       <span className="wg-ref-arrow">↗</span>
     </button>
   );
@@ -45,7 +45,7 @@ function StationCard({ name, tag, weather, active, onClick }) {
         <>
           <span className="wg-ref-station-place">{weather.location}, {weather.state || "India"}</span>
           <span className="wg-ref-station-weather"><WxIcon icon={weather.icon} size={38} /><b>{weather.current_temp}°</b><span>{weather.condition}</span></span>
-          <span className="wg-ref-station-metrics">Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}% · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"}</span>
+          <span className="wg-ref-station-feels">Feels {weather.feels_like ?? "—"}° · H: {weather.daily?.[0]?.temp_max ?? "—"}° • L: {weather.daily?.[0]?.temp_min ?? "—"}°</span><span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}%</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"}</span><span className="wg-ref-station-warning">[LIVE DATA] Current provider conditions</span>
         </>
       ) : (
         <span className="wg-ref-station-weather muted">Select/search this place for live telemetry</span>
@@ -118,8 +118,8 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
           <strong>4.2</strong><span>Depth: <b>8 km</b></span><span>14 hours ago</span>
           <b>Mahendragarh-Dehradun Subsurface Ridge</b><span>📍 25 km from New Delhi · Zone IV</span>
         </div>
-        <div className="wg-ref-seismic-copy">Shallow localized tremor bulletin. Review official instructions if you are in an affected area.</div>
-        <div className="wg-ref-seismic-actions"><button className="wg-btn-ghost" onClick={() => setBulletin((bulletin + 1) % 4)}>1/4 · Next →</button><button className="wg-btn" onClick={() => onTab("risk")}>Drop, Cover &amp; Hold Drill</button></div>
+        <div className="wg-ref-seismic-copy">Shallow localized tremor felt across Gurugram, South Delhi, and Noida high-rise residential complexes.</div>
+        <div className="wg-ref-seismic-actions"><button className="wg-btn-ghost" onClick={() => setBulletin((bulletin + 1) % 4)}>1/4 <span>Next →</span></button><button className="wg-btn" onClick={() => onTab("risk")}>Drop, Cover &amp; Hold Drill</button><button className="wg-btn-ghost" onClick={() => onTab("risk")}>Simulate Tremor</button></div>
       </div>
 
       <div className="wg-ref-hero">
@@ -159,22 +159,22 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
       <Section eyebrow="AI INTELLIGENCE" title="Deep-Cast & Disaster Engines">
         <div className="wg-ref-feature-grid">
-          <FeatureCard icon="✦" title="AI Deep-Cast Ensemble" text="ECMWF, GFS, WRF & IMD consensus, thermodynamic context, and what-if forecast interpretation." meta="4 MODELS · LIVE" onClick={() => onTab("dashboard")} />
-          <FeatureCard icon="⌁" title="Evacuation Routing" text="Traffic-aware escape routes, flooded-road avoidance, high-ground shelters and SOS context." meta="LIVE TRAFFIC" onClick={() => onTab("map")} />
-          <FeatureCard icon="◈" title="FloodWatch Digital Twin" text="River gauges, rainfall, terrain and ward-level inundation context for hazard analysis." meta="HYDROLOGY" onClick={() => onTab("risk")} />
-          <FeatureCard icon="◷" title="12-Month Climate Trends" text="Compare temperature and precipitation against climatological normal to spot shifts." meta="30-YR NORMAL" onClick={() => onTab("climate")} />
+          <FeatureCard icon="✦" title="AI Deep-Cast Ensemble" text="ECMWF, GFS, WRF & IMD consensus, thermodynamic CAPE stability, and What-If simulation sandbox." meta="4 MODELS" action="Explore Soundings" onClick={() => onTab("dashboard")} />
+          <FeatureCard icon="⌁" title="Evacuation Routing" text="Traffic-aware line-path escape routes avoiding flooded subways, high-ground shelters & SOS beacon." meta="LIVE TRAFFIC" action="Launch Evacuation Map" onClick={() => onTab("map")} />
+          <FeatureCard icon="◈" title="FloodWatch Digital Twin" text="Real-time CWC river gauges, ward-level inundation mapping, and reservoir spillway alerts." meta="HYDROLOGY" action="View Digital Twin" onClick={() => onTab("risk")} />
+          <FeatureCard icon="◷" title="12-Month Climate Trends" text="Compare regional temperature & precipitation against 1991–2020 climatological normal to spot shifts." meta="30-YR NORMAL" action="Analyze Anomalies" onClick={() => onTab("climate")} />
         </div>
       </Section>
 
       <Section eyebrow="PRIORITY OBSERVATION NETWORK" title="Pinned Weather Dashboard">
-        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 4 STATIONS</b> · Live concurrent telemetry across priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh</label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setStationCount((n) => n === 4 ? 3 : 4)}>Select &amp; Manage</button></span></div>
+        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 4 STATIONS</b> · Live concurrent telemetry across your designated priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">55s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setStationCount((n) => n === 4 ? 3 : 4)}>Select &amp; Manage</button></span></div>
         <div className="wg-ref-station-grid">
           {regional.slice(0, stationCount).map(([name, tag], i) => {
             const stationWeather = i === 0 && weather ? weather : regionalWeather[name] || null;
             return <StationCard key={name} name={name} tag={tag} weather={stationWeather} active={i === 0 && !!stationWeather} onClick={() => onTab("dashboard")} />;
           })}
         </div>
-        {stationCount < 4 && <button className="wg-ref-pin-another wg-card" onClick={() => setStationCount(4)}>＋ <span><b>Pin Another Station</b><small>Monitor up to 4 stations ({stationCount} active)</small></span></button>}
+        {stationCount < 4 && <button className="wg-ref-pin-another wg-card" onClick={() => setStationCount(4)}>＋ <span><b>Pin Another Station</b><small>Monitor up to 4 stations ({stationCount} active)</small></span><em>＋ Browse Indian Observatories</em></button>}
       </Section>
 
       <Section eyebrow="SYNOPTIC ANALYSIS" title="7-Day Synoptic Weather Trajectory" action="Full Meteorology" onClick={() => onTab("dashboard")}>
@@ -189,7 +189,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
       <Section eyebrow="MULTIVARIABLE PROJECTION" title="7-Day Temperature & Precipitation Outlook">
         <div className="wg-ref-outlook-panel wg-card">
-          <div className="wg-ref-outlook-top"><span>Multivariable atmospheric projection model for {askLocation}</span><div><button className={metric === "temperature" ? "active" : ""} onClick={() => setMetric("temperature")}>Dual Trend</button><button className={metric === "precipitation" ? "active" : ""} onClick={() => setMetric("precipitation")}>Precipitation</button></div></div>
+          <div className="wg-ref-outlook-top"><span>Multivariable atmospheric projection model for {askLocation}</span><div><button className={metric === "temperature" ? "active" : ""} onClick={() => setMetric("temperature")}>Dual Trend</button><button className={metric === "temperature" ? "" : "active"} onClick={() => setMetric("temperature")}>Temperature</button><button className={metric === "precipitation" ? "active" : ""} onClick={() => setMetric("precipitation")}>Precipitation</button></div></div>
           <div className="wg-ref-summary-grid">
             <div><span>Thermal Trajectory</span><b>{maxTemps.length ? `${weeklyMax - (weeklyMin || weeklyMax)}° spread` : "—"}</b><small>Diurnal spread from live NWP</small></div>
             <div><span>Weekly Extremes</span><b>{weeklyMax != null ? `${weeklyMax}° / ${weeklyMin}°` : "—"}</b><small>Peak / minimum</small></div>
@@ -206,7 +206,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
               })}
             </div>
           </div>
-          <div className="wg-ref-legend"><span>Max Temperature (°C)</span><span>Min Temperature (°C)</span><span>Rain Probability (%)</span><b>Tap columns or data points to inspect daily synoptics</b></div>
+          <div className="wg-ref-legend"><span>Max Temperature (°C)</span><span>Min Temperature (°C)</span><span>Rain Probability (%)</span><span>Rain mm</span><b>Tap columns or data points to inspect daily synoptics</b></div>
         </div>
       </Section>
 
@@ -222,7 +222,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
               <button className="wg-ref-map-pin p-mum" onClick={() => onAsk("Weather and hazards for Mumbai")}>●<small>Mumbai</small></button>
               <button className="wg-ref-map-pin p-blr" onClick={() => onAsk("Weather and hazards for Bengaluru")}>●<small>Bengaluru</small></button>
             </div>
-            <div className="wg-ref-map-side"><b>Active Station</b><strong>{weather?.location || "New Delhi"}</strong><span>{weather?.lat?.toFixed?.(1) || "28.6"}°N, {weather?.lon?.toFixed?.(1) || "77.2"}°E</span><strong>{weather?.current_temp ?? "31"}°C</strong><div><button className="active" onClick={() => onTab("map")}>Radar</button><button onClick={() => onTab("satellite")}>Satellite</button></div></div>
+            <div className="wg-ref-map-side"><b>Active Station</b><strong>{weather?.location || "New Delhi"}</strong><span>{weather?.lat?.toFixed?.(1) || "28.6"}°N, {weather?.lon?.toFixed?.(1) || "77.2"}°E</span><strong>{weather?.current_temp ?? "31"}°C</strong><div><button className="wg-ref-gps" onClick={() => onTab("map")}>GPS</button><button className="active" onClick={() => onTab("map")}>Radar</button><button onClick={() => onTab("satellite")}>Satellite</button></div></div>
           </div>
           <div className="wg-ref-map-tabs">{["All India","North","South","West & East","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
           <div className="wg-ref-hubs"><b>Quick Hubs:</b>{["New Delhi","Mumbai","Chennai","Bengaluru","Kolkata","Hyderabad","Kochi","Ahmedabad"].map((x) => <button key={x} onClick={() => onAsk(`Weather for ${x}`)}>{x}</button>)}</div>
@@ -232,8 +232,8 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
       <Section eyebrow="SECTORAL INTELLIGENCE" title="Sectoral Climate & Lifestyle Hubs">
         <div className="wg-ref-sector-header"><span>Hyperlocal decision engines tailored to key socio-economic activities</span><b>6 Real-Time Engines</b></div>
         <div className="wg-ref-feature-grid six">
-          <FeatureCard icon="☀" title="Life Cast" text="Jogging, cycling, laundry drying, drone flights, and outdoor health ratings." onClick={() => onAsk(`Give me today's life-cast for ${askLocation}.`)} />
-          <FeatureCard icon="🌾" title="Farm & Crop Advisory" text="Agricultural advisories, sowing/harvesting schedules, and chemical spraying windows." onClick={() => onTab("agri")} />
+          <FeatureCard icon="☀" title="Life Cast" text="Personal lifestyle weather forecasts: jogging, cycling, laundry drying, drone flights, and outdoor health ratings." onClick={() => onAsk(`Give me today's life-cast for ${askLocation}.`)} />
+          <FeatureCard icon="🌾" title="Farm & Crop Advisory" text="GKMS agricultural advisories, sowing/harvesting schedules, and chemical spraying windows." onClick={() => onTab("agri")} />
           <FeatureCard icon="🛣" title="RoadWatch Transit" text="Highway hydroplaning risks, dense fog visibility warnings, and crosswind alerts." onClick={() => onAsk(`Give me road-weather advice for ${askLocation}.`)} />
           <FeatureCard icon="🌳" title="TreeGuard Urban Canopy" text="Urban tree vulnerability, branch-fall danger, windthrow risk, and root anchorage." onClick={() => onTab("climate")} />
           <FeatureCard icon="🧳" title="Weather Trip Planner" text="Multi-waypoint routing with weather-at-arrival forecasting and departure optimization." onClick={() => onAsk(`Help me plan a weather-safe trip around ${askLocation}.`)} />
@@ -260,7 +260,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
           </button>
         ))}
       </div>
-      <footer className="wg-ref-footer"><span>WEATHERGPT · AI WEATHER INTELLIGENCE</span><span>Theme: Auto · Live provider status labels</span><span>Open-Meteo · RainViewer · NASA GIBS · public geospatial sources</span></footer>
+      <footer className="wg-ref-footer"><span>WEATHERGPT · AI WEATHER INTELLIGENCE</span><span>Theme: Auto · {weather?.condition || "Live Weather"}</span><span>Open-Meteo · RainViewer · NASA GIBS · public geospatial sources</span></footer>
     </section>
   );
 }
