@@ -40,7 +40,7 @@ NOT CONFIGURED`).
 - **3D Earth (lazy tab)**: procedural three.js globe, Natural Earth coastlines,
   day/night terminator, live markers (place, alerts, DEMO track, USGS quakes,
   EONET fires); adaptive quality, reduced-motion aware
-- Farm advisories (6 crops), STATIC sample aviation briefings, estimated marine advisories
+- Farm advisories (6 crops), live NOAA ADDS aviation data with STATIC fallback, estimated marine advisories
 - STATIC decadal climate reference with bar visualisations
 - City-vs-city comparison, saved places, NWP/satellite provenance panels
 
@@ -67,7 +67,7 @@ UV. AQI is an **ESTIMATED** placeholder band. Every payload carries
 `data_source / status / updated_at_ist / confidence`; upstream failure
 yields a labelled **SIMULATED** estimate, never a crash.
 
-Free provider stack (all probed LIVE; see `GET /api/providers/health`):
+Free provider stack (see `GET /api/providers/health`):
 Open-Meteo Forecast, Geocoding, **Air Quality** (US AQI + PM2.5/PM10/NO₂/O₃/SO₂/CO),
 **Marine** (wave height/direction/period, sea temperature), **Archive/ERA5**
 (observed yearly history), RainViewer radar, NASA GIBS tiles.
@@ -115,8 +115,10 @@ from live temp/rain/humidity. **Informational only**, Meghdoot-style format.
 
 ## Aviation
 
-**STATIC DEMO DATA**: our own sample METAR/TAF for VIDP/VABB/VOBL/VECC
-with decoded fields and flight categories. Never for flight planning.
+**LIVE NOAA ADDS with STATIC fallback**: METAR/TAF data for the supported
+Indian airport set when the upstream feed responds. When ADDS is silent or
+unavailable, the UI uses clearly labelled STATIC demonstration data.
+Never use the demo data for flight planning.
 
 ## Marine
 
@@ -176,9 +178,9 @@ cd frontend && npm run dev   # http://localhost:5173
 ## Testing
 
 ```bash
-cd backend && python -m pytest -q     # 68 tests: risk, geo, chat, intents, providers, disasters, API, CORS, hardening
+cd backend && python -m pytest -q     # run the complete backend suite; latest reported baseline: 100 passing tests
 cd frontend && npm run build          # production bundle check (entry ~374KB; Earth/Leaflet lazy)
-cd frontend && npx oxlint src         # lint (0 errors)
+cd frontend && npx oxlint src         # lint (0 errors in the latest reported baseline)
 ```
 
 Outbound provider calls use timeout + retry with backoff (`services/http.py`).
@@ -194,9 +196,15 @@ Set explicit `CORS_ALLOW_ORIGINS` on the platform (never commit secrets).
 Backend: any ASGI host (`vercel.json` included for Vercel). Run the smoke
 checks in Testing after deploy.
 
+If Vercel reports `upgradeToPro=build-rate-limit`, that is a deployment
+quota condition rather than evidence of an application build failure.
+Do not change working application code to work around it; retry deployment
+after the provider's quota window clears and then verify the deployed commit.
+
 ## Limitations
 
-WRF / MOSDAC / IMD feed / LLM keys: NOT CONFIGURED. Aviation STATIC.
+WRF / MOSDAC / IMD feed / LLM keys: NOT CONFIGURED.
+Aviation uses LIVE NOAA ADDS when available and STATIC fallback when silent.
 Climate STATIC. AQI/marine/risk ESTIMATED. Alerts computed, unofficial.
 Voice needs a supporting browser. See per-panel labels.
 
