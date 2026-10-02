@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
 import WxIcon from "./WxIcon";
+import RealIndiaMap from "./RealIndiaMap";
 import Live3DIcon from "./Live3DIcon";
 
 function agoLabel(ist) {
@@ -235,18 +236,11 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
       <Section eyebrow="GEOSPATIAL INTELLIGENCE" title="Interactive Subcontinent Mini-Map">
         <div className="wg-ref-map-card wg-card">
           <div className="wg-ref-map-head"><span>CLICK TO SELECT</span><span>Click anywhere on the map or tap a station pin to instantly set your active location.</span></div>
-          <div className="wg-ref-map-body">
-            <div className="wg-ref-map-grid">
-              <span className="wg-ref-map-label n10">10°N</span><span className="wg-ref-map-label n20">20°N</span><span className="wg-ref-map-label n30">30°N</span>
-              <span className="wg-ref-map-label e72">72°E</span><span className="wg-ref-map-label e80">80°E</span><span className="wg-ref-map-label e88">88°E</span>
-              <span className="wg-ref-map-ocean arabian">ARABIAN SEA</span><span className="wg-ref-map-ocean bay">BAY OF BENGAL</span><span className="wg-ref-map-ocean indian">INDIAN OCEAN</span>
-              <button className="wg-ref-map-land" onClick={() => onTab("map")} aria-label="Open interactive India map"><span>INDIA</span><i>●</i></button>
-              <button className="wg-ref-map-pin p-del" onClick={() => onAsk("Weather and hazards for New Delhi")}>●<small>New Delhi</small></button>
-              <button className="wg-ref-map-pin p-mum" onClick={() => onAsk("Weather and hazards for Mumbai")}>●<small>Mumbai</small></button>
-              <button className="wg-ref-map-pin p-blr" onClick={() => onAsk("Weather and hazards for Bengaluru")}>●<small>Bengaluru</small></button>
-            </div>
-            <div className="wg-ref-map-side"><b>Active Station</b><strong>{weather?.location || "New Delhi"}</strong><span>{weather?.lat?.toFixed?.(1) || "28.6"}°N, {weather?.lon?.toFixed?.(1) || "77.2"}°E</span><strong>{weather?.current_temp ?? "31"}°C</strong><div><button className="wg-ref-gps" onClick={() => onTab("map")}>GPS</button><button className="active" onClick={() => onTab("map")}>Radar</button><button onClick={() => onTab("satellite")}>Satellite</button></div></div>
+          <div className="wg-ref-map-body wg-ref-map-real-body">
+            <div className="wg-ref-map-real"><RealIndiaMap weather={weather} onAsk={onAsk} /></div>
+            <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "New Delhi"}</strong><span>{weather?.lat?.toFixed?.(1) || "20.6"}°N, {weather?.lon?.toFixed?.(1) || "79.0"}°E</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>Live Open-Meteo telemetry</small></div>
           </div>
+</div>
           <div className="wg-ref-map-tabs">{["All India","North","South","West","East & NE","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
           <div className="wg-ref-hubs"><b>Quick Hubs:</b>{["New Delhi","Mumbai","Chennai","Bengaluru","Kolkata","Hyderabad","Kochi","Ahmedabad"].map((x) => <button key={x} onClick={() => onAsk(`Weather for ${x}`)}>{x}</button>)}</div>
         </div>
