@@ -11,7 +11,7 @@ vendored into this repository.
 | Package | Version | License | Purpose |
 |---|---|---|---|
 | react, react-dom | 19.2.8 | MIT | UI runtime |
-| vite, @vitejs/plugin-react | 8.2.2 / 6.1.1 | MIT | Build tooling |
+| vite, @vitejs/plugin-react | 8.2.2 / 6.1.0 | MIT | Build tooling |
 | tailwindcss, @tailwindcss/vite | 4.3.3 | MIT | Styling |
 | leaflet | 1.9.4 | BSD-2-Clause | Interactive maps |
 | react-leaflet | 5.0.0 | Hippocratic-2.1 | React bindings for Leaflet — ethical-source terms; review if your policy requires pure OSI licensing (map use is isolated in `GISMap.jsx`) |
@@ -19,7 +19,7 @@ vendored into this repository.
 | react-markdown, remark-gfm | 10.1.0 / 4.0.1 | MIT | Chat markdown rendering |
 | three | 0.x (npm) | MIT | Lazy 3D globe (Earth tab only) |
 | topojson-client | 3.x (npm) | BSD-3-Clause | Decode Natural Earth TopoJSON at runtime |
-| oxlint (dev) | 1.80.0 | MIT | Linting |
+| oxlint (dev) | 1.79.0 | MIT | Linting |
 
 ## Backend (`backend/requirements.txt`)
 
