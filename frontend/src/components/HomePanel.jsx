@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
 import WxIcon from "./WxIcon";
 import RealIndiaMap from "./RealIndiaMap";
+import LiveWeatherChart from "./LiveWeatherChart";
 import Live3DIcon from "./Live3DIcon";
 
 function agoLabel(ist) {
@@ -219,16 +220,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
             <div><span>Peak Rain Probability</span><b>{peakRain != null ? `${peakRain}%` : "—"}</b><small>{peakRain >= 60 ? "Elevated storm/rain risk" : "Current forecast signal"}</small></div>
             <div><span>7-Day Accumulation</span><b>{rainTotal.toFixed(1)} mm</b><small>{rainTotal >= 50 ? "High accumulation watch" : "Forecast accumulation"}</small></div>
           </div>
-          <div className="wg-ref-chart">
-            <div className="wg-ref-chart-y"><span>{weeklyMax ?? 38}°</span><span>{Math.round((weeklyMax ?? 38) - trendRange / 2)}°</span><span>{weeklyMin ?? 20}°</span></div>
-            <div className="wg-ref-bars">
-              {(daily.length ? daily.slice(0, 7) : Array.from({length:7},(_,i)=>({day:`D+${i}`,temp_max:null,temp_min:null,rain_prob:null}))).map((d,i) => {
-                const high = Number(d.temp_max); const low = Number(d.temp_min); const rain = Number(d.rain_prob);
-                const h = Number.isFinite(high) ? Math.max(12, ((high - (weeklyMin ?? 20)) / trendRange) * 100) : 18;
-                return <button key={i} onClick={() => onTab("dashboard")} className="wg-ref-bar-day"><div className="wg-ref-bar-track"><span className="wg-ref-bar" style={{height:`${h}%`}} /><i style={{height:`${Number.isFinite(rain) ? Math.max(4,rain) : 8}%`}} /></div><b>{d.day || d.date?.slice(5) || `D+${i}`}</b><small>{Number.isFinite(high) ? high : "—"}°</small><em>{Number.isFinite(rain) ? rain : "—"}%</em></button>;
-              })}
-            </div>
-          </div>
+          <LiveWeatherChart weather={weather} />
           <div className="wg-ref-legend"><span>Max Temperature (°C)</span><span>Min Temperature (°C)</span><span>Rain Probability (%)</span><span>Rain mm</span><b>Tap columns or data points to inspect daily synoptics</b></div>
         </div>
       </Section>
