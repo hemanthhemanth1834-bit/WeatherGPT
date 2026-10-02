@@ -91,7 +91,7 @@ function LiveRadarPreview({ weather }) {
   );
 }
 
-function ExplanationGrid() {
+function ExplanationGrid({ weather }) {
   const items = [
     ["LIVE WEATHER","Current conditions, rain chance, wind, humidity and AQI."],
     ["AI DEEP-CAST","Weather-model guidance turned into plain-language scenarios."],
@@ -110,7 +110,7 @@ function ExplanationGrid() {
           <h2>Understand Every WeatherGPT Panel</h2>
           <p>Quick guide to what each panel shows and how to read it.</p>
         </div>
-        <LiveRadarPreview weather={window.__wgWeatherForExplain} />
+        <LiveRadarPreview weather={weather} />
       </div>
       <div className="wg-explain-grid">
         {items.map(([title,text]) => (
@@ -190,7 +190,6 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
   const askLocation = weather?.location || "my city";
   const topAlert = alerts?.[0];
-  useEffect(() => { window.__wgWeatherForExplain = weather; return () => { window.__wgWeatherForExplain = null; }; }, [weather]);
   const daily = weather?.daily || [];
   const maxTemps = daily.map((d) => Number(d.temp_max)).filter(Number.isFinite);
   const minTemps = daily.map((d) => Number(d.temp_min)).filter(Number.isFinite);
@@ -254,7 +253,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
         </div>
       </div>
 
-      <ExplanationGrid />
+      <ExplanationGrid weather={weather} />
 
       {topAlert && <button className="wg-ref-alertbar" onClick={() => onTab("alerts")}><span>⚠ ACTIVE ALERT</span><strong>{topAlert.headline}</strong><em>{topAlert.severity}</em><b>View alerts →</b></button>}
 
