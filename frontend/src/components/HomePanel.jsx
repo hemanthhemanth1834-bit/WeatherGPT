@@ -26,10 +26,29 @@ function Section({ title, action, onClick, children }) {
   );
 }
 
+function Live3DIcon({ kind = "weather", size = "sm" }) {
+  const glyph = { weather: "☁", rain: "≋", storm: "ϟ", flood: "≈", climate: "◉", life: "✦", farm: "✿", road: "⌁", tree: "♣", trip: "⌖", solar: "☼" }[kind] || "☁";
+  return <span className={`wg-live3d wg-live3d-${size} wg-live3d-${kind}`} aria-hidden="true"><span className="wg-live3d-orbit"></span><span className="wg-live3d-core">{glyph}</span><span className="wg-live3d-glow"></span></span>;
+}
+
+function iconKind(title = "") {
+  const t = title.toLowerCase();
+  if (t.includes("deep-cast") || t.includes("storm")) return "storm";
+  if (t.includes("evacuation") || t.includes("road")) return "road";
+  if (t.includes("flood")) return "flood";
+  if (t.includes("climate")) return "climate";
+  if (t.includes("life")) return "life";
+  if (t.includes("farm") || t.includes("crop")) return "farm";
+  if (t.includes("tree")) return "tree";
+  if (t.includes("trip")) return "trip";
+  if (t.includes("solar") || t.includes("energy")) return "solar";
+  return "weather";
+}
+
 function FeatureCard({ icon, title, text, meta, action, onClick }) {
   return (
     <button className="wg-ref-feature wg-card hoverable" onClick={onClick}>
-      <span className="wg-ref-icon">{icon}</span>
+      <span className="wg-ref-icon"><Live3DIcon kind={iconKind(title)} /></span>
       <span className="wg-ref-feature-copy"><strong>{title}</strong><span>{text}</span>{action && <small className="wg-ref-feature-action">{action} →</small>}{meta && <small>{meta}</small>}</span>
       <span className="wg-ref-arrow">↗</span>
     </button>
@@ -161,7 +180,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
             <div className="wg-ref-live-head"><span>⌖ CURRENT WEATHER</span><span className="wg-chip live">LIVE</span></div>
             {weather ? (
               <>
-                <div className="wg-ref-temp-row"><WxIcon icon={weather.icon} size={68} /><div><b>{weather.current_temp}°</b><span>Feels like {weather.feels_like}°C</span></div></div>
+                <div className="wg-ref-temp-row"><Live3DIcon kind={weather?.condition?.toLowerCase?.().includes("rain") ? "rain" : "weather"} size="lg" /><WxIcon icon={weather.icon} size={48} /><div><b>{weather.current_temp}°</b><span>Feels like {weather.feels_like}°C</span></div></div>
                 <strong className="wg-ref-condition">{weather.condition}</strong>
                 <div className="wg-ref-location">{weather.location}, {weather.state || "India"}</div>
                 <div className="wg-ref-metrics">
