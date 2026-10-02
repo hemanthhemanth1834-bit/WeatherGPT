@@ -77,7 +77,6 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
   const [auto, setAuto] = useState(false);
   const [stationCount, setStationCount] = useState(3);
   const [metric, setMetric] = useState("dual");
-  const [bulletin, setBulletin] = useState(0);
   const [manageStations, setManageStations] = useState(false);
   const [regionalWeather, setRegionalWeather] = useState({});
 
@@ -144,21 +143,6 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
   return (
     <section className="wg-ref-home" aria-label="WeatherGPT Intelligence Hub">
-      <div className="wg-ref-seismic">
-        <div className="wg-ref-seismic-main">
-          <span className="wg-ref-seismic-badge">{["NCS SEISMIC BULLETIN","IMD WEATHER BULLETIN","CWC HYDROLOGY BULLETIN","NDMA SAFETY BULLETIN"][bulletin]}</span>
-          <strong>{["4.2","RED","FLOOD WATCH","READY"][bulletin]}</strong><span>{["Depth: 8 km","Heavy rain advisory","River gauge watch","Emergency readiness"][bulletin]}</span><span>{["14 hours ago","Live","Live","Updated"][bulletin]}</span>
-          <b>{["Mahendragarh-Dehradun Subsurface Ridge","New Delhi, Delhi NCR","Yamuna basin monitoring","National emergency preparedness"][bulletin]}</b><span>📍 {weather?.location || "New Delhi"} · India</span>
-        </div>
-        <div className="wg-ref-seismic-copy">{[
-          "Shallow localized tremor felt across Gurugram, South Delhi, and Noida high-rise residential complexes.",
-          "Monitor rainfall, thunderstorm and visibility conditions using the live WeatherGPT telemetry feed.",
-          "Review rainfall accumulation and flood-risk signals before travel or evacuation decisions.",
-          "Keep emergency contacts and evacuation information available during severe-weather conditions."
-        ][bulletin]}</div>
-        <div className="wg-ref-seismic-actions"><button className="wg-btn-ghost" onClick={() => setBulletin((bulletin + 1) % 4)}>{bulletin + 1}/4 <span>Next →</span></button><button className="wg-btn" onClick={() => onTab("risk")}>Drop, Cover &amp; Hold Drill</button><button className="wg-btn-ghost" onClick={() => onTab("risk")}>Simulate Tremor</button></div>
-      </div>
-
       <div className="wg-ref-hero">
         <div className="wg-ref-hero-location">WeatherGPT Intelligence Hub <span>{weather?.location || "New Delhi"}, {weather?.state || "Delhi NCR"}</span></div>
         <div className="wg-ref-hero-grid">
