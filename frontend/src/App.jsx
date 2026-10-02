@@ -1,6 +1,7 @@
 import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import { personaForApi } from "./services/persona";
 import WeatherChat from "./components/WeatherChat";
+import ReferenceChrome from "./components/ReferenceChrome";
 import { fetchActiveAlerts, fetchCurrentWeather, fetchReverseGeocode, sendChatQuery } from "./services/api";
 
 /* Secondary views ride in lazy chunks; home + chat entry stays lean. */
@@ -263,71 +264,28 @@ export default function App() {
 
 
   return (
-    <div className="wg-shell">
-      <div className="wg-body">
-        <div className="wg-maincol wg-reference-maincol">
-          <main className="wg-wrap" style={{ flex: 1, paddingTop: "0.9rem", paddingBottom: "1.2rem", width: "100%" }}>
-            {tab === "chat" && (
-              <WeatherChat messages={messages} busy={busy} language={language} persona={persona} onAsk={ask} onTab={goTab} micTick={micTick} />
-            )}
-            <Suspense
-              fallback={
-                <div role="status" style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
-                  <div className="wg-spin" aria-label="Loading panel" />
-                </div>
-              }
-            >
-              {tab === "home" && (
-                <HomePanel weather={weather} busy={busy} detecting={locating} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} onRefresh={searchPlace} />
-              )}
-              {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
-              {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
+    <ReferenceChrome tab={tab} onTab={goTab} weather={weather} alertCount={alerts.length}>
+      <main className="wg-wrap wg-reference-main">
+        {tab === "chat" && <WeatherChat messages={messages} busy={busy} language={language} persona={persona} onAsk={ask} onTab={goTab} micTick={micTick} />}
+        <Suspense fallback={<div role="status" style={{ display: "flex", justifyContent: "center", padding: "4rem" }}><div className="wg-spin" aria-label="Loading panel" /></div>}>
+          {tab === "home" && <HomePanel weather={weather} busy={busy} detecting={locating} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} onRefresh={searchPlace} />}
+          {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
+          {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
           {tab === "earth" && <Earth3D weather={weather} />}
-              {tab === "agri" && <AgriAdvisor place={place} onAsk={askFromTab} />}
-              {tab === "aviation_marine" && <AviationMarine onAsk={askFromTab} />}
-              {tab === "alerts" && <AlertCenter onAsk={askFromTab} />}
-              {tab === "severe" && <SevereWeatherPanel weather={weather} onAsk={askFromTab} />}
-              {tab === "compare" && <CityComparison onAsk={askFromTab} />}
-              {tab === "climate" && <ClimateAnalytics onAsk={askFromTab} />}
-              {tab === "risk" && <RiskPanel location={place} />}
-              {tab === "nwp" && (
-            <>
-              <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="nwp" />
-              <div style={{ marginTop: "0.8rem" }}>
-                <ProvidersPanel />
-              </div>
-            </>
-          )}
-              {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
-              {tab === "saved" && (
-                <SavedPlacesPanel current={place} saved={saved} weather={weather}
-                  onSelect={(name) => searchPlace(name)} onAddCurrent={() => remember(place)} onRemove={removeSaved} />
-              )}
-              {tab === "about" && <AboutDeveloper />}
+          {tab === "agri" && <AgriAdvisor place={place} onAsk={askFromTab} />}
+          {tab === "aviation_marine" && <AviationMarine onAsk={askFromTab} />}
+          {tab === "alerts" && <AlertCenter onAsk={askFromTab} />}
+          {tab === "severe" && <SevereWeatherPanel weather={weather} onAsk={askFromTab} />}
+          {tab === "compare" && <CityComparison onAsk={askFromTab} />}
+          {tab === "climate" && <ClimateAnalytics onAsk={askFromTab} />}
+          {tab === "risk" && <RiskPanel location={place} />}
+          {tab === "nwp" && <><NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="nwp" /><div style={{ marginTop: "0.8rem" }}><ProvidersPanel /></div></>}
+          {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
+          {tab === "saved" && <SavedPlacesPanel current={place} saved={saved} weather={weather} onSelect={(name) => searchPlace(name)} onAddCurrent={() => remember(place)} onRemove={removeSaved} />}
+          {tab === "about" && <AboutDeveloper />}
           {tab === "capabilities" && <CapabilitiesHub onOpen={(t) => setTab(t)} />}
-            </Suspense>
-          </main>
-
-        </div>
-      </div>
-
-      <div className="wg-bottomnav wg-ref-commandbar">
-        <nav aria-label="Command">
-          {[
-            ["home", "⌂", "Home"],
-            ["chat", "✦", "AI Chat"],
-            ["compare", "⇄", "Compare"],
-            ["alerts", "⚠", "Alerts"],
-            ["capabilities", "⚙", "Settings"],
-            ["capabilities", "▦", "Modules"],
-          ].map(([id, ico, label], index) => (
-            <button key={`${id}-${index}`} className="wg-bnav" aria-selected={tab === id} onClick={() => goTab(id)}>
-              <span className="ico" aria-hidden="true">{ico}</span>
-              <span>{label}</span>
-            </button>
-          ))}
-        </nav>
-      </div>
-    </div>
+        </Suspense>
+      </main>
+    </ReferenceChrome>
   );
 }
