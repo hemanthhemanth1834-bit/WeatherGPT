@@ -100,7 +100,18 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
   const daily = weather?.daily || [];
   const maxTemps = daily.map((d) => Number(d.temp_max)).filter(Number.isFinite);
   const minTemps = daily.map((d) => Number(d.temp_min)).filter(Number.isFinite);
-  const rainVals = daily.map((d) => Number(d.rain_prob)).filter(Number.isFinite);
+  const hourly = weather?.hourly || [];
+  const rainProbByDate = useMemo(() => {
+    const map = {};
+    hourly.forEach((h) => {
+      const date = String(h.time || "").slice(0, 10);
+      const value = Number(h.rain_prob);
+      if (!date || !Number.isFinite(value)) return;
+      map[date] = Math.max(map[date] ?? 0, value);
+    });
+    return map;
+  }, [hourly]);
+  const rainVals = daily.map((d) => Number.isFinite(Number(d.rain_prob)) ? Number(d.rain_prob) : (rainProbByDate[d.date] ?? 0));
   const weeklyMax = maxTemps.length ? Math.max(...maxTemps) : null;
   const weeklyMin = minTemps.length ? Math.min(...minTemps) : null;
   const peakRain = rainVals.length ? Math.max(...rainVals) : null;
@@ -181,7 +192,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
         <div className="wg-ref-synoptic wg-card">
           <div className="wg-ref-synoptic-head"><span>Day-by-day temperature ranges, rain probability curve, and wind velocity projections for {askLocation}</span><button className="wg-btn-ghost" onClick={() => onAsk(`Give me synoptic trend analysis for ${askLocation}.`)}>Synoptic Trend Analysis →</button></div>
           <div className="wg-ref-synoptic-days">
-            {daily.slice(0, 7).map((d, i) => <button key={i} onClick={() => onTab("dashboard")}><b>{i === 0 ? "TODAY" : d.day || d.date?.slice(5) || `D+${i}`}</b><span>{d.temp_max ?? "—"}° / {d.temp_min ?? "—"}°</span><small>🌧 {d.rain_prob ?? "—"}%</small><em>💨 {d.wind_speed ?? "—"}</em></button>)}
+            {daily.slice(0, 7).map((d, i) => <button key={i} onClick={() => onTab("dashboard")}><b>{i === 0 ? "TODAY" : d.day || d.date?.slice(5) || `D+${i}`}</b><span>{d.temp_max ?? "—"}° / {d.temp_min ?? "—"}°</span><small>🌧 {rainProbByDate[d.date] ?? d.rain_prob ?? 0}%</small><em>💨 {d.wind_speed ?? "—"}</em></button>)}
             {!daily.length && <div className="wg-ref-empty">Load a location to populate live synoptic trajectory.</div>}
           </div>
         </div>
