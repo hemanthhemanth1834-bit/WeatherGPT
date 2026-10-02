@@ -4,7 +4,25 @@ import { fetchActiveAlerts, fetchCurrentWeather } from "../services/api";
 export default function SavedPlacesPanel({ current, saved, weather, onSelect, onAddCurrent, onRemove }) {
   const [previews, setPreviews] = useState({});
   const [alertNote, setAlertNote] = useState("");
+  const [profile, setProfile] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("weathergpt.profile") || "") || {
+        name: "", email: "", phone: "", city: current || "", language: "English",
+        units: "Celsius (°C)", notifications: true
+      };
+    } catch {
+      return { name: "", email: "", phone: "", city: current || "", language: "English", units: "Celsius (°C)", notifications: true };
+    }
+  });
   const names = saved.slice(0, 8);
+
+  const updateProfile = (field, value) => {
+    setProfile((prev) => {
+      const next = { ...prev, [field]: value };
+      try { localStorage.setItem("weathergpt.profile", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
   const key = names.join("|");
 
   useEffect(() => {
@@ -51,6 +69,28 @@ export default function SavedPlacesPanel({ current, saved, weather, onSelect, on
           </p>
         </div>
         <button className="wg-btn" onClick={onAddCurrent}>＋ Save current place</button>
+      </div>
+
+      <div className="wg-card wg-profile-card">
+        <div className="wg-profile-heading">
+          <div>
+            <h2>👤 Profile Information</h2>
+            <p>Keep your basic details and weather preferences ready for a more personal WeatherGPT experience.</p>
+          </div>
+          <span className="wg-chip static">Stored on this device</span>
+        </div>
+        <div className="wg-profile-grid">
+          <label><span>Full name</span><input className="wg-input" value={profile.name} onChange={(e)=>updateProfile("name",e.target.value)} placeholder="Enter your name" /></label>
+          <label><span>Email address</span><input className="wg-input" type="email" value={profile.email} onChange={(e)=>updateProfile("email",e.target.value)} placeholder="name@example.com" /></label>
+          <label><span>Phone number <small>(optional)</small></span><input className="wg-input" type="tel" value={profile.phone} onChange={(e)=>updateProfile("phone",e.target.value)} placeholder="+91 XXXXX XXXXX" /></label>
+          <label><span>Home city</span><input className="wg-input" value={profile.city} onChange={(e)=>updateProfile("city",e.target.value)} placeholder="Your city" /></label>
+          <label><span>Preferred language</span><select className="wg-input" value={profile.language} onChange={(e)=>updateProfile("language",e.target.value)}><option>English</option><option>తెలుగు</option><option>हिन्दी</option><option>தமிழ்</option><option>मराठी</option><option>বাংলা</option><option>ಕನ್ನಡ</option><option>മലയാളം</option></select></label>
+          <label><span>Temperature units</span><select className="wg-input" value={profile.units} onChange={(e)=>updateProfile("units",e.target.value)}><option>Celsius (°C)</option><option>Fahrenheit (°F)</option></select></label>
+        </div>
+        <div className="wg-profile-preferences">
+          <label><input type="checkbox" checked={profile.notifications} onChange={(e)=>updateProfile("notifications",e.target.checked)} /> Weather and safety notifications</label>
+          <span>✓ Preferences save automatically</span>
+        </div>
       </div>
 
       {alertNote && <div className="wg-alert info" role="status">{alertNote}</div>}
