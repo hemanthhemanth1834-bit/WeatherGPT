@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Live3DIcon from "./Live3DIcon";
 import Solar3DScene from "./Solar3DScene";
 
@@ -29,6 +29,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
   const [tilt, setTilt] = useState(18);
   const [azimuthDeg, setAzimuthDeg] = useState(180);
   const [animationOn, setAnimationOn] = useState(true);
+  const [motionProgress, setMotionProgress] = useState(0);
 
   const data = useMemo(() => {
     const uv = Math.max(0, num(weather?.uv_index, 4.8));
@@ -56,7 +57,23 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
     return { uv, cloud, humidity, sunrise, sunset, daylight, altitude, azimuth, clearSky, psh, daily, peak, co2, savings, noonHour, loss, profile };
   }, [weather, ratedKw]);
 
+  useEffect(() => {
+    if (!animationOn) return undefined;
+    let frame = 0;
+    const tick = () => {
+      setMotionProgress(p => (p + 0.0028) % 1);
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [animationOn]);
+
   const maxProfile = Math.max(...data.profile, 1);
+  const animatedSolarIndex = motionProgress * Math.max(data.profile.length - 1, 1);
+  const animatedProfileIndex = Math.min(data.profile.length - 1, Math.max(0, Math.floor(animatedSolarIndex)));
+  const trajectoryT = animationOn ? motionProgress : 0.62;
+  const trajectoryLeft = 14 + 72 * trajectoryT;
+  const trajectoryTop = 19 + 70 * (1 - Math.sin(Math.PI * trajectoryT));
   const currentSolarIndex = Math.min(data.profile.length - 1, Math.max(0, Math.round((data.uv / 12) * (data.profile.length - 1))));
   const adjustedYield = +(data.daily * Math.max(.55, 1 - Math.abs(tilt - 20) * .006) * Math.max(.75, 1 - Math.abs(azimuthDeg - 180) / 720)).toFixed(2);
   const chartW = 720, chartH = 280, pad = 42;
@@ -126,13 +143,20 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
         .wg-solar-tabs button{transition:transform .25s,box-shadow .25s,background .25s}
         .wg-solar-tabs button:hover{transform:translateY(-2px)}
         .wg-solar-panel:hover{transform:translateY(-3px);box-shadow:0 24px 50px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.045)}
-        .wg-solar-sun{animation:wgSunPulse 2.4s ease-in-out infinite}
+        .wg-solar-sun{animation:wgSunPulse 2.4s ease-in-out infinite;transition:left .08s linear,top .08s linear}
+        .wg-solar-sun.is-traveling{animation:wgSunTravelGlow 1.8s ease-in-out infinite}
+        @keyframes wgSunTravelGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
         @keyframes wgSunPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 9px rgba(245,158,11,.12),0 0 35px rgba(245,158,11,.65)}50%{transform:scale(1.18);box-shadow:0 0 0 15px rgba(245,158,11,.08),0 0 52px rgba(245,158,11,.82)}}
         .wg-solar-arc{animation:wgArcGlow 3.8s ease-in-out infinite}
         @keyframes wgArcGlow{0%,100%{opacity:.58}50%{opacity:1;filter:drop-shadow(0 0 8px rgba(245,158,11,.35))}}
         .wg-solar-chart-wrap{position:relative}
         .wg-solar-chart-marker{position:absolute;width:13px;height:13px;border-radius:50%;background:#fbbf24;border:2px solid #fff;box-shadow:0 0 0 6px rgba(251,191,36,.13),0 0 20px rgba(251,191,36,.72);pointer-events:none;z-index:2;transition:left .7s ease,top .7s ease}
         .wg-solar-chart-marker.off{opacity:.25}
+        .wg-solar-chart-scan{position:absolute;top:7%;bottom:8%;width:1px;background:linear-gradient(transparent,rgba(251,191,36,.55),transparent);box-shadow:0 0 14px rgba(251,191,36,.32);pointer-events:none;z-index:1;transition:left .08s linear}
+        .wg-solar-flow-line{fill:none;stroke:rgba(255,255,255,.8);stroke-width:2;stroke-dasharray:2 18;stroke-linecap:round;opacity:.8;animation:wgChartFlow 1.1s linear infinite}
+        @keyframes wgChartFlow{to{stroke-dashoffset:-20}}
+        .wg-solar-generation-glow{animation:wgGenerationGlow 1.8s ease-in-out infinite}
+        @keyframes wgGenerationGlow{0%,100%{opacity:.65}50%{opacity:1}}
         .wg-solar-3d-label{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .55rem;border:1px solid rgba(34,211,238,.25);border-radius:999px;background:rgba(34,211,238,.07);color:#67e8f9;font-size:.62rem;font-weight:900;letter-spacing:.04em}
         .wg-solar-rooftop{position:relative;height:235px;margin-top:1rem;border-radius:22px;background:radial-gradient(circle at 70% 18%,rgba(245,158,11,.18),transparent 28%),linear-gradient(145deg,#0a1830,#050d1c);overflow:hidden;perspective:900px;border:1px solid rgba(148,163,184,.12)}
         .wg-solar-rooftop-ground{position:absolute;left:9%;right:9%;bottom:23px;height:9px;background:linear-gradient(90deg,#263b56,#0f1b30);transform:skewX(-20deg)}
@@ -200,17 +224,17 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
       {view === "overview" && <div className="wg-solar-main">
         <div className="wg-solar-panel">
           <div className="wg-solar-panel-head"><div><h2>☼ Sun Position &amp; Solar Trajectory</h2><p>Solar elevation proxy &amp; azimuth context</p></div><span className="wg-solar-mini">Daylight: {data.daylight.toFixed(1)}h</span></div>
-          <div className="wg-solar-sunbox"><div className="wg-solar-sun-label">Solar Noon ({Math.floor(data.noonHour)}:{Math.round((data.noonHour%1)*60).toString().padStart(2,"0")})</div><div className="wg-solar-arc"/><div className="wg-solar-sun"/><div className="wg-solar-dash"/><div className="wg-solar-sun-times"><span>🌅 Sunrise {data.sunrise}</span><span>Sun Altitude {data.altitude.toFixed(1)}°</span><span>🌇 Sunset {data.sunset}</span></div></div>
+          <div className="wg-solar-sunbox"><div className="wg-solar-sun-label">Solar Noon ({Math.floor(data.noonHour)}:{Math.round((data.noonHour%1)*60).toString().padStart(2,"0")})</div><div className="wg-solar-arc"/><div className={"wg-solar-sun"+(animationOn?" is-traveling":"")} style={{left:trajectoryLeft+"%",top:trajectoryTop+"%"}}/><div className="wg-solar-dash"/><div className="wg-solar-sun-times"><span>🌅 Sunrise {data.sunrise}</span><span>Sun Altitude {data.altitude.toFixed(1)}°</span><span>🌇 Sunset {data.sunset}</span></div></div>
           <div className="wg-solar-stats"><div className="wg-solar-stat"><small>Solar Azimuth Bearing</small><strong>{data.azimuth}° <em>(SW)</em></strong></div><div className="wg-solar-stat"><small>Solar Zenith Angle</small><strong>{(90-data.altitude).toFixed(1)}°</strong></div><div className="wg-solar-stat"><small>Cloud Attenuation</small><strong>-{data.loss}% Loss</strong></div><div className="wg-solar-stat"><small>Atmospheric UV Index</small><strong style={{color:"#22d3ee"}}>{data.uv.toFixed(1)} <em style={{color:"#94a3b8"}}>({data.uv<3?"Low":data.uv<6?"Moderate":"High"})</em></strong></div></div>
         </div>
         <div className="wg-solar-panel">
           <div className="wg-solar-panel-head"><div><h2>↗ Daylight Solar Generation Profile (kW)</h2><p>Estimated array output vs. clear-sky ceiling across daylight hours</p></div><span style={{color:"#fbbf24",fontWeight:900}}>● Actual estimate　<span style={{color:"#38bdf8"}}>--- Clear Sky Max</span></span></div>
-          <div className="wg-solar-chart-wrap"><div className={"wg-solar-chart-marker"+(!animationOn?" off":"")} style={{left:(10+(currentSolarIndex/Math.max(data.profile.length-1,1))*78)+"%",top:(28+(1-data.profile[currentSolarIndex]/maxProfile)*48)+"%"}}/><svg className="wg-solar-chart" viewBox={`0 0 ${chartW} ${chartH}`} role="img" aria-label="Estimated solar generation curve"><line className="wg-solar-chart-grid" x1="42" x2="678" y1="60" y2="60"/><line className="wg-solar-chart-grid" x1="42" x2="678" y1="120" y2="120"/><line className="wg-solar-chart-grid" x1="42" x2="678" y1="180" y2="180"/><line className="wg-solar-chart-grid" x1="42" x2="678" y1="240" y2="240"/><polygon className="wg-solar-actual" points={area}/><polyline className="wg-solar-ceiling" points={data.profile.map((_,i)=>{const h=5+i; const x=pad+(i/(data.profile.length-1))*(chartW-pad*2); const y=chartH-pad-Math.sin(Math.max(0,Math.min(1,(h-hourValue(data.sunrise,6.2))/data.daylight))*Math.PI)*(chartH-pad*2)*.88; return x+","+y}).join(" ")}/><polyline className="wg-solar-line" points={line}/>{[5,7,9,11,13,15,17,19].map(h=><text key={h} x={pad+((h-5)/14)*(chartW-pad*2)} y="270" textAnchor="middle">{String(h).padStart(2,"0")}:00</text>)}</svg></div>
+          <div className="wg-solar-chart-wrap"><div className={"wg-solar-chart-marker"+(!animationOn?" off":"")} style={{left:(10+(animatedSolarIndex/Math.max(data.profile.length-1,1))*78)+"%",top:(28+(1-data.profile[animatedProfileIndex]/maxProfile)*48)+"%"}}/><div className="wg-solar-chart-scan" style={{left:(10+(animatedSolarIndex/Math.max(data.profile.length-1,1))*78)+"%"}}/><svg className="wg-solar-chart" viewBox={`0 0 ${chartW} ${chartH}`} role="img" aria-label="Estimated solar generation curve"><line className="wg-solar-chart-grid" x1="42" x2="678" y1="60" y2="60"/><line className="wg-solar-chart-grid" x1="42" x2="678" y1="120" y2="120"/><line className="wg-solar-chart-grid" x1="42" x2="678" y1="180" y2="180"/><line className="wg-solar-chart-grid" x1="42" x2="678" y1="240" y2="240"/><polygon className="wg-solar-actual" points={area}/><polyline className="wg-solar-ceiling" points={data.profile.map((_,i)=>{const h=5+i; const x=pad+(i/(data.profile.length-1))*(chartW-pad*2); const y=chartH-pad-Math.sin(Math.max(0,Math.min(1,(h-hourValue(data.sunrise,6.2))/data.daylight))*Math.PI)*(chartH-pad*2)*.88; return x+","+y}).join(" ")}/><polyline className="wg-solar-line wg-solar-generation-glow" points={line}/><polyline className="wg-solar-flow-line" points={line}/>{[5,7,9,11,13,15,17,19].map(h=><text key={h} x={pad+((h-5)/14)*(chartW-pad*2)} y="270" textAnchor="middle">{String(h).padStart(2,"0")}:00</text>)}</svg></div>
           <div className="wg-solar-callout">☼ Optimal Solar Window: {Math.max(9,Math.floor(data.noonHour-1.7))}:30 AM – {Math.min(17,Math.ceil(data.noonHour+2))}:30 PM<small>Estimated peak generation ≈ {data.peak.toFixed(1)} kW · based on current cloud/UV inputs</small></div>
         </div>
       </div>}
 
-      {view === "curve" && <div className="wg-solar-panel"><div className="wg-solar-panel-head"><div><h2>24h Generation Curve</h2><p>Same transparent model, expanded for hourly interpretation.</p></div></div><div className="wg-solar-chart-wrap"><svg className="wg-solar-chart" viewBox={`0 0 ${chartW} ${chartH}`}><polygon className="wg-solar-actual" points={area}/><polyline className="wg-solar-line" points={line}/>{data.profile.map((v,i)=><circle key={i} cx={points[i][0]} cy={points[i][1]} r="4" fill="#fbbf24"/>)}</svg></div></div>}
+      {view === "curve" && <div className="wg-solar-panel"><div className="wg-solar-panel-head"><div><h2>24h Generation Curve</h2><p>Same transparent model, expanded for hourly interpretation.</p></div></div><div className="wg-solar-chart-wrap"><svg className="wg-solar-chart" viewBox={`0 0 ${chartW} ${chartH}`}><polygon className="wg-solar-actual" points={area}/><polyline className="wg-solar-line wg-solar-generation-glow" points={line}/><polyline className="wg-solar-flow-line" points={line}/>{data.profile.map((v,i)=><circle key={i} cx={points[i][0]} cy={points[i][1]} r="4" fill="#fbbf24"/>)}</svg></div></div>}
 
       {view === "outlook" && <div className="wg-solar-panel"><div className="wg-solar-panel-head"><div><h2>7-Day Solar Outlook</h2><p>Animated model view; each bar is an estimate derived from current weather context.</p></div><span className="wg-solar-3d-label">3D YIELD FIELD</span></div><div className="wg-solar-outlook">{Array.from({length:7},(_,i)=>{const factor=Math.max(.55,1-i*.045);const y=+(data.daily*factor).toFixed(2);return <div className="wg-solar-outlook-day" key={i}><small>DAY {i+1}</small><div className="wg-solar-outlook-bar" style={{"--h":Math.max(12,Math.min(88,y/Math.max(data.daily,.1)*88))+"%"}}/><strong>{y} kWh</strong><small>{i===0?"NOW":"FORECAST"}</small></div>})}</div></div>}
 
