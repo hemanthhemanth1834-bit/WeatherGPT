@@ -308,7 +308,6 @@ export default function App() {
             </Suspense>
           </main>
 
-          <footer className="wg-ref-footer"><div className="wg-ref-footer-inner"><span>Theme: Auto · {weather?.condition || "Live Weather"}</span></div></footer>
         </div>
       </div>
 
