@@ -90,7 +90,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
           <button className="wg-ref-install" onClick={installApp} title={installPrompt ? "Install WeatherGPT" : "Install WeatherGPT PWA when supported"}><Download size={14}/>Install App</button>
           <button className="wg-ref-live"><Live3DIcon kind="live" size="xs" label="Live telemetry"/>LIVE</button>
           <div className="wg-ref-language"><Globe size={15}/><select value={language === "auto" ? "en" : language} onChange={(e) => onLanguageChange?.(e.target.value)}>
-            <option value="en">English (EN)</option><option value="hi">हिन्दी (Hindi)</option><option value="ta">தமிழ் (Tamil)</option><option value="te">తెలుగు (Telugu)</option><option value="ml">മലയാളം (Malayalam)</option><option value="kn">ಕನ್ನಡ (Kannada)</option><option value="bn">বাংলা (Bengali)</option><option value="mr">मराठी (Marathi)</option><option value="gu">ગુજરાતી (Gujarati)</option>
+            <option value="en">English (EN)</option><option value="hi">हिन्दी (Hindi)</option><option value="ta">தமிழ் (Tamil)</option><option value="te">తెలుగు (Telugu)</option><option value="ml">മലയാളം (Malayalam)</option><option value="kn">ಕನ್ನಡ (Kannada)</option><option value="bn">বাংলা (Bengali)</option><option value="mr">मराठी (Marathi)</option><option value="gu">ગુજરાતી (Gujarati)</option><option value="pa">ਪੰਜਾਬੀ (Punjabi)</option><option value="or">ଓଡ଼ିଆ (Odia)</option>
           </select></div>
           <button className="wg-ref-user" onClick={() => go("capabilities")} title="Administrator account — full WeatherGPT access"><span>H</span><b>Admin</b></button>
         </div>
