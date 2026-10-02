@@ -387,3 +387,11 @@
 .wg-explain-live-map .leaflet-control-attribution{display:none}
 .wg-explain-live-overlay{z-index:5}
 .wg-explain-live::before{content:"";position:absolute;z-index:4;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(2,8,23,.05) 20%,rgba(2,8,23,.78) 100%)}
+
+.wg-market-head>div:first-child{min-width:0}.wg-market-axis-label{display:block;margin-top:3px;color:#64748b;font-size:9px;font-style:normal;letter-spacing:.04em}
+.wg-market-time{fill:#94a3b8!important;font-size:10px!important;font-weight:700}
+.wg-market-svg{height:340px}
+.wg-market-svg text{paint-order:stroke;stroke:rgba(2,8,23,.75);stroke-width:2px;stroke-linejoin:round}
+.wg-market-line{stroke-width:4}
+.wg-market-point{r:4}
+@media(max-width:800px){.wg-market-svg{height:280px}.wg-market-time{font-size:8px!important}}
