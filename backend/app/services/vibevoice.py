@@ -113,7 +113,7 @@ async def synthesize(text: str, speaker: str = "default", language: str = "en") 
         payload = {
             "text": clean,
             "speaker": speaker or VIBEVOICE_VOICE,
-            "language": "en",
+            "language": language or "en",
         }
 
     try:
