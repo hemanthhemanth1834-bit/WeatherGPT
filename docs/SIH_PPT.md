@@ -22,11 +22,10 @@ free providers → provenance/validation → grounded reply. (See ARCHITECTURE.m
 
 ## 6. AI Agent
 Detect language → extract place → classify intent → call tool → template reply.
-14 tools. Hallucination tests. Optional LLM adapters, deterministic default.
+19 tools. Hallucination tests. Optional LLM adapters, deterministic default.
 
 ## 7. Live Data Sources
-Open-Meteo ×5, NOAA ADDS, RainViewer, NASA GIBS, BigDataCloud, GDACS, OSM —
-all free, probed live. WRF/MOSDAC/IMD/INCOIS honestly NOT CONFIGURED.
+Open-Meteo core services, NOAA ADDS, RainViewer, NASA GIBS, BigDataCloud, GDACS, USGS/EONET, OSM — with each source labelled according to its actual runtime status. WRF/MOSDAC/IMD/INCOIS honestly NOT CONFIGURED.
 
 ## 8. Key Features
 Live weather + 24h/7d, GPS, chat+voice, AQI+UV, risk+travel, alerts, GIS radar,
@@ -45,8 +44,7 @@ No secrets, CORS allowlist, rate limits, validation, retries, honest 502s,
 TTL caches, guarded chat fallback.
 
 ## 12. Testing + Performance
-64/64 pytest, oxlint 0 errors, Vite build, 16-screen browser QA (0 errors,
-0 overflow), entry ~374KB lazy-split, production smoke 14/14 per deploy.
+Current repository verification must be rerun after code changes; prior evidence is retained in the QA history and is not presented as a current test count.
 
 ## 13. Impact / Use Cases
 Citizens, farmers, pilots, fishermen, disaster cells, researchers —
