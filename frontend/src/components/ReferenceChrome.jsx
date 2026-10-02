@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Live3DIcon from "./Live3DIcon";
 
-// User Account and password settings are removed from the platform navigation.
+// Account controls are removed from the platform navigation.
 const GROUPS = [
   ["Core Meteorology", [
     ["home", LayoutDashboard, "Overview"],
