@@ -1,84 +1,226 @@
 import React, { useEffect, useState } from "react";
-import { fetchActiveAlerts, fetchCurrentWeather } from "../services/api";
 
-export default function SavedPlacesPanel({ current, saved, weather, onSelect, onAddCurrent, onRemove }) {
-  const [previews, setPreviews] = useState({});
-  const [alertNote, setAlertNote] = useState("");
-  const [profile, setProfile] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("weathergpt.profile") || "") || {
-        name: "", email: "", phone: "", city: current || "", language: "English",
-        units: "Celsius (°C)", notifications: true
-      };
-    } catch {
-      return { name: "", email: "", phone: "", city: current || "", language: "English", units: "Celsius (°C)", notifications: true };
-    }
+const STORAGE_KEY = "weathergpt.profile.secure";
+const LEGACY_KEY = "weathergpt.profile";
+
+const emptyProfile = (city = "") => ({
+  name: "",
+  email: "",
+  phone: "",
+  city,
+  language: "English",
+  units: "Celsius (°C)",
+  notifications: true,
+});
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  bytes.forEach((b) => { binary += String.fromCharCode(b); });
+  return btoa(binary);
+}
+
+function base64ToBytes(value) {
+  const binary = atob(value);
+  return Uint8Array.from(binary, (c) => c.charCodeAt(0));
+}
+
+async function deriveKey(password, salt) {
+  const material = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveKey"]
+  );
+  return crypto.subtle.deriveKey(
+    { name: "PBKDF2", salt, iterations: 210000, hash: "SHA-256" },
+    material,
+    { name: "AES-GCM", length: 256 },
+    false,
+    ["encrypt", "decrypt"]
+  );
+}
+
+async function encryptProfile(profile, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: "AES-GCM", iv },
+    key,
+    new TextEncoder().encode(JSON.stringify(profile))
+  );
+  return JSON.stringify({
+    version: 1,
+    algorithm: "AES-256-GCM",
+    kdf: "PBKDF2-SHA256",
+    iterations: 210000,
+    salt: bytesToBase64(salt),
+    iv: bytesToBase64(iv),
+    data: bytesToBase64(new Uint8Array(encrypted)),
   });
-  const names = saved.slice(0, 8);
+}
 
-  const updateProfile = (field, value) => {
-    setProfile((prev) => {
-      const next = { ...prev, [field]: value };
-      try { localStorage.setItem("weathergpt.profile", JSON.stringify(next)); } catch {}
-      return next;
-    });
-  };
-  const key = names.join("|");
+async function decryptProfile(blob, password) {
+  const record = JSON.parse(blob);
+  const salt = base64ToBytes(record.salt);
+  const iv = base64ToBytes(record.iv);
+  const key = await deriveKey(password, salt);
+  const plain = await crypto.subtle.decrypt(
+    { name: "AES-GCM", iv },
+    key,
+    base64ToBytes(record.data)
+  );
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+
+export default function SavedPlacesPanel({ current }) {
+  const [profile, setProfile] = useState(() => emptyProfile(current || ""));
+  const [locked, setLocked] = useState(true);
+  const [hasAccount, setHasAccount] = useState(false);
+  const [legacyProfile, setLegacyProfile] = useState(null);
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    let cancelled = false;
-    if (!key) return undefined;
-    (async () => {
-      const entries = {};
-      for (const name of names) {
-        try {
-          const w = await fetchCurrentWeather(name);
-          entries[name] = { temp: w.current_temp, cond: w.condition, status: w.status };
-        } catch {
-          entries[name] = null;
-        }
+    try {
+      const secure = localStorage.getItem(STORAGE_KEY);
+      if (secure) {
+        setHasAccount(true);
+        setLocked(true);
+        return;
       }
-      if (!cancelled) setPreviews(entries);
-      try {
-        const alerts = await fetchActiveAlerts();
-        const hit = alerts.filter((a) => names.some((s) => a.district.toLowerCase().includes(s.toLowerCase())));
-        if (!cancelled) setAlertNote(hit.length ? `${hit.length} active alert(s) touch your saved places.` : "No active alerts touch your saved places right now.");
-      } catch {
-        if (!cancelled) setAlertNote("");
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        setLegacyProfile(JSON.parse(legacy));
       }
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
+    } catch {
+      setError("Unable to read the local profile data.");
+    }
+  }, []);
+
+  const createAccount = async () => {
+    setError("");
+    setMessage("");
+    if (password.length < 8) {
+      setError("Use at least 8 characters for your password.");
+      return;
+    }
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+    try {
+      const initial = { ...emptyProfile(current || ""), ...(legacyProfile || {}) };
+      localStorage.setItem(STORAGE_KEY, await encryptProfile(initial, password));
+      localStorage.removeItem(LEGACY_KEY);
+      setProfile(initial);
+      setHasAccount(true);
+      setLocked(false);
+      setPassword("");
+      setConfirm("");
+      setLegacyProfile(null);
+      setMessage("Account created. Your profile is encrypted on this device.");
+    } catch {
+      setError("Could not secure your profile. Please try again.");
+    }
+  };
+
+  const unlock = async () => {
+    setError("");
+    setMessage("");
+    if (!password) {
+      setError("Enter your password.");
+      return;
+    }
+    try {
+      const value = await decryptProfile(localStorage.getItem(STORAGE_KEY), password);
+      setProfile({ ...emptyProfile(current || ""), ...value });
+      setLocked(false);
+      setPassword("");
+    } catch {
+      setError("Incorrect password. Your profile remains locked.");
+      setPassword("");
+    }
+  };
+
+  const updateProfile = async (field, value) => {
+    const next = { ...profile, [field]: value };
+    setProfile(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, await encryptProfile(next, password));
+      setMessage("Saved securely.");
+      window.clearTimeout(updateProfile.timer);
+      updateProfile.timer = window.setTimeout(() => setMessage(""), 1600);
+    } catch {
+      setError("Could not save the encrypted profile.");
+    }
+  };
+
+  const lock = () => {
+    setLocked(true);
+    setPassword("");
+    setError("");
+    setMessage("Profile locked.");
+  };
+
+  if (locked && hasAccount) {
+    return (
+      <section className="wg-user-account" aria-label="User Account">
+        <div className="wg-card wg-profile-lock">
+          <div className="wg-profile-lock-icon">🔐</div>
+          <h2>Private User Account</h2>
+          <p>Your profile is encrypted and locked. Enter your password to view or edit your details.</p>
+          <label><span>Password</span><input className="wg-input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && unlock()} placeholder="Enter your password" /></label>
+          <button className="wg-btn" onClick={unlock}>Unlock account</button>
+          {error && <div className="wg-alert warn" role="alert">{error}</div>}
+          <small>Password is never stored. Only an encrypted profile is stored on this device.</small>
+        </div>
+      </section>
+    );
+  }
+
+  if (locked && !hasAccount) {
+    return (
+      <section className="wg-user-account" aria-label="User Account">
+        <div className="wg-card wg-profile-lock">
+          <div className="wg-profile-lock-icon">🔐</div>
+          <h2>Create your private account</h2>
+          <p>Set a password to protect your WeatherGPT profile. Your password is not stored; your profile is encrypted on this device.</p>
+          <label><span>Create password</span><input className="wg-input" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 8 characters" /></label>
+          <label><span>Confirm password</span><input className="wg-input" type="password" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} onKeyDown={(e) => e.key === "Enter" && createAccount()} placeholder="Enter password again" /></label>
+          <button className="wg-btn" onClick={createAccount}>Create secure account</button>
+          {legacyProfile && <div className="wg-alert info" role="status">Existing profile details found. They will be encrypted when you create your password.</div>}
+          {error && <div className="wg-alert warn" role="alert">{error}</div>}
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section aria-label="Saved places" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-      {alertNote && <div className="wg-alert info" role="status">{alertNote}</div>}
-
-      {saved.length === 0 && (
-        <div className="wg-alert info" role="status">No saved places yet — search any city and it is remembered automatically, or save the current one.</div>
-      )}
-
-      <div className="wg-grid-panels">
-        {saved.map((name) => {
-          const p = previews[name];
-          return (
-            <div key={name} className="wg-card hoverable" style={{ padding: "0.95rem 1.05rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
-                <strong>{name}</strong>
-                <button className="wg-btn-ghost" style={{ padding: "0.3rem 0.6rem" }} onClick={() => onRemove(name)} aria-label={`Remove ${name}`}>✕</button>
-              </div>
-              <div style={{ fontSize: "0.85rem", color: "var(--wg-muted)", marginTop: "0.3rem" }}>
-                {p === undefined ? "Loading preview…" : p === null ? "Preview unavailable (offline?)" : <>{p.temp}° · {p.cond} · <span className="wg-mono">{p.status}</span></>}
-              </div>
-              <button className="wg-btn" style={{ marginTop: "0.6rem", width: "100%" }} onClick={() => onSelect(name)}>
-                Open →
-              </button>
-            </div>
-          );
-        })}
+    <section className="wg-user-account" aria-label="User Account">
+      <div className="wg-card wg-profile-card">
+        <div className="wg-profile-heading">
+          <div>
+            <h2>👤 Profile Information</h2>
+            <p>Your details are protected by your password and stored as encrypted data on this device.</p>
+          </div>
+          <button className="wg-btn-ghost" onClick={lock}>🔒 Lock account</button>
+        </div>
+        <div className="wg-profile-grid">
+          <label><span>Full name</span><input className="wg-input" value={profile.name} onChange={(e)=>updateProfile("name",e.target.value)} placeholder="Enter your name" /></label>
+          <label><span>Email address</span><input className="wg-input" type="email" value={profile.email} onChange={(e)=>updateProfile("email",e.target.value)} placeholder="name@example.com" /></label>
+          <label><span>Phone number <small>(optional)</small></span><input className="wg-input" type="tel" value={profile.phone} onChange={(e)=>updateProfile("phone",e.target.value)} placeholder="+91 XXXXX XXXXX" /></label>
+          <label><span>Home city</span><input className="wg-input" value={profile.city} onChange={(e)=>updateProfile("city",e.target.value)} placeholder="Your city" /></label>
+          <label><span>Preferred language</span><select className="wg-input" value={profile.language} onChange={(e)=>updateProfile("language",e.target.value)}><option>English</option><option>తెలుగు</option><option>हिन्दी</option><option>தமிழ்</option><option>मराठी</option><option>বাংলা</option><option>ಕನ್ನಡ</option><option>മലയാളം</option></select></label>
+          <label><span>Temperature units</span><select className="wg-input" value={profile.units} onChange={(e)=>updateProfile("units",e.target.value)}><option>Celsius (°C)</option><option>Fahrenheit (°F)</option></select></label>
+        </div>
+        <div className="wg-profile-preferences">
+          <label><input type="checkbox" checked={profile.notifications} onChange={(e)=>updateProfile("notifications",e.target.checked)} /> Weather and safety notifications</label>
+          <span>{message || "✓ Changes are encrypted and saved automatically"}</span>
+        </div>
       </div>
     </section>
   );
