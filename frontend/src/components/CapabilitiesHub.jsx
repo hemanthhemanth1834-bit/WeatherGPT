@@ -8,6 +8,7 @@ export default function CapabilitiesHub() {
   const [engine, setEngine] = useState(null);
   const [state, setState] = useState("checking");
   const [checkedAt, setCheckedAt] = useState(null);
+  const [saveMessage, setSaveMessage] = useState("");
 
   const runDiagnostics = async () => {
     setState("checking");
@@ -19,6 +20,17 @@ export default function CapabilitiesHub() {
   };
 
   useEffect(() => { runDiagnostics(); }, []);
+
+  const saveDiagnosticReport = () => {
+    try {
+      const report = { savedAt: new Date().toISOString(), backendStatus: state, engine, providers };
+      localStorage.setItem("weathergpt.admin.diagnosticReport", JSON.stringify(report));
+      setSaveMessage("✓ Report saved on this device");
+      window.setTimeout(() => setSaveMessage(""), 2200);
+    } catch {
+      setSaveMessage("Could not save report");
+    }
+  };
 
   const rows = providers?.providers || [];
   const liveCount = rows.filter((p) => ["LIVE", "AVAILABLE"].includes(p.status)).length;
@@ -32,9 +44,10 @@ export default function CapabilitiesHub() {
           <h1>System &amp; Admin</h1>
           <p>Live health, weather-provider status and local privacy information.</p>
         </div>
-        <button className="wg-admin-diagnostic" onClick={runDiagnostics} disabled={state === "checking"}>
+        <div className="wg-admin-actions-top"><button className="wg-admin-action" onClick={saveDiagnosticReport} disabled={!checkedAt}>💾 Save report</button><button className="wg-admin-diagnostic" onClick={runDiagnostics} disabled={state === "checking"}>
           ↻ {state === "checking" ? "Checking…" : "Run Health Diagnostics"}
-        </button>
+        </button></div>
+        {saveMessage && <span className="wg-admin-save-message">{saveMessage}</span>}
       </header>
 
       <div className="wg-admin-status-grid">
