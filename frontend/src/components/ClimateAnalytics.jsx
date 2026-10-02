@@ -2,16 +2,52 @@ import React, { useEffect, useState } from "react";
 import { Thermometer } from "lucide-react";
 import { fetchClimateHistory, fetchClimateMonthly, fetchClimateTrends } from "../services/api";
 
-function Bars({ values, color, format }) {
-  const peak = Math.max(...values.map((v) => Math.abs(v)), 1);
+function Bars({ values, color, format, labels = [], ariaLabel = "Climate chart" }) {
+  const nums = values.map(Number);
+  const finite = nums.filter(Number.isFinite);
+  if (!finite.length) return null;
+  const min = Math.min(...finite);
+  const max = Math.max(...finite);
+  const span = Math.max(max - min, 1);
+  const pad = span * 0.16;
+  const lo = min - pad;
+  const hi = max + pad;
+  const W = 1100, H = 280, L = 58, R = 22, T = 24, B = 48;
+  const pts = nums.map((v, i) => {
+    const x = L + (i / Math.max(1, nums.length - 1)) * (W - L - R);
+    const y = H - B - ((v - lo) / (hi - lo)) * (H - T - B);
+    return { x, y, v, label: labels[i] || String(i + 1) };
+  });
+  const line = pts.map((p, i) => (i ? "L " : "M ") + p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" ");
+  const area = line + ` L ${pts.at(-1)?.x || L} ${H-B} L ${pts[0]?.x || L} ${H-B} Z`;
+  const step = Math.max(1, Math.ceil(pts.length / 6));
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: "0.45rem", height: "9rem", paddingTop: "0.5rem" }} role="img" aria-label="Bar chart">
-      {values.map((v, i) => (
-        <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "0.25rem", height: "100%", justifyContent: "flex-end" }}>
-          <span style={{ fontSize: "0.62rem" }} className="wg-mono">{format(v)}</span>
-          <div style={{ width: "100%", height: `${Math.max(4, (Math.abs(v) / peak) * 100)}%`, background: color, borderRadius: "0.3rem", opacity: 0.85 }} />
-        </div>
-      ))}
+    <div className="wg-climate-chart" role="img" aria-label={ariaLabel}>
+      <div className="wg-climate-chart-head">
+        <span><b>Live data visualization</b><small>Hover points for exact values</small></span>
+        <span className="wg-climate-chart-status">● DATA CONNECTED</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+        {[0,1,2,3].map(i => {
+          const y = T + i * ((H-T-B)/3);
+          const v = hi - i * ((hi-lo)/3);
+          return <g key={i}>
+            <line x1={L} x2={W-R} y1={y} y2={y} className="wg-climate-grid"/>
+            <text x="8" y={y+4} className="wg-climate-axis">{format(v)}</text>
+          </g>;
+        })}
+        <path d={area} className="wg-climate-area" style={{"--wg-climate-color": color}}/>
+        <path d={line} className="wg-climate-line" style={{"--wg-climate-color": color}}/>
+        {pts.map((p,i) => (
+          <g key={i}>
+            <circle cx={p.x} cy={p.y} r="4.5" className="wg-climate-point" style={{"--wg-climate-color": color}}>
+              <title>{p.label}: {format(p.v)}</title>
+            </circle>
+            {i % step === 0 && <text x={p.x} y={H-13} textAnchor="middle" className="wg-climate-label">{p.label}</text>}
+          </g>
+        ))}
+      </svg>
+      <div className="wg-climate-legend"><span>● {pts.length} real data points</span><span>Range: {format(min)} – {format(max)}</span></div>
     </div>
   );
 }
@@ -77,7 +113,7 @@ export default function ClimateAnalytics({ onAsk }) {
             <Thermometer size={14} /> Monthly {monthly.year} — {monthly.location}{" "}
             <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OBSERVED · ERA5</span>
           </h3>
-          <Bars values={monthly.months.map((m) => m.total_rain_mm)} color="#38bdf8" format={(v) => `${Math.round(v)}`} />
+          <Bars values={monthly.months.map((m) => m.total_rain_mm)} labels={monthly.months.map((m) => m.month)} color="#38bdf8" format={(v) => `${Math.round(v)} mm`} ariaLabel="Monthly observed rainfall chart" />
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem 0.9rem", fontSize: "0.7rem", color: "var(--wg-muted)", marginTop: "0.3rem" }}>
             {monthly.months.map((m) => (
               <span key={m.month} className="wg-mono">{m.month}: {m.mean_max_c}°C · {Math.round(m.total_rain_mm)}mm{m.mean_humidity_pct != null ? ` · ${m.mean_humidity_pct}%` : ""}</span>
@@ -115,12 +151,12 @@ export default function ClimateAnalytics({ onAsk }) {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(18rem,1fr))", gap: "0.7rem" }}>
             <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
               <h3 style={{ margin: "0 0 0.3rem", fontSize: "0.82rem" }}>Temperature anomaly (°C)</h3>
-              <Bars values={data.temperature_anomaly_celsius} color="#f87171" format={(v) => `${v > 0 ? "+" : ""}${v}`} />
+              <Bars values={data.temperature_anomaly_celsius} labels={data.decadal_years} color="#f87171" format={(v) => `${v > 0 ? "+" : ""}${Number(v).toFixed(1)}°C`} ariaLabel="Temperature anomaly chart" />
               <p className="wg-mono" style={{ fontSize: "0.65rem", color: "var(--wg-muted)" }}>{data.decadal_years.join(" · ")}</p>
             </div>
             <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
               <h3 style={{ margin: "0 0 0.3rem", fontSize: "0.82rem" }}>Monsoon departure (% of {data.lpa_monsoon_rainfall_mm} mm LPA)</h3>
-              <Bars values={data.monsoon_departure_pct} color="#38bdf8" format={(v) => `${v > 0 ? "+" : ""}${v}%`} />
+              <Bars values={data.monsoon_departure_pct} labels={data.decadal_years} color="#38bdf8" format={(v) => `${v > 0 ? "+" : ""}${Number(v).toFixed(1)}%`} ariaLabel="Monsoon rainfall departure chart" />
               <p className="wg-mono" style={{ fontSize: "0.65rem", color: "var(--wg-muted)" }}>{data.decadal_years.join(" · ")}</p>
             </div>
           </div>
