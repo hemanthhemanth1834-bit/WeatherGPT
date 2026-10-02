@@ -14,11 +14,11 @@ function agoLabel(ist) {
   return `${Math.floor(mins / 60)} h ${mins % 60} min ago`;
 }
 
-function Section({ eyebrow, title, action, onClick, children }) {
+function Section({ title, action, onClick, children }) {
   return (
     <section className="wg-ref-section">
       <div className="wg-ref-section-head">
-        <div><div className="wg-section-title">{eyebrow}</div><h2>{title}</h2></div>
+        <div><h2>{title}</h2></div>
         {action && <button className="wg-btn-ghost wg-ref-action" onClick={onClick}>{action} →</button>}
       </div>
       {children}
@@ -45,7 +45,7 @@ function StationCard({ name, tag, weather, active, onClick }) {
         <>
           <span className="wg-ref-station-place">{weather.location}, {weather.state || "India"}</span>
           <span className="wg-ref-station-weather"><WxIcon icon={weather.icon} size={38} /><b>{weather.current_temp}°</b><span>{weather.condition}</span></span>
-          <span className="wg-ref-station-feels">Feels {weather.feels_like ?? "—"}° · H: {weather.daily?.[0]?.temp_max ?? "—"}° • L: {weather.daily?.[0]?.temp_min ?? "—"}°</span><span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}%</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"}</span><span className="wg-ref-station-warning">[LIVE DATA] Current provider conditions</span>
+          <span className="wg-ref-station-feels">Feels {weather.feels_like ?? "—"}° · H: {weather.daily?.[0]?.temp_max ?? "—"}° • L: {weather.daily?.[0]?.temp_min ?? "—"}°</span><span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}%</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"}</span><span className="wg-ref-station-warning">[DEMO SCENARIO] Cyclone &amp; Monsoon Flash Flood Warning</span>
         </>
       ) : (
         <span className="wg-ref-station-weather muted">Select/search this place for live telemetry</span>
@@ -158,6 +158,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
                   <span>💨 {weather.wind_speed} km/h<small>Wind</small></span>
                   <span>💧 {weather.humidity}%<small>Humidity</small></span>
                   <span>🍃 {weather.aqi ?? "—"}<small>AQI</small></span>
+                  <span>◉ 4<small>Models</small></span>
                 </div>
                 <div className="wg-ref-source">SOURCE {weather.data_source} · {weather.status} · UPDATED {agoLabel(weather.updated_at_ist) || "now"}</div>
               </>
@@ -228,6 +229,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
             <div className="wg-ref-map-grid">
               <span className="wg-ref-map-label n10">10°N</span><span className="wg-ref-map-label n20">20°N</span><span className="wg-ref-map-label n30">30°N</span>
               <span className="wg-ref-map-label e72">72°E</span><span className="wg-ref-map-label e80">80°E</span><span className="wg-ref-map-label e88">88°E</span>
+              <span className="wg-ref-map-ocean arabian">ARABIAN SEA</span><span className="wg-ref-map-ocean bay">BAY OF BENGAL</span><span className="wg-ref-map-ocean indian">INDIAN OCEAN</span>
               <button className="wg-ref-map-land" onClick={() => onTab("map")} aria-label="Open interactive India map"><span>INDIA</span><i>●</i></button>
               <button className="wg-ref-map-pin p-del" onClick={() => onAsk("Weather and hazards for New Delhi")}>●<small>New Delhi</small></button>
               <button className="wg-ref-map-pin p-mum" onClick={() => onAsk("Weather and hazards for Mumbai")}>●<small>Mumbai</small></button>
@@ -235,7 +237,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
             </div>
             <div className="wg-ref-map-side"><b>Active Station</b><strong>{weather?.location || "New Delhi"}</strong><span>{weather?.lat?.toFixed?.(1) || "28.6"}°N, {weather?.lon?.toFixed?.(1) || "77.2"}°E</span><strong>{weather?.current_temp ?? "31"}°C</strong><div><button className="wg-ref-gps" onClick={() => onTab("map")}>GPS</button><button className="active" onClick={() => onTab("map")}>Radar</button><button onClick={() => onTab("satellite")}>Satellite</button></div></div>
           </div>
-          <div className="wg-ref-map-tabs">{["All India","North","South","West & East","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
+          <div className="wg-ref-map-tabs">{["All India","North","South","West","East & NE","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
           <div className="wg-ref-hubs"><b>Quick Hubs:</b>{["New Delhi","Mumbai","Chennai","Bengaluru","Kolkata","Hyderabad","Kochi","Ahmedabad"].map((x) => <button key={x} onClick={() => onAsk(`Weather for ${x}`)}>{x}</button>)}</div>
         </div>
       </Section>
@@ -253,7 +255,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
       </Section>
 
       <div className="wg-ref-emergency">
-        <div><span>NATIONAL CRISIS &amp; EMERGENCY DISPATCH</span><b>24/7 direct toll-free connections to control centers</b><small>Use official emergency services for urgent assistance.</small></div>
+        <div><span>NATIONAL CRISIS &amp; EMERGENCY DISPATCH</span><b>24/7 direct toll-free connections to control centers</b></div>
         <div className="wg-ref-emergency-links"><a href="tel:112">Dial 112 (National)</a><a href="tel:1078">1078 (NDMA)</a><a href="tel:1070">1070 (Relief Comm.)</a></div>
       </div>
 
