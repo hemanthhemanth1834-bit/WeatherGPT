@@ -221,7 +221,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
             <div><span>7-Day Accumulation</span><b>{rainTotal.toFixed(1)} mm</b><small>{rainTotal >= 50 ? "High accumulation watch" : "Forecast accumulation"}</small></div>
           </div>
           <LiveWeatherChart weather={weather} />
-          <div className="wg-ref-legend"><span>Max Temperature (°C)</span><span>Min Temperature (°C)</span><span>Rain Probability (%)</span><span>Rain mm</span><b>Tap columns or data points to inspect daily synoptics</b></div>
+          <div className="wg-ref-legend"><span>Hourly live telemetry</span><span>Forecast + recent history</span><span>Hover points for detail</span><b>Open-Meteo · free source · no API key</b></div>
         </div>
       </Section>
 
