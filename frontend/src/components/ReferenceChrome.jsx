@@ -18,7 +18,6 @@ const GROUPS = [
     ["climate", TrendingUp, "Climate Trends"],
     ["alerts", Radio, "Live News Broadcast"],
     ["chat", Bot, "AI Weather Assistant"],
-    ["dashboard", FileText, "Weather Report"],
   ]],
   ["Disaster Early Warning", [
     ["alerts", ShieldAlert, "Severe Alerts"],
