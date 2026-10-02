@@ -4,7 +4,7 @@ Only working features claimed; statuses verified in production.
 
 | Requirement | Implementation | Status |
 |---|---|---|
-| Conversational AI | intent router + 14 tools + templates | LIVE |
+| Conversational AI | intent router + 19 tools + templates | LIVE |
 | Weather forecasting | Open-Meteo current/hourly/daily + GFS select | LIVE |
 | Real-time weather | live values + IST timestamps | LIVE |
 | Extreme weather alerts | 10-station computed scan + GDACS official feed | COMPUTED + OFFICIAL* |
