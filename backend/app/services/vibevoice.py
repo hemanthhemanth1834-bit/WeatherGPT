@@ -1,12 +1,13 @@
-"""Optional VibeVoice TTS bridge.
+"""Free online TTS bridge with optional VibeVoice support.
 
-WeatherGPT remains deployable without a GPU. When VIBEVOICE_TTS_URL is
-configured, this service proxies text to a separately hosted VibeVoice
-server and returns audio. The bridge supports both the OpenAI-compatible
-/audio/speech contract and the simple {text, speaker, language} contract.
+VibeVoice remains supported when VIBEVOICE_TTS_URL is configured. For the
+free production path, WeatherGPT automatically uses edge-tts (Microsoft
+Edge's online neural TTS service) when VibeVoice is not configured, with
+browser SpeechSynthesis still available as the frontend fallback.
 """
 
 import base64
+import io
 import os
 
 import httpx
@@ -15,16 +16,23 @@ from fastapi.responses import Response
 
 VIBEVOICE_TTS_URL = os.getenv("VIBEVOICE_TTS_URL", "").strip()
 VIBEVOICE_API_KEY = os.getenv("VIBEVOICE_API_KEY", "").strip()
-# Realtime 0.5B is the model intended for this integration.
 VIBEVOICE_MODEL = os.getenv(
     "VIBEVOICE_MODEL", "microsoft/VibeVoice-Realtime-0.5B"
 ).strip()
 VIBEVOICE_VOICE = os.getenv("VIBEVOICE_VOICE", "Carter").strip()
 VIBEVOICE_TIMEOUT = float(os.getenv("VIBEVOICE_TIMEOUT_SECONDS", "60"))
 
+# Free Edge neural voice used when no VibeVoice server is configured.
+EDGE_TTS_VOICE = os.getenv("EDGE_TTS_VOICE", "en-US-ChristopherNeural").strip()
+
 
 def configured() -> bool:
-    return bool(VIBEVOICE_TTS_URL)
+    """Return whether any server-side TTS provider is available."""
+    return True
+
+
+def provider() -> str:
+    return "VibeVoice-Realtime-0.5B" if VIBEVOICE_TTS_URL else "Edge-TTS"
 
 
 def _openai_compatible(url: str) -> bool:
@@ -35,22 +43,45 @@ def _openai_compatible(url: str) -> bool:
 def _decode_json_audio(data: dict) -> bytes:
     audio_b64 = data.get("audio_base64") or data.get("audio") or data.get("data")
     if not isinstance(audio_b64, str):
-        raise HTTPException(status_code=502, detail="VibeVoice returned no audio")
+        raise HTTPException(status_code=502, detail="TTS returned no audio")
     try:
         return base64.b64decode(audio_b64)
     except Exception as exc:
         raise HTTPException(
-            status_code=502, detail="Invalid VibeVoice audio payload"
+            status_code=502, detail="Invalid TTS audio payload"
         ) from exc
 
 
-async def synthesize(text: str, speaker: str = "default") -> Response:
-    if not configured():
-        raise HTTPException(status_code=503, detail="VibeVoice TTS is not configured")
+async def _edge_tts(text: str) -> Response:
+    """Synthesize MP3 using edge-tts without an API key or GPU."""
+    try:
+        import edge_tts
 
+        communicate = edge_tts.Communicate(text, EDGE_TTS_VOICE)
+        audio = io.BytesIO()
+        async for chunk in communicate.stream():
+            if chunk.get("type") == "audio":
+                audio.write(chunk.get("data", b""))
+        content = audio.getvalue()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Edge TTS unavailable: {exc}",
+        ) from exc
+
+    if not content:
+        raise HTTPException(status_code=502, detail="Edge TTS returned no audio")
+    return Response(content=content, media_type="audio/mpeg")
+
+
+async def synthesize(text: str, speaker: str = "default") -> Response:
     clean = " ".join(str(text or "").split())[:4000]
     if not clean:
         raise HTTPException(status_code=422, detail="Text is required")
+
+    # Keep VibeVoice as an optional higher-priority provider when supplied.
+    if not VIBEVOICE_TTS_URL:
+        return await _edge_tts(clean)
 
     headers = {"Accept": "audio/wav, audio/*, application/json"}
     if VIBEVOICE_API_KEY:
