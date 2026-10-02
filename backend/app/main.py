@@ -144,9 +144,10 @@ def project() -> dict:
         "category": "AI / ML / Weather Intelligence / Disaster Decision Support",
         "developer": "Muchakarla Hemanth Kumar (SRK Institute of Technology, CSE – AI/ML, 2024–2028)",
         "version": APP_VERSION,
-        "license_note": ("Project license: not yet selected. Third-party "
-                         "packages are covered by their own upstream licenses; "
-                         "see THIRD_PARTY_NOTICES.md."),
+        "license_note": ("MIT License applies to the original WeatherGPT application code. "
+                         "Third-party packages, data services, tiles, and fonts "
+                         "remain under their respective upstream licenses; see "
+                         "THIRD_PARTY_NOTICES.md."),
     }
 
 
