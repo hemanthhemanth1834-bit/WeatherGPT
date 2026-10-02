@@ -5,6 +5,7 @@ LIVE (verified now), FALLBACK (backup path in use), ESTIMATED (computed),
 STATIC (bundled reference), DEMO (illustrative), NOT_CONFIGURED (needs
 credentials/access), ERROR (probe failed). Probes never raise.
 """
+import datetime
 import time
 from typing import Any, Callable, Dict, List
 
@@ -28,6 +29,14 @@ def _get(url: str, timeout: float = 5.0) -> Dict[str, Any]:
 def probe_open_meteo() -> Dict[str, Any]:
     return _get("https://api.open-meteo.com/v1/forecast?latitude=20&longitude=78"
                 "&current=temperature_2m&timezone=Asia%2FKolkata")
+
+
+def probe_gfs() -> Dict[str, Any]:
+    """Probe the actual GFS model selector rather than the default blend."""
+    return _get("https://api.open-meteo.com/v1/forecast?latitude=20&longitude=78"
+                "&current=temperature_2m&models=gfs_seamless&timezone=Asia%2FKolkata")
+
+
 
 
 def probe_geocoding() -> Dict[str, Any]:
@@ -55,9 +64,12 @@ def probe_rainviewer() -> Dict[str, Any]:
 
 
 def probe_gibs() -> Dict[str, Any]:
-    return _get("https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_"
-                "CorrectedReflectance_TrueColor/default/2026-09-28/"
-                "GoogleMapsCompatible_Level9/5/18/12.jpg")
+    """Probe a recent NASA GIBS tile so the health check does not expire."""
+    probe_date = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2)).strftime("%Y-%m-%d")
+    url = ("https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/"
+           "MODIS_Terra_CorrectedReflectance_TrueColor/default/"
+           f"{probe_date}/GoogleMapsCompatible_Level9/5/18/12.jpg")
+    return _get(url, timeout=8.0)
 
 
 def probe_portal(url: str) -> Dict[str, Any]:
@@ -76,7 +88,7 @@ PROVIDERS: List[Dict[str, Any]] = [
     {"name": "Open-Meteo Archive (ERA5)", "role": "climate", "kind": "LIVE data",
      "needs_key": False, "probe": probe_archive},
     {"name": "GFS via Open-Meteo models", "role": "nwp", "kind": "LIVE data",
-     "needs_key": False, "probe": probe_open_meteo},
+     "needs_key": False, "probe": probe_gfs},
     {"name": "RainViewer Radar", "role": "radar", "kind": "LIVE tiles",
      "needs_key": False, "probe": probe_rainviewer},
     {"name": "NASA GIBS Tiles", "role": "satellite", "kind": "LIVE tiles",
@@ -102,7 +114,6 @@ STATUS_UNAVAILABLE = {"OPENWEATHER": "not implemented (key-gated; OM covers need
 
 def health_snapshot(check_live: bool = True) -> Dict[str, Any]:
     """Build the provider health table. Set check_live=False for instant metadata."""
-    import datetime
     rows = []
     for entry in PROVIDERS:
         probe: Callable[[], Dict[str, Any]] | None = entry["probe"]
