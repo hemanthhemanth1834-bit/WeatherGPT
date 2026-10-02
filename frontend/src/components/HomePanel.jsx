@@ -53,6 +53,52 @@ function FeatureCard({ icon, title, text, meta, action, onClick }) {
   );
 }
 
+
+function ExplainBlock({ title, children }) {
+  return (
+    <details className="wg-card" style={{marginTop:"1rem",padding:"0",overflow:"hidden"}}>
+      <summary style={{cursor:"pointer",listStyle:"none",padding:"1rem 1.1rem",fontWeight:800,display:"flex",justifyContent:"space-between",gap:"1rem"}}>
+        <span>ⓘ {title}</span><span style={{color:"var(--wg-muted)"}}>What this means ▾</span>
+      </summary>
+      <div style={{padding:"0 1.1rem 1.1rem",color:"var(--wg-muted)",lineHeight:1.65}}>{children}</div>
+    </details>
+  );
+}
+
+function ExplanationGrid() {
+  const items = [
+    ["LIVE WEATHER","Shows the latest available weather telemetry for the selected location. Temperature, feels-like temperature, rain probability, wind, humidity and air-quality values are presented with the provider status and update time."],
+    ["AI DEEP-CAST","Turns numerical weather-model information into a human-readable forecast and scenario analysis. Model output is guidance, not a guaranteed prediction; official warnings remain the authority for emergencies."],
+    ["SYNOPTIC TRAJECTORY","The 7-day view shows how temperature, precipitation probability and wind are expected to evolve day by day. It helps you see trends rather than treating one hour as the whole forecast."],
+    ["LIVE WEATHER GRAPH","The animated line chart plots hourly observations/forecast values across recent history and upcoming hours. Change the metric to inspect temperature, precipitation, wind, humidity or pressure and hover points for exact values."],
+    ["REAL-TIME MAP","The map uses a real geographic basemap and live weather layers where available. Station pins show fetched telemetry; radar and satellite layers visualize external geospatial data. Clicking the map can select a location."],
+    ["DISASTER & EVACUATION","This area combines weather hazards, alerts and geographic context for emergency decision support. It does not replace instructions from government disaster-management or emergency authorities."],
+    ["SECTORAL INTELLIGENCE","Each hub translates weather conditions into a specific use case: farming, roads, trees, travel, lifestyle and solar energy. The displayed advice should be interpreted together with the underlying weather conditions."],
+    ["DATA SOURCES","Weather data is fetched from free/public services used by the application. Open-Meteo provides forecast variables; RainViewer supplies radar visualization where available; NASA GIBS provides satellite imagery; OpenStreetMap provides map data. Provider availability and coverage can change."],
+    ["LIVE / DEMO / UNAVAILABLE","LIVE means the application received current provider data. DEMO means an example or simulation is being shown. UNAVAILABLE means the provider did not return usable data. The interface should never treat a demo value as a live observation."]
+  ];
+  return (
+    <section className="wg-ref-section" aria-label="How WeatherGPT works">
+      <div className="wg-ref-section-head">
+        <div><span className="wg-chip live">HOW IT WORKS</span><h2>Understand Every WeatherGPT Panel</h2><p style={{color:"var(--wg-muted)",maxWidth:"58rem"}}>WeatherGPT is a decision-support dashboard. Every card, graph and map is designed to tell you what the value represents, where it comes from, and how it should be interpreted.</p></div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:".75rem"}}>
+        {items.map(([title,text]) => <article key={title} className="wg-card" style={{padding:"1rem"}}><strong style={{display:"block",marginBottom:".35rem"}}>{title}</strong><span style={{color:"var(--wg-muted)",lineHeight:1.6}}>{text}</span></article>)}
+      </div>
+      <ExplainBlock title="How to read the numbers">
+        <p><b>Temperature</b> is the air temperature. <b>Feels like</b> accounts for effects such as humidity and wind. <b>Rain probability</b> is the forecast likelihood of measurable precipitation for the relevant period; it is not the amount of rain.</p>
+        <p><b>Wind</b> is reported as speed, while <b>humidity</b> describes the moisture content of the air. <b>AQI</b> is an air-quality indicator when supplied by the connected provider; a missing AQI is shown as unavailable rather than invented.</p>
+      </ExplainBlock>
+      <ExplainBlock title="How to read the graph">
+        <p>The line represents the selected weather variable over time. The left-to-right direction is time, not a stock price. A rising line means the selected variable is increasing; a falling line means it is decreasing. Use the time-range and metric controls to change the view.</p>
+      </ExplainBlock>
+      <ExplainBlock title="Why forecasts can change">
+        <p>Weather forecasts are numerical-model outputs and are updated as new model runs and observations become available. Different models can disagree, especially farther into the future or near rapidly changing storms. WeatherGPT therefore presents forecast information as an evolving estimate rather than a certainty.</p>
+      </ExplainBlock>
+    </section>
+  );
+}
+
 function StationCard({ name, place, weather, active, onClick }) {
   return (
     <button className={`wg-ref-station wg-card hoverable ${active ? "active" : ""}`} onClick={onClick}>
@@ -179,14 +225,16 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
         </div>
       </div>
 
+      <ExplanationGrid />
+
       {topAlert && <button className="wg-ref-alertbar" onClick={() => onTab("alerts")}><span>⚠ ACTIVE ALERT</span><strong>{topAlert.headline}</strong><em>{topAlert.severity}</em><b>View alerts →</b></button>}
 
       <Section eyebrow="AI INTELLIGENCE" title="Deep-Cast & Disaster Engines">
         <div className="wg-ref-feature-grid">
-          <FeatureCard icon="✦" title="AI Deep-Cast Ensemble" text="ECMWF, GFS, WRF & IMD consensus, thermodynamic CAPE stability, and What-If simulation sandbox." meta="4 MODELS" action="Explore Soundings" onClick={() => onTab("deep_cast")} />
-          <FeatureCard icon="⌁" title="Evacuation Routing" text="Traffic-aware line-path escape routes avoiding flooded subways, high-ground shelters & SOS beacon." meta="LIVE TRAFFIC" action="Launch Evacuation Map" onClick={() => onTab("evacuation")} />
-          <FeatureCard icon="◈" title="FloodWatch Digital Twin" text="Real-time CWC river gauges, ward-level inundation mapping, and reservoir spillway alerts." meta="HYDROLOGY" action="View Digital Twin" onClick={() => onTab("risk")} />
-          <FeatureCard icon="◷" title="12-Month Climate Trends" text="Compare regional temperature & precipitation against 1991–2020 climatological normal to spot shifts." meta="30-YR NORMAL" action="Analyze Anomalies" onClick={() => onTab("climate")} />
+          <FeatureCard icon="✦" title="AI Deep-Cast Ensemble" text="Combines available numerical weather-model signals into an interpretable forecast view. Model availability and provenance are shown by the module." meta="MODEL GUIDANCE" action="Explore Soundings" onClick={() => onTab("deep_cast")} />
+          <FeatureCard icon="⌁" title="Evacuation Routing" text="Uses weather and geographic context to support route planning. It should be checked against current official emergency instructions and local road conditions." meta="DECISION SUPPORT" action="Launch Evacuation Map" onClick={() => onTab("evacuation")} />
+          <FeatureCard icon="◈" title="FloodWatch Digital Twin" text="Visualizes available hydrology and flood-risk information to help understand exposed areas and changing conditions." meta="HYDROLOGY" action="View Digital Twin" onClick={() => onTab("risk")} />
+          <FeatureCard icon="◷" title="12-Month Climate Trends" text="Compares available climate and historical weather information so long-term patterns can be viewed separately from short-term forecasts." meta="CLIMATE CONTEXT" action="Analyze Anomalies" onClick={() => onTab("climate")} />
         </div>
       </Section>
 
@@ -277,7 +325,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
           <div style={{display:"flex",justifyContent:"flex-end",gap:".4rem",marginTop:".8rem"}}><button className="wg-btn" onClick={()=>setManageStations(false)}>Done</button></div>
         </div>
       </div>}
-      <footer className="wg-ref-footer"><span>WEATHERGPT · AI WEATHER INTELLIGENCE</span><span>Theme: Auto · {weather?.condition || "Live Weather"}</span><span>Open-Meteo · RainViewer · NASA GIBS · public geospatial sources</span></footer>
+      <footer className="wg-ref-footer"><span>WEATHERGPT · AI WEATHER INTELLIGENCE</span><span>Theme: Auto · {weather?.condition || "Live Weather"}</span><span>Data: Open-Meteo · RainViewer · NASA GIBS · OpenStreetMap</span><span>Forecasts are estimates; follow official emergency alerts for safety-critical decisions.</span></footer>
     </section>
   );
 }
