@@ -3,12 +3,12 @@ import "./ReferenceChrome.css";
 import {
   Activity, Bell, Bot, CloudLightning, CloudRain, CloudSun, Database, Download,
   Globe, Layers, LayoutDashboard, MapPin, Navigation, PhoneCall, Radio,
-  Settings, ShieldAlert, Sparkles, Sun, Trees, TrendingUp, User, Waves,
+  Settings, ShieldAlert, Sparkles, Sun, Trees, TrendingUp, Waves,
   ArrowRightLeft, FileText, Car, Sprout, Zap, Type, X, Menu
 } from "lucide-react";
 import Live3DIcon from "./Live3DIcon";
 
-const GROUPS = [
+// User Account is intentionally excluded from the main navigation.\nconst GROUPS = [
   ["Core Meteorology", [
     ["home", LayoutDashboard, "Overview"],
     ["dashboard", CloudSun, "Live Weather"],
