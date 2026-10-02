@@ -17,9 +17,9 @@ VIBEVOICE_TTS_URL = os.getenv("VIBEVOICE_TTS_URL", "").strip()
 VIBEVOICE_API_KEY = os.getenv("VIBEVOICE_API_KEY", "").strip()
 # Realtime 0.5B is the model intended for this integration.
 VIBEVOICE_MODEL = os.getenv(
-    "VIBEVOICE_MODEL", "vibevoice/VibeVoice-Realtime-0.5B"
+    "VIBEVOICE_MODEL", "microsoft/VibeVoice-Realtime-0.5B"
 ).strip()
-VIBEVOICE_VOICE = os.getenv("VIBEVOICE_VOICE", "default").strip()
+VIBEVOICE_VOICE = os.getenv("VIBEVOICE_VOICE", "Carter").strip()
 VIBEVOICE_TIMEOUT = float(os.getenv("VIBEVOICE_TIMEOUT_SECONDS", "60"))
 
 
