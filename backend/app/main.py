@@ -128,7 +128,7 @@ def voice_status() -> dict:
 async def voice_tts(payload: dict):
     """Synthesize English WeatherGPT speech through VibeVoice or free Edge-TTS."""
     from .services.vibevoice import synthesize
-    return await synthesize(str(payload.get("text", "")), str(payload.get("speaker", "Carter")))
+    return await synthesize(str(payload.get("text", "")), str(payload.get("speaker", "Carter")), str(payload.get("language", "en")))
 
 
 @app.get("/api/meta/developer", response_model=DeveloperMeta)
