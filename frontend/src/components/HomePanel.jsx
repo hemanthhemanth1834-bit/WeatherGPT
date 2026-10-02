@@ -36,21 +36,23 @@ function FeatureCard({ icon, title, text, meta, action, onClick }) {
   );
 }
 
-function StationCard({ name, tag, weather, active, onClick }) {
+function StationCard({ name, place, weather, active, onClick }) {
   return (
     <button className={`wg-ref-station wg-card hoverable ${active ? "active" : ""}`} onClick={onClick}>
-      <span className="wg-ref-station-top"><span>{tag}</span><span>{active ? "ACTIVE" : "FOCUS STATION"}</span></span>
+      {active && <span className="wg-ref-station-active">Active</span>}
       <strong>{name}</strong>
+      <span className="wg-ref-station-place">{place}</span>
       {weather ? (
         <>
-          <span className="wg-ref-station-place">{weather.location}, {weather.state || "India"}</span>
           <span className="wg-ref-station-weather"><WxIcon icon={weather.icon} size={38} /><b>{weather.current_temp}°</b><span>{weather.condition}</span></span>
-          <span className="wg-ref-station-feels">Feels {weather.feels_like ?? "—"}° · H: {weather.daily?.[0]?.temp_max ?? "—"}° • L: {weather.daily?.[0]?.temp_min ?? "—"}°</span><span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}%</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"}</span><span className="wg-ref-station-warning">[DEMO SCENARIO] Cyclone &amp; Monsoon Flash Flood Warning</span>
+          <span className="wg-ref-station-feels">Feels {weather.feels_like ?? "—"}° · H: {weather.daily?.[0]?.temp_max ?? "—"}° • L: {weather.daily?.[0]?.temp_min ?? "—"}°</span>
+          <span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}%</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"} • {weather.aqi_status || "Poor"}</span>
+          <span className="wg-ref-station-warning">[DEMO SCENARIO] Cyclone &amp; Monsoon Flash Flood Warning</span>
         </>
       ) : (
         <span className="wg-ref-station-weather muted">Select/search this place for live telemetry</span>
       )}
-      <small>Open-Meteo · NWP ensemble</small>
+      <small>{active ? "Active Station" : "Focus Station"}</small>
     </button>
   );
 }
@@ -118,7 +120,10 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
   const rainTotal = daily.reduce((sum, d) => sum + (Number(d.rain_sum) || 0), 0);
   const trendRange = Math.max(1, (weeklyMax ?? 35) - (weeklyMin ?? 23));
   const regional = useMemo(() => [
-    ["New Delhi", "DEL"], ["Mumbai", "BOM"], ["Bengaluru", "BLR"], ["Chennai", "MAA"],
+    ["New Delhi", "Central Delhi, Delhi NCR"],
+    ["Mumbai", "Mumbai City, Maharashtra"],
+    ["Bengaluru", "Bengaluru Urban, Karnataka"],
+    ["Chennai", "Chennai, Tamil Nadu"],
   ], []);
 
   return (
@@ -179,11 +184,11 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
       </Section>
 
       <Section eyebrow="PRIORITY OBSERVATION NETWORK" title="Pinned Weather Dashboard">
-        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 4 STATIONS</b> · Live concurrent telemetry across your designated priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">55s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setStationCount((n) => n === 4 ? 3 : 4)}>Select &amp; Manage</button></span></div>
+        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 4 STATIONS</b> · Live concurrent telemetry across your designated priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">57s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setStationCount((n) => n === 4 ? 3 : 4)}>Select &amp; Manage</button></span></div>
         <div className="wg-ref-station-grid">
-          {regional.slice(0, stationCount).map(([name, tag], i) => {
+          {regional.slice(0, stationCount).map(([name, stationPlace], i) => {
             const stationWeather = i === 0 && weather ? weather : regionalWeather[name] || null;
-            return <StationCard key={name} name={name} tag={tag} weather={stationWeather} active={i === 0 && !!stationWeather} onClick={() => onTab("dashboard")} />;
+            return <StationCard key={name} name={name} place={stationPlace} weather={stationWeather} active={i === 0 && !!stationWeather} onClick={() => onTab("dashboard")} />;
           })}
         </div>
         {stationCount < 4 && <button className="wg-ref-pin-another wg-card" onClick={() => setStationCount(4)}>＋ <span><b>Pin Another Station</b><small>Monitor up to 4 stations ({stationCount} active)</small></span><em>＋ Browse Indian Observatories</em></button>}
