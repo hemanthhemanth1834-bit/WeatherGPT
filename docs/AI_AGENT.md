@@ -16,7 +16,7 @@ USER QUERY → INTENT DETECTION → LOCATION EXTRACTION → TOOL SELECTION
    travel / AQI / default weather (keyword rules, inspectable in
    `backend/app/services/chat.py`).
 4. **Tools** — deterministic functions only (see `GET /api/agent/tools`,
-   14 tools). Figures originate here, never in prose.
+   19 tools). Figures originate here, never in prose.
 5. **Response** — per-language template filled with tool numbers + speech
    text + structured payload + source line. On tool failure: honest
    "data unavailable" reply (never a 500, never a guess).
