@@ -240,7 +240,6 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
             <div className="wg-ref-map-real"><RealIndiaMap weather={weather} onAsk={onAsk} /></div>
             <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "New Delhi"}</strong><span>{weather?.lat?.toFixed?.(1) || "20.6"}°N, {weather?.lon?.toFixed?.(1) || "79.0"}°E</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>Live Open-Meteo telemetry</small></div>
           </div>
-</div>
           <div className="wg-ref-map-tabs">{["All India","North","South","West","East & NE","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
           <div className="wg-ref-hubs"><b>Quick Hubs:</b>{["New Delhi","Mumbai","Chennai","Bengaluru","Kolkata","Hyderabad","Kochi","Ahmedabad"].map((x) => <button key={x} onClick={() => onAsk(`Weather for ${x}`)}>{x}</button>)}</div>
         </div>
