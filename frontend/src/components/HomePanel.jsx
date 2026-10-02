@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
 import WxIcon from "./WxIcon";
+import Live3DIcon from "./Live3DIcon";
 
 function agoLabel(ist) {
   if (!ist) return "";
@@ -24,11 +25,6 @@ function Section({ title, action, onClick, children }) {
       {children}
     </section>
   );
-}
-
-function Live3DIcon({ kind = "weather", size = "sm" }) {
-  const glyph = { weather: "☁", rain: "≋", storm: "ϟ", flood: "≈", climate: "◉", life: "✦", farm: "✿", road: "⌁", tree: "♣", trip: "⌖", solar: "☼" }[kind] || "☁";
-  return <span className={`wg-live3d wg-live3d-${size} wg-live3d-${kind}`} aria-hidden="true"><span className="wg-live3d-orbit"></span><span className="wg-live3d-core">{glyph}</span><span className="wg-live3d-glow"></span></span>;
 }
 
 function iconKind(title = "") {
