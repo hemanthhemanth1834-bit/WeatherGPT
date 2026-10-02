@@ -9,10 +9,10 @@
   .wg-ref-sidebar {
     position: fixed !important;
     left: max(0px, calc((100vw - 1280px) / 2));
-    top: 99px;
+    top: 65px;
     bottom: 0;
     width: 288px !important;
-    height: auto !important;
+    height: calc(100vh - 65px) !important;
     max-height: none !important;
     min-height: 0;
     z-index: 35;
@@ -90,3 +90,22 @@
     position: fixed !important;
   }
 }
+
+/* Inch-level reference alignment overrides */
+.wg-ref-header-main{box-sizing:border-box}
+.wg-ref-alertbar{box-sizing:border-box}
+.wg-ref-brand-icon{width:44px;height:44px;border-radius:16px}
+.wg-ref-brand-name{font-size:24px}
+.wg-ref-brand p{font-size:12px}
+.wg-ref-location{max-width:360px}
+.wg-ref-header-actions{gap:8px}
+.wg-ref-header-actions>button{box-sizing:border-box}
+.wg-ref-sidebar{background:rgba(9,16,36,.85)}
+.wg-ref-sidebar-scroll{padding-right:4px}
+.wg-ref-nav-group{margin-bottom:20px}
+.wg-ref-nav-heading{padding:0 12px 6px;font-size:11px}
+.wg-ref-nav-item{padding:8px 14px;border-radius:16px;font-size:14px;line-height:1.25}
+.wg-ref-nav-icon{flex-basis:16px}
+.wg-ref-settings-row{padding:8px 14px;border-radius:16px;background:rgba(30,41,59,.4)}
+.wg-ref-engine{padding:12px 8px 0}
+@media(max-width:1100px){.wg-ref-brand-name{font-size:22px}.wg-ref-nav-item{font-size:13px}}
