@@ -181,3 +181,57 @@
 .wg-market-svg{position:relative}.wg-market-line{stroke-dasharray:2200;stroke-dashoffset:2200;animation:wgChartDraw 1.8s cubic-bezier(.22,.61,.36,1) forwards}.wg-market-area{opacity:0;animation:wgChartArea .9s ease-out .45s forwards;transform-origin:center}.wg-market-point{animation:wgChartPoint .45s ease-out both}.wg-market-point:nth-of-type(2){animation-delay:.04s}.wg-market-point:nth-of-type(3){animation-delay:.08s}.wg-market-point:nth-of-type(4){animation-delay:.12s}.wg-market-point:nth-of-type(5){animation-delay:.16s}.wg-market-live-dot{fill:#67e8f9;stroke:#071426;stroke-width:2;filter:drop-shadow(0 0 5px rgba(103,232,249,.8))}.wg-market-live-pulse{fill:none;stroke:#67e8f9;stroke-width:2;opacity:.7;transform-box:fill-box;transform-origin:center;animation:wgLivePulse 1.6s ease-out infinite}.wg-market-chart{animation:wgChartIn .45s ease-out}.wg-market-controls button,.wg-market-metrics button{transition:transform .18s ease,background .18s ease,border-color .18s ease}.wg-market-controls button:hover,.wg-market-metrics button:hover{transform:translateY(-1px)}
 @keyframes wgChartDraw{to{stroke-dashoffset:0}}@keyframes wgChartArea{to{opacity:1}}@keyframes wgChartPoint{from{opacity:0;transform:scale(.35)}to{opacity:1;transform:scale(1)}}@keyframes wgLivePulse{0%{transform:scale(.65);opacity:.75}70%,100%{transform:scale(2.5);opacity:0}}@keyframes wgChartIn{from{opacity:.55;transform:translateY(4px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.wg-market-line,.wg-market-area,.wg-market-point,.wg-market-live-pulse,.wg-market-chart{animation:none!important}.wg-market-line{stroke-dashoffset:0}.wg-market-area{opacity:1}.wg-market-live-pulse{opacity:.35;transform:none}}
+
+/* FULL-SITE MOTION SYSTEM — DATA VISUALS + UI */
+.wg-ref-app{--wg-motion-ease:cubic-bezier(.22,.61,.36,1)}
+.wg-ref-app .wg-ref-header-main{animation:wgHeaderIn .7s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-sidebar{animation:wgSidebarIn .8s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-home,.wg-ref-app .wg-ref-section{animation:wgSectionIn .7s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-section:nth-of-type(2){animation-delay:.08s}.wg-ref-app .wg-ref-section:nth-of-type(3){animation-delay:.16s}.wg-ref-app .wg-ref-section:nth-of-type(4){animation-delay:.24s}.wg-ref-app .wg-ref-section:nth-of-type(5){animation-delay:.32s}
+.wg-ref-app .wg-card{transition:transform .28s var(--wg-motion-ease),border-color .28s ease,box-shadow .28s ease,background .28s ease;animation:wgCardIn .65s var(--wg-motion-ease) both}
+.wg-ref-app .wg-card:hover{transform:translateY(-5px) scale(1.008);box-shadow:0 16px 42px rgba(0,0,0,.24),0 0 24px rgba(56,189,248,.08)}
+.wg-ref-app .wg-ref-feature:hover,.wg-ref-app .wg-ref-station:hover{transform:translateY(-7px) scale(1.012)}
+.wg-ref-app .wg-ref-feature .wg-ref-icon,.wg-ref-app .wg-ref-station-weather,.wg-ref-app .wg-ref-temp-row{animation:wgFloat 3.2s ease-in-out infinite}
+.wg-ref-app .wg-ref-feature:nth-child(2) .wg-ref-icon{animation-delay:.3s}.wg-ref-app .wg-ref-feature:nth-child(3) .wg-ref-icon{animation-delay:.6s}.wg-ref-app .wg-ref-feature:nth-child(4) .wg-ref-icon{animation-delay:.9s}.wg-ref-app .wg-ref-feature:nth-child(5) .wg-ref-icon{animation-delay:1.2s}.wg-ref-app .wg-ref-feature:nth-child(6) .wg-ref-icon{animation-delay:1.5s}
+.wg-ref-app .wg-ref-hero-copy h1{animation:wgHeroTitle 1s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-hero-copy p{animation:wgFadeUp .8s .15s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-hero-actions{animation:wgFadeUp .8s .25s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-live-card{animation:wgLiveCardIn .9s .15s var(--wg-motion-ease) both;position:relative;overflow:hidden}
+.wg-ref-app .wg-ref-live-card::after,.wg-ref-app .wg-card::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(103,232,249,.07) 48%,transparent 61%);transform:translateX(-130%);animation:wgSheen 5s ease-in-out infinite}
+.wg-ref-app .wg-btn,.wg-ref-app .wg-btn-ghost,.wg-ref-app button{transition:transform .18s ease,filter .18s ease,box-shadow .18s ease,border-color .18s ease}
+.wg-ref-app .wg-btn:hover,.wg-ref-app .wg-btn-ghost:hover{transform:translateY(-2px);filter:brightness(1.08);box-shadow:0 8px 24px rgba(14,165,233,.13)}
+.wg-ref-app .wg-chip.live{animation:wgLiveChip 1.7s ease-in-out infinite}
+.wg-ref-app .wg-ref-online i,.wg-ref-live-dot{animation:wgLiveDot 1.25s ease-in-out infinite}
+.wg-ref-app .wg-ref-weather-pill{animation:wgSoftPulse 3s ease-in-out infinite}
+.wg-ref-app .wg-ref-nav-group{animation:wgNavIn .55s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-nav-group:nth-child(2){animation-delay:.08s}.wg-ref-app .wg-ref-nav-group:nth-child(3){animation-delay:.16s}.wg-ref-app .wg-ref-nav-group:nth-child(4){animation-delay:.24s}
+.wg-ref-app .wg-ref-nav-group button{transition:transform .2s ease,background .2s ease,color .2s ease}
+.wg-ref-app .wg-ref-nav-group button:hover{transform:translateX(4px)}
+.wg-ref-app .wg-ref-emergency{animation:wgEmergency 1s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-bottom-command{animation:wgFadeUp .8s .45s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-footer{animation:wgFadeUp .8s .55s var(--wg-motion-ease) both}
+.wg-ref-app .wg-ref-map-real,.wg-ref-app .wg-real-map{animation:wgMapIn 1s var(--wg-motion-ease) both}
+.wg-ref-app .wg-real-map-controls button.active{animation:wgControlActive .8s ease-in-out infinite alternate}
+.wg-ref-app .wg-ref-hubs button,.wg-ref-map-tabs button{transition:transform .2s ease,background .2s ease;border-color .2s ease}
+.wg-ref-app .wg-ref-hubs button:hover,.wg-ref-map-tabs button:hover{transform:translateY(-2px)}
+.wg-ref-atmosphere{animation:wgAtmosphere 14s ease-in-out infinite alternate}
+@keyframes wgHeaderIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:none}}
+@keyframes wgSidebarIn{from{opacity:0;transform:translateX(-22px)}to{opacity:1;transform:none}}
+@keyframes wgSectionIn{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+@keyframes wgCardIn{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes wgHeroTitle{from{opacity:0;transform:translateY(18px) scale(.98);filter:blur(4px)}to{opacity:1;transform:none;filter:none}}
+@keyframes wgFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes wgLiveCardIn{from{opacity:0;transform:translateX(22px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes wgFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes wgSheen{0%,35%{transform:translateX(-130%)}65%,100%{transform:translateX(130%)}}
+@keyframes wgLiveChip{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.12)}50%{box-shadow:0 0 0 6px rgba(34,197,94,.08)}}
+@keyframes wgLiveDot{0%,100%{opacity:.55;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes wgSoftPulse{0%,100%{box-shadow:0 0 0 rgba(56,189,248,0)}50%{box-shadow:0 0 22px rgba(56,189,248,.09)}}
+@keyframes wgNavIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes wgEmergency{from{opacity:0;transform:scale(.985)}to{opacity:1;transform:none}}
+@keyframes wgMapIn{from{opacity:0;filter:saturate(.5);transform:scale(.985)}to{opacity:1;filter:none;transform:none}}
+@keyframes wgControlActive{from{box-shadow:0 0 0 rgba(56,189,248,0)}to{box-shadow:0 0 14px rgba(56,189,248,.18)}}
+@keyframes wgAtmosphere{from{transform:translate3d(-1%,0,0)}to{transform:translate3d(1%,1%,0)}}
+@media(prefers-reduced-motion:reduce){
+ .wg-ref-app *, .wg-ref-app *::before,.wg-ref-app *::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}
+}
