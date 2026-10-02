@@ -48,7 +48,7 @@ function OpeningMessage() {
   };
 }
 
-export default function App() {
+// Dedicated reference intelligence routes\nexport default function App() {
   const [tab, setTab] = useState("home");
   const [persona, setPersona] = useState("general");
   const [language, setLanguage] = useState("auto");
