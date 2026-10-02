@@ -121,169 +121,6 @@ export default function App() {
         if (!cancelled) setNotice("Starting offline: live data will load when the backend is reachable.");
       }
     })();
-    attemptGps(false);
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const ask = useCallback(
-    async (text) => {
-      const query = (text || "").trim();
-      if (!query || busy) return;
-      setMessages((prev) => [...prev, { id: `u-${Date.now()}`, sender: "user", text: query }]);
-      setBusy(true);
-      try {
-        const reply = await sendChatQuery(query, personaForApi(persona), language, place);
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `b-${Date.now()}`,
-            sender: "bot",
-            text: reply.markdown_response,
-            speech_text: reply.speech_text,
-            weather: reply.structured_weather,
-            alerts: reply.alerts,
-            agri_advisory: reply.agri_advisory,
-            aviation_briefing: reply.aviation_briefing,
-            marine_advisory: reply.marine_advisory,
-            suggested_actions: reply.suggested_actions,
-            quick_suggestions: reply.quick_suggestions,
-          },
-        ]);
-        if (reply.structured_weather) {
-          setWeather(reply.structured_weather);
-          setPlace(reply.structured_weather.location);
-          remember(reply.structured_weather.location);
-        }
-      } catch {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: `e-${Date.now()}`,
-            sender: "bot",
-            text: "⚠️ I could not reach the weather engine. Please check the backend is running and try again.",
-            speech_text: "Could not reach the weather engine. Please try again.",
-          },
-        ]);
-      } finally {
-        setBusy(false);
-      }
-    },
-    [busy, persona, language, place, remember]
-  );
-
-  const searchPlace = useCallback(
-    async (name, lat = null, lon = null, state = null, source = "MANUAL") => {
-      const target = (name || "").trim();
-      if (!target) return;
-      const requestId = locRequestId.current;
-      setBusy(true);
-      try {
-        const data = await fetchCurrentWeather(target, lat, lon, "auto", state);
-        if (locRequestId.current !== requestId) return;
-        setWeather(data);
-        setPlace(data.location);
-        setLocState({ source, status: source === "GPS" ? "LIVE" : source === "SAVED" ? "LAST_KNOWN" : "MANUAL" });
-        remember(data.location);
-      } catch {
-        if (locRequestId.current !== requestId) return;
-        setNotice(`Could not load weather for "${target}". Try again shortly.`);
-      } finally {
-        if (locRequestId.current === requestId) setBusy(false);
-      }
-    },
-    [remember]
-  );
-
-  const attemptGps = useCallback(
-    (manual, savedFallback) => {
-      if (!navigator.geolocation) {
-        if (manual) setNotice("Geolocation is not available in this browser.");
-        else {
-          setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
-          setNotice("Location unavailable. Loading the reference default location: New Delhi.");
-          if (!savedFallback || savedFallback.length === 0) {
-            searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
-          }
-        }
-        return;
-      }
-      const requestId = ++locRequestId.current;
-      setLocating(true);
-      setLocState({ source: "UNKNOWN", status: "DETECTING" });
-      if (manual) setNotice("Detecting location…");
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          if (locRequestId.current !== requestId) return;
-          const { latitude, longitude, accuracy } = pos.coords;
-          try {
-            const rev = await fetchReverseGeocode(latitude, longitude);
-            if (locRequestId.current !== requestId) return;
-            const name = rev.city || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
-            await searchPlace(name, latitude, longitude, rev.state || null, "GPS");
-            if (locRequestId.current !== requestId) return;
-            const label = { name, state: rev.state || "", at: Date.now() };
-            setGpsLabel(label);
-            try {
-              localStorage.setItem("weathergpt.lastGps", JSON.stringify(label));
-            } catch {
-              /* noop */
-            }
-            setNotice(`📍 Current Location — ${name}${rev.state ? `, ${rev.state}` : ""}`);
-          } catch {
-            if (locRequestId.current !== requestId) return;
-            setLocState({ source: "UNKNOWN", status: "ERROR" });
-            setNotice("GPS detected, but city lookup failed. Loading the reference default location: New Delhi.");
-            if (!savedFallback || savedFallback.length === 0) {
-              await searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
-            }
-          } finally {
-            if (locRequestId.current === requestId) setLocating(false);
-          }
-        },
-        (err) => {
-          if (locRequestId.current !== requestId) return;
-          setLocating(false);
-          if (err && err.code === err.TIMEOUT) {
-            setLocState({ source: "UNKNOWN", status: "ERROR" });
-            setNotice("Location request timed out. Search for a location manually.");
-          } else if (err && err.code === err.POSITION_UNAVAILABLE) {
-            setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
-            setNotice("Location unavailable. Search for a location manually.");
-          } else {
-            setLocState({ source: "UNKNOWN", status: "DENIED" });
-            setNotice("Location access was denied. Loading the reference default location: New Delhi.");
-          }
-          if (!manual && savedFallback && savedFallback.length > 0) {
-            searchPlace(savedFallback[0], null, null, null, "SAVED");
-          } else if (!manual && (!savedFallback || savedFallback.length === 0)) {
-            searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
-          }
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    },
-    [searchPlace]
-  );
-
-  const locateMe = useCallback(() => {
-    attemptGps(true, saved);
-  }, [attemptGps, saved]);
-
-  useEffect(() => {
-    if (initDone.current) return;
-    initDone.current = true;
-    let cancelled = false;
-    (async () => {
-      try {
-        const al = await fetchActiveAlerts();
-        if (!cancelled) setAlerts(al);
-      } catch {
-        if (!cancelled) setNotice("Starting offline: live data will load when the backend is reachable.");
-      }
-    })();
     attemptGps(false, savedRef.current || []);
     return () => {
       cancelled = true;
@@ -342,16 +179,7 @@ export default function App() {
       />
 
       <div className="wg-body">
-        <aside className="wg-side" aria-label="Primary">
-          {GROUPS.map(([group, links]) => (
-            <React.Fragment key={group}>
-              <div className="wg-sidegroup">{group}</div>
-              {links.map(([id, ico, label]) => sideLink(id, ico, label))}
-            </React.Fragment>
-          ))}
-        </aside>
-
-        <div className="wg-maincol">
+        <div className="wg-maincol wg-reference-maincol">
           {notice && (
             <div className="wg-wrap" style={{ marginTop: "0.6rem" }}>
               <div className="wg-alert warn" role="status">
@@ -405,22 +233,7 @@ export default function App() {
             </Suspense>
           </main>
 
-          <footer style={{ borderTop: "1px solid var(--wg-line)", background: "rgba(9,14,27,.85)" }}>
-            <div className="wg-wrap" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem 1.2rem", justifyContent: "space-between", paddingTop: "0.7rem", paddingBottom: "0.7rem", fontSize: "0.74rem", color: "var(--wg-muted)" }}>
-              <span>
-                <strong style={{ color: "var(--wg-ink)" }}>WeatherGPT</strong> · AI Weather Intelligence · SIH 2026
-                <br />
-                Muchakarla Hemanth Kumar · SRK Institute of Technology · B.Tech CSE–AI/ML · 2024–2028
-              </span>
-              <span style={{ display: "flex", gap: "0.9rem", flexWrap: "wrap" }}>
-                <a href="https://github.com/hemanthhemanth1834-bit" target="_blank" rel="noreferrer">GitHub</a>
-                <a href="https://www.linkedin.com/in/hemanth-kumar-muchakarla-7974002a7/" target="_blank" rel="noreferrer">LinkedIn</a>
-                <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT#third-party-notices" target="_blank" rel="noreferrer">Attribution</a>
-                <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT/blob/main/LICENSE" target="_blank" rel="noreferrer">MIT License</a>
-              </span>
-              <span className="wg-mono">Open-Meteo · LIVE — GFS LIVE · WRF NOT CONFIGURED</span>
-            </div>
-          </footer>
+          <footer className="wg-ref-footer"><div className="wg-ref-footer-inner"><span>Theme: Auto · {weather?.condition || "Live Weather"}</span></div></footer>
         </div>
       </div>
 
