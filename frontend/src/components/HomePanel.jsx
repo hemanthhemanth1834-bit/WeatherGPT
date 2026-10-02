@@ -61,8 +61,9 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
   const [risk, setRisk] = useState(null);
   const [auto, setAuto] = useState(false);
   const [stationCount, setStationCount] = useState(3);
-  const [metric, setMetric] = useState("temperature");
+  const [metric, setMetric] = useState("dual");
   const [bulletin, setBulletin] = useState(0);
+  const [manageStations, setManageStations] = useState(false);
   const [regionalWeather, setRegionalWeather] = useState({});
 
   useEffect(() => {
@@ -77,7 +78,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
   useEffect(() => {
     if (!auto || !weather?.location) return undefined;
-    const id = setInterval(() => onRefresh(weather.location), 10 * 60 * 1000);
+    const id = setInterval(() => onRefresh(weather.location), 60 * 1000);
     return () => clearInterval(id);
   }, [auto, weather?.location, onRefresh]);
 
@@ -130,12 +131,17 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
     <section className="wg-ref-home" aria-label="WeatherGPT Intelligence Hub">
       <div className="wg-ref-seismic">
         <div className="wg-ref-seismic-main">
-          <span className="wg-ref-seismic-badge">NCS SEISMIC BULLETIN</span>
-          <strong>4.2</strong><span>Depth: <b>8 km</b></span><span>14 hours ago</span>
-          <b>Mahendragarh-Dehradun Subsurface Ridge</b><span>📍 25 km from New Delhi · Zone IV</span>
+          <span className="wg-ref-seismic-badge">{["NCS SEISMIC BULLETIN","IMD WEATHER BULLETIN","CWC HYDROLOGY BULLETIN","NDMA SAFETY BULLETIN"][bulletin]}</span>
+          <strong>{["4.2","RED","FLOOD WATCH","READY"][bulletin]}</strong><span>{["Depth: 8 km","Heavy rain advisory","River gauge watch","Emergency readiness"][bulletin]}</span><span>{["14 hours ago","Live","Live","Updated"][bulletin]}</span>
+          <b>{["Mahendragarh-Dehradun Subsurface Ridge","New Delhi, Delhi NCR","Yamuna basin monitoring","National emergency preparedness"][bulletin]}</b><span>📍 {weather?.location || "New Delhi"} · India</span>
         </div>
-        <div className="wg-ref-seismic-copy">Shallow localized tremor felt across Gurugram, South Delhi, and Noida high-rise residential complexes.</div>
-        <div className="wg-ref-seismic-actions"><button className="wg-btn-ghost" onClick={() => setBulletin((bulletin + 1) % 4)}>1/4 <span>Next →</span></button><button className="wg-btn" onClick={() => onTab("risk")}>Drop, Cover &amp; Hold Drill</button><button className="wg-btn-ghost" onClick={() => onTab("risk")}>Simulate Tremor</button></div>
+        <div className="wg-ref-seismic-copy">{[
+          "Shallow localized tremor felt across Gurugram, South Delhi, and Noida high-rise residential complexes.",
+          "Monitor rainfall, thunderstorm and visibility conditions using the live WeatherGPT telemetry feed.",
+          "Review rainfall accumulation and flood-risk signals before travel or evacuation decisions.",
+          "Keep emergency contacts and evacuation information available during severe-weather conditions."
+        ][bulletin]}</div>
+        <div className="wg-ref-seismic-actions"><button className="wg-btn-ghost" onClick={() => setBulletin((bulletin + 1) % 4)}>{bulletin + 1}/4 <span>Next →</span></button><button className="wg-btn" onClick={() => onTab("risk")}>Drop, Cover &amp; Hold Drill</button><button className="wg-btn-ghost" onClick={() => onTab("risk")}>Simulate Tremor</button></div>
       </div>
 
       <div className="wg-ref-hero">
@@ -184,7 +190,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
       </Section>
 
       <Section eyebrow="PRIORITY OBSERVATION NETWORK" title="Pinned Weather Dashboard">
-        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 4 STATIONS</b> · Live concurrent telemetry across your designated priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">57s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setStationCount((n) => n === 4 ? 3 : 4)}>Select &amp; Manage</button></span></div>
+        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 4 STATIONS</b> · Live concurrent telemetry across your designated priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">57s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setManageStations(true)}>Select &amp; Manage</button></span></div>
         <div className="wg-ref-station-grid">
           {regional.slice(0, stationCount).map(([name, stationPlace], i) => {
             const stationWeather = i === 0 && weather ? weather : regionalWeather[name] || null;
@@ -206,7 +212,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
       <Section eyebrow="MULTIVARIABLE PROJECTION" title="7-Day Temperature & Precipitation Outlook">
         <div className="wg-ref-outlook-panel wg-card">
-          <div className="wg-ref-outlook-top"><span>Multivariable atmospheric projection model for {askLocation}</span><div><button className={metric === "temperature" ? "active" : ""} onClick={() => setMetric("temperature")}>Dual Trend</button><button className={metric === "temperature" ? "" : "active"} onClick={() => setMetric("temperature")}>Temperature</button><button className={metric === "precipitation" ? "active" : ""} onClick={() => setMetric("precipitation")}>Precipitation</button></div></div>
+          <div className="wg-ref-outlook-top"><span>Multivariable atmospheric projection model for {askLocation}</span><div><button className={metric === "dual" ? "active" : ""} onClick={() => setMetric("dual")}>Dual Trend</button><button className={metric === "temperature" ? "active" : ""} onClick={() => setMetric("temperature")}>Temperature</button><button className={metric === "precipitation" ? "active" : ""} onClick={() => setMetric("precipitation")}>Precipitation</button></div></div>
           <div className="wg-ref-summary-grid">
             <div><span>Thermal Trajectory</span><b>{maxTemps.length ? `${weeklyMax - (weeklyMin || weeklyMax)}° spread` : "—"}</b><small>Diurnal spread from live NWP</small></div>
             <div><span>Weekly Extremes</span><b>{weeklyMax != null ? `${weeklyMax}° / ${weeklyMin}°` : "—"}</b><small>Peak / minimum</small></div>
@@ -278,6 +284,15 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
           </button>
         ))}
       </div>
+      {manageStations && <div role="dialog" aria-modal="true" style={{position:"fixed",inset:0,zIndex:120,background:"rgba(2,6,23,.72)",backdropFilter:"blur(8px)",display:"grid",placeItems:"center",padding:"1rem"}} onClick={()=>setManageStations(false)}>
+        <div className="wg-card" style={{width:"min(34rem,100%)",padding:"1rem",background:"#0b1328"}} onClick={e=>e.stopPropagation()}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:".5rem"}}><div><b>Station Management</b><small style={{display:"block",color:"var(--wg-muted)"}}>Choose up to 4 priority observation stations.</small></div><button className="wg-btn-ghost" onClick={()=>setManageStations(false)}>✕</button></div>
+          <div style={{display:"grid",gap:".4rem",marginTop:".8rem"}}>
+            {regional.map(([name,stationPlace],i)=><label key={name} style={{display:"flex",alignItems:"center",gap:".6rem",padding:".55rem .65rem",border:"1px solid var(--wg-line)",borderRadius:".7rem"}}><input type="checkbox" checked={i < stationCount} onChange={()=>setStationCount(n=>i<n?Math.max(1,n-1):Math.min(4,n+1))}/><span><b>{name}</b><small style={{display:"block",color:"var(--wg-muted)"}}>{stationPlace}</small></span></label>)}
+          </div>
+          <div style={{display:"flex",justifyContent:"flex-end",gap:".4rem",marginTop:".8rem"}}><button className="wg-btn" onClick={()=>setManageStations(false)}>Done</button></div>
+        </div>
+      </div>}
       <footer className="wg-ref-footer"><span>WEATHERGPT · AI WEATHER INTELLIGENCE</span><span>Theme: Auto · {weather?.condition || "Live Weather"}</span><span>Open-Meteo · RainViewer · NASA GIBS · public geospatial sources</span></footer>
     </section>
   );
