@@ -697,3 +697,15 @@ button, input, select, a { min-height: 0; }
  .wg-profile-grid{grid-template-columns:1fr}
  .wg-profile-heading,.wg-profile-preferences{flex-direction:column;align-items:flex-start}
 }
+
+/* Password-protected user account */
+.wg-user-account{width:100%;max-width:1100px;margin:0 auto}
+.wg-profile-lock{max-width:520px;margin:1rem auto;padding:1.5rem}
+.wg-profile-lock-icon{font-size:2rem;margin-bottom:.4rem}
+.wg-profile-lock h2{margin:0;font-size:1.15rem}
+.wg-profile-lock p{color:var(--wg-muted);font-size:.8rem;line-height:1.55;margin:.45rem 0 1rem}
+.wg-profile-lock label{display:flex;flex-direction:column;gap:.35rem;margin-top:.75rem;font-size:.75rem;font-weight:700;color:#cbd5e1}
+.wg-profile-lock .wg-btn{width:100%;margin-top:1rem}
+.wg-profile-lock small{display:block;margin-top:.8rem;color:var(--wg-faint);line-height:1.45}
+.wg-profile-lock .wg-alert{margin-top:.8rem}
+.wg-profile-card .wg-profile-heading{align-items:center}
