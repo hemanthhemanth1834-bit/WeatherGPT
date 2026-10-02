@@ -15,6 +15,12 @@ export default function AlertCenter({ onAsk }) {
   const [voicing, setVoicing] = useState(null);
   const [showContacts, setShowContacts] = useState(false);
   const [capFor, setCapFor] = useState(null);
+  const [readIds, setReadIds] = useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem("weathergpt.readAlerts") || "[]")); } catch { return new Set(); }
+  });
+  const [notificationsMuted, setNotificationsMuted] = useState(() => {
+    try { return localStorage.getItem("weathergpt.alertNotificationsMuted") === "1"; } catch { return false; }
+  });
 
   const load = async (level) => {
     setBusy(true);
@@ -22,13 +28,16 @@ export default function AlertCenter({ onAsk }) {
     try {
       const data = await fetchActiveAlerts(level === "All" ? null : level);
       setAlerts(data);
-      if (typeof window !== "undefined" && "Notification" in window &&
+      if (typeof window !== "undefined" && !notificationsMuted && "Notification" in window &&
           Notification.permission === "granted" && data.length > 0 && !load.notified) {
-        load.notified = true;
-        try {
-          new Notification(`WeatherGPT: ${data[0].severity} alert`, { body: data[0].headline });
-        } catch {
-          /* blocked by browser policy */
+        const unread = data.filter((a) => !readIds.has(a.id));
+        if (unread.length > 0) {
+          load.notified = true;
+          try {
+            new Notification(`WeatherGPT: ${unread[0].severity} alert`, { body: unread[0].headline });
+          } catch {
+            /* blocked by browser policy */
+          }
         }
       }
     } catch {
@@ -36,6 +45,40 @@ export default function AlertCenter({ onAsk }) {
     } finally {
       setBusy(false);
     }
+  };
+
+  const markRead = (id) => {
+    setReadIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      try { localStorage.setItem("weathergpt.readAlerts", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
+
+  const markAllRead = () => {
+    setReadIds((prev) => {
+      const next = new Set([...prev, ...alerts.map((a) => a.id)]);
+      try { localStorage.setItem("weathergpt.readAlerts", JSON.stringify([...next])); } catch {}
+      return next;
+    });
+  };
+
+  const clearRead = () => {
+    setAlerts((prev) => prev.filter((a) => !readIds.has(a.id)));
+    setReadIds((prev) => {
+      const next = new Set();
+      try { localStorage.setItem("weathergpt.readAlerts", "[]"); } catch {}
+      return next;
+    });
+  };
+
+  const toggleMute = () => {
+    setNotificationsMuted((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("weathergpt.alertNotificationsMuted", next ? "1" : "0"); } catch {}
+      return next;
+    });
   };
 
   const enableNotifications = async () => {
@@ -105,8 +148,14 @@ export default function AlertCenter({ onAsk }) {
           <button className="wg-btn-ghost" style={{ fontSize: "0.72rem" }} onClick={() => setShowContacts(true)}>
             📞 Emergency contacts
           </button>
-          <button className="wg-btn-ghost" style={{ fontSize: "0.72rem" }} onClick={enableNotifications} title="One browser notification per session for the top alert">
-            🔔 Notify me
+          <button className="wg-btn-ghost" style={{ fontSize: "0.72rem" }} onClick={markAllRead} title="Mark every current alert as read">
+            ✓ Mark all read
+          </button>
+          <button className="wg-btn-ghost" style={{ fontSize: "0.72rem" }} onClick={clearRead} title="Remove alerts you have already read">
+            🧹 Clear read
+          </button>
+          <button className="wg-btn-ghost" style={{ fontSize: "0.72rem" }} onClick={toggleMute} title="Stop browser notifications until you turn them back on">
+            {notificationsMuted ? "🔕 Notifications off" : "🔔 Notify me"}
           </button>
         </div>
       </div>
@@ -164,6 +213,9 @@ export default function AlertCenter({ onAsk }) {
             <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
               <button className="wg-btn-ghost" onClick={() => broadcast(a)}>
                 {voicing === a.id ? "⏹ Stop" : "🔊 Broadcast"}
+              </button>
+              <button className="wg-btn-ghost" onClick={() => markRead(a.id)} disabled={readIds.has(a.id)} title="Mark this alert as read">
+                {readIds.has(a.id) ? "✓ Read" : "Mark read"}
               </button>
               <button className="wg-btn-ghost" onClick={() => setCapFor(capFor?.id === a.id ? null : a)}>
                 {capFor?.id === a.id ? "Hide CAP" : "View CAP"}
