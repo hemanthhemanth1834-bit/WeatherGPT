@@ -357,3 +357,25 @@
  .wg-market-svg line{animation:none!important}
  .wg-market-chart:hover{transform:none}
 }
+
+
+/* COMPACT PANEL GUIDE + LIVE RADAR PREVIEW */
+.wg-explain-section{padding-top:8px}
+.wg-explain-head{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.wg-explain-head h2{margin:.35rem 0 .2rem}
+.wg-explain-head p{margin:0;color:var(--wg-muted);font-size:12px}
+.wg-explain-live{position:relative;width:min(330px,38vw);height:125px;flex:0 0 auto;overflow:hidden;border-radius:14px;border:1px solid rgba(103,232,249,.24);background:#071426;box-shadow:0 12px 30px rgba(0,0,0,.25),inset 0 0 25px rgba(34,211,238,.06)}
+.wg-explain-live img{width:100%;height:100%;display:block;object-fit:cover;opacity:.82;filter:saturate(1.15) contrast(1.08)}
+.wg-explain-live::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(3,12,28,.05),rgba(3,12,28,.78));pointer-events:none}
+.wg-explain-live-overlay{position:absolute;z-index:2;left:10px;right:10px;bottom:9px;display:flex;flex-direction:column;gap:2px;text-shadow:0 1px 5px #000}
+.wg-explain-live-overlay span{font-size:9px;font-weight:900;letter-spacing:.1em;color:#67e8f9}
+.wg-explain-live-overlay small{font-size:10px;color:#dbeafe}
+.wg-explain-live-empty{display:grid;place-items:center;height:100%;font-size:9px;letter-spacing:.1em;color:#67e8f9}
+.wg-explain-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:10px}
+.wg-explain-card{padding:10px 11px!important;min-height:76px;display:flex;flex-direction:column;justify-content:center;gap:4px;transition:transform .22s ease,box-shadow .22s ease}
+.wg-explain-card:hover{transform:translateY(-3px) translateZ(5px);box-shadow:0 10px 25px rgba(0,0,0,.22),0 0 16px rgba(34,211,238,.07)}
+.wg-explain-card strong{font-size:10px;letter-spacing:.07em;color:#67e8f9}
+.wg-explain-card span{font-size:10px;line-height:1.45;color:var(--wg-muted)}
+.wg-explain-section details{margin-top:8px!important}
+@media(max-width:1050px){.wg-explain-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wg-explain-live{width:290px}}
+@media(max-width:700px){.wg-explain-head{align-items:stretch;flex-direction:column}.wg-explain-live{width:100%;height:145px}.wg-explain-grid{grid-template-columns:1fr}}
