@@ -1,0 +1,63 @@
+/* Fixed desktop reference sidebar: it stays pinned while the main page scrolls. */
+@media (min-width: 821px) {
+  .wg-ref-layout {
+    box-sizing: border-box;
+    padding-left: 288px;
+    align-items: stretch;
+  }
+
+  .wg-ref-sidebar {
+    position: fixed !important;
+    left: max(0px, calc((100vw - 1280px) / 2));
+    top: 99px;
+    bottom: 0;
+    width: 288px !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0;
+    z-index: 35;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .wg-ref-sidebar-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-right: 5px;
+  }
+
+  .wg-ref-engine {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 2;
+    background: rgba(9, 16, 36, 0.98);
+  }
+
+  .wg-ref-content {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (min-width: 821px) and (max-width: 1100px) {
+  .wg-ref-layout {
+    padding-left: 250px;
+  }
+
+  .wg-ref-sidebar {
+    left: 0;
+    width: 250px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wg-ref-sidebar,
+  .wg-ref-sidebar-scroll {
+    scroll-behavior: auto;
+  }
+}
