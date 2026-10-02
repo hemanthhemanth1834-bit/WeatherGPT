@@ -239,3 +239,9 @@ https://github.com/hemanthhemanth1834-bit
 ## LinkedIn
 
 https://www.linkedin.com/in/hemanth-kumar-muchakarla-7974002a7/
+
+### VibeVoice voice output (optional)
+
+WeatherGPT can use Microsoft's VibeVoice-Realtime-0.5B as an optional TTS provider. The browser-native Web Speech engine remains the automatic fallback, so the main deployment does not require a GPU. VibeVoice is primarily documented for English and requires a separately hosted inference service; set backend `VIBEVOICE_TTS_URL` to that service's `/tts` endpoint. The integration sends only the generated `speech_text` to the voice service.
+
+Official model/docs: https://github.com/microsoft/VibeVoice and https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B
