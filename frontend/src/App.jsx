@@ -1,5 +1,4 @@
 import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import Navbar from "./components/Navbar";
 import { personaForApi } from "./services/persona";
 import WeatherChat from "./components/WeatherChat";
 import { fetchActiveAlerts, fetchCurrentWeather, fetchReverseGeocode, sendChatQuery } from "./services/api";
@@ -22,12 +21,6 @@ const SavedPlacesPanel = lazy(() => import("./components/SavedPlacesPanel"));
 const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
 const CapabilitiesHub = lazy(() => import("./components/CapabilitiesHub"));
 
-const GROUPS = [
-  ["Overview", [["home", "🏠", "Command"], ["chat", "💬", "AI Chat"], ["dashboard", "📊", "Forecast"]]],
-  ["Intelligence", [["map", "🗺", "Radar · GIS"], ["earth", "🌍", "3D Earth"], ["severe", "🌀", "Severe"], ["alerts", "🚨", "Alerts"], ["risk", "⚠", "Risk"], ["climate", "🌡", "Climate"], ["compare", "⚖", "Compare"]]],
-  ["Sectors", [["agri", "🌾", "Agriculture"], ["aviation_marine", "✈", "Air · Sea"], ["nwp", "🛰", "NWP"], ["satellite", "📡", "Satellite"], ["saved", "★", "Saved"]]],
-  ["Project", [["about", "ℹ", "About"], ["capabilities", "🧭", "Capabilities"]]],
-];
 
 const SAVED_KEY = "weathergpt.savedPlaces";
 
@@ -66,21 +59,11 @@ export default function App() {
   const [saved, setSaved] = useState(loadSaved);
   const [notice, setNotice] = useState("");
   const [micTick, setMicTick] = useState(0);
-  const [drawer, setDrawer] = useState(false);
   const [locating, setLocating] = useState(false);
   // LocationState: { source: GPS|MANUAL|SAVED|UNKNOWN, status: DETECTING|LIVE|MANUAL|LAST_KNOWN|DENIED|UNAVAILABLE|ERROR|IDLE }
   const [locState, setLocState] = useState({ source: "UNKNOWN", status: "IDLE" });
   const locRequestId = React.useRef(0);
   const initDone = React.useRef(false);
-  const savedRef = React.useRef([]);
-  savedRef.current = saved;
-  const [gpsLabel, setGpsLabel] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("weathergpt.lastGps") || "null");
-    } catch {
-      return null;
-    }
-  });
 
   const remember = useCallback((name) => {
     const clean = (name || "").trim();
@@ -121,12 +104,154 @@ export default function App() {
         if (!cancelled) setNotice("Starting offline: live data will load when the backend is reachable.");
       }
     })();
-    attemptGps(false, savedRef.current || []);
+    attemptGps(false);
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const ask = useCallback(
+    async (text) => {
+      const query = (text || "").trim();
+      if (!query || busy) return;
+      setMessages((prev) => [...prev, { id: `u-${Date.now()}`, sender: "user", text: query }]);
+      setBusy(true);
+      try {
+        const reply = await sendChatQuery(query, personaForApi(persona), language, place);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `b-${Date.now()}`,
+            sender: "bot",
+            text: reply.markdown_response,
+            speech_text: reply.speech_text,
+            weather: reply.structured_weather,
+            alerts: reply.alerts,
+            agri_advisory: reply.agri_advisory,
+            aviation_briefing: reply.aviation_briefing,
+            marine_advisory: reply.marine_advisory,
+            suggested_actions: reply.suggested_actions,
+            quick_suggestions: reply.quick_suggestions,
+          },
+        ]);
+        if (reply.structured_weather) {
+          setWeather(reply.structured_weather);
+          setPlace(reply.structured_weather.location);
+          remember(reply.structured_weather.location);
+        }
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `e-${Date.now()}`,
+            sender: "bot",
+            text: "⚠️ I could not reach the weather engine. Please check the backend is running and try again.",
+            speech_text: "Could not reach the weather engine. Please try again.",
+          },
+        ]);
+      } finally {
+        setBusy(false);
+      }
+    },
+    [busy, persona, language, place, remember]
+  );
+
+  const searchPlace = useCallback(
+    async (name, lat = null, lon = null, state = null, source = "MANUAL") => {
+      const target = (name || "").trim();
+      if (!target) return;
+      const requestId = locRequestId.current;
+      setBusy(true);
+      try {
+        const data = await fetchCurrentWeather(target, lat, lon, "auto", state);
+        if (locRequestId.current !== requestId) return;
+        setWeather(data);
+        setPlace(data.location);
+        setLocState({ source, status: source === "GPS" ? "LIVE" : source === "SAVED" ? "LAST_KNOWN" : "MANUAL" });
+        remember(data.location);
+      } catch {
+        if (locRequestId.current !== requestId) return;
+        setNotice(`Could not load weather for "${target}". Try again shortly.`);
+      } finally {
+        if (locRequestId.current === requestId) setBusy(false);
+      }
+    },
+    [remember]
+  );
+
+  const attemptGps = useCallback(
+    (manual, savedFallback) => {
+      if (!navigator.geolocation) {
+        if (manual) setNotice("Geolocation is not available in this browser.");
+        else {
+          setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
+          if (manual) setNotice("Location unavailable. Loading the reference default location: New Delhi.");
+          if (!savedFallback || savedFallback.length === 0) {
+            searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+          }
+        }
+        return;
+      }
+      const requestId = ++locRequestId.current;
+      setLocating(true);
+      setLocState({ source: "UNKNOWN", status: "DETECTING" });
+      if (manual) setNotice("Detecting location…");
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          if (locRequestId.current !== requestId) return;
+          const { latitude, longitude, accuracy } = pos.coords;
+          try {
+            const rev = await fetchReverseGeocode(latitude, longitude);
+            if (locRequestId.current !== requestId) return;
+            const name = rev.city || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+            await searchPlace(name, latitude, longitude, rev.state || null, "GPS");
+            if (locRequestId.current !== requestId) return;
+            const label = { name, state: rev.state || "", at: Date.now() };
+            setGpsLabel(label);
+            try {
+              localStorage.setItem("weathergpt.lastGps", JSON.stringify(label));
+            } catch {
+              /* noop */
+            }
+            setNotice(`📍 Current Location — ${name}${rev.state ? `, ${rev.state}` : ""}`);
+          } catch {
+            if (locRequestId.current !== requestId) return;
+            setLocState({ source: "UNKNOWN", status: "ERROR" });
+            if (manual) setNotice("GPS detected, but city lookup failed. Loading the reference default location: New Delhi.");
+            if (!savedFallback || savedFallback.length === 0) {
+              await searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+            }
+          } finally {
+            if (locRequestId.current === requestId) setLocating(false);
+          }
+        },
+        (err) => {
+          if (locRequestId.current !== requestId) return;
+          setLocating(false);
+          if (err && err.code === err.TIMEOUT) {
+            setLocState({ source: "UNKNOWN", status: "ERROR" });
+            setNotice("Location request timed out. Search for a location manually.");
+          } else if (err && err.code === err.POSITION_UNAVAILABLE) {
+            setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
+            setNotice("Location unavailable. Search for a location manually.");
+          } else {
+            setLocState({ source: "UNKNOWN", status: "DENIED" });
+            if (manual) setNotice("Location access was denied. Loading the reference default location: New Delhi.");
+          }
+          if (!manual && savedFallback && savedFallback.length > 0) {
+            searchPlace(savedFallback[0], null, null, null, "SAVED");
+          } else if (!manual && (!savedFallback || savedFallback.length === 0)) {
+            searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+          }
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    },
+    [searchPlace]
+  );
+
+
 
   const goTab = useCallback((name) => {
     const map = { open_map: "map", open_dashboard: "dashboard", open_agri: "agri", open_alerts: "alerts", open_compare: "compare" };
@@ -144,40 +269,9 @@ export default function App() {
     ask(q);
   }, [ask]);
 
-  const sideLink = (id, ico, label) => (
-    <button key={id} className="wg-sidelink" aria-current={tab === id ? "page" : undefined} onClick={() => goTab(id)}>
-      <span className="ico" aria-hidden="true">{ico}</span>
-      <span>{label}</span>
-      {id === "alerts" && alerts.length > 0 && <span className="wg-badge cnt">{alerts.length}</span>}
-    </button>
-  );
 
   return (
     <div className="wg-shell">
-      <Navbar
-        onHome={() => goTab("home")}
-        persona={persona}
-        onPersona={setPersona}
-        language={language}
-        onLanguage={(code) => {
-          setLanguage(code);
-          setMessages([OpeningMessage()]);
-        }}
-        place={place}
-        onPlace={setPlace}
-        onSearch={searchPlace}
-        onLocate={locateMe}
-        locating={locating}
-        gpsLabel={gpsLabel}
-        alertCount={alerts.length}
-        onAlerts={() => goTab("alerts")}
-        saved={saved}
-        onRemoveSaved={removeSaved}
-        weather={weather}
-        onVoice={voiceToChat}
-        onMenu={() => setDrawer(true)}
-      />
-
       <div className="wg-body">
         <div className="wg-maincol wg-reference-maincol">
           {notice && (
