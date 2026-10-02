@@ -395,3 +395,112 @@
 .wg-market-line{stroke-width:4}
 .wg-market-point{r:4}
 @media(max-width:800px){.wg-market-svg{height:280px}.wg-market-time{font-size:8px!important}}
+
+
+/* CLIMATE ANALYTICS — animated real-data charts */
+.wg-climate-chart{
+  position:relative;
+  width:100%;
+  overflow:hidden;
+  border:1px solid rgba(103,232,249,.10);
+  border-radius:12px;
+  background:linear-gradient(180deg,rgba(15,31,54,.42),rgba(2,8,23,.22));
+  box-shadow:inset 0 0 35px rgba(34,211,238,.035);
+  perspective:1000px;
+}
+.wg-climate-chart::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;top:-20%;
+  height:22%;
+  pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(103,232,249,.08),transparent);
+  animation:wgClimateScan 5s linear infinite;
+}
+.wg-climate-chart-head{
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:9px 11px 0;
+  font-size:10px;
+}
+.wg-climate-chart-head span:first-child{display:flex;flex-direction:column;gap:2px}
+.wg-climate-chart-head small{font-size:9px;color:var(--wg-muted);font-weight:500}
+.wg-climate-chart-status{
+  color:#67e8c7;
+  font-weight:800;
+  letter-spacing:.05em;
+  animation:wgClimateStatus 1.8s ease-in-out infinite;
+}
+.wg-climate-chart svg{
+  display:block;
+  width:100%;
+  height:235px;
+  overflow:visible;
+}
+.wg-climate-grid{
+  stroke:rgba(148,163,184,.13);
+  stroke-dasharray:3 7;
+  animation:wgClimateGrid 9s linear infinite;
+}
+.wg-climate-axis,.wg-climate-label{
+  fill:#94a3b8;
+  font-size:10px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.wg-climate-label{font-size:9px;font-weight:700}
+.wg-climate-area{
+  fill:var(--wg-climate-color);
+  opacity:.12;
+  filter:drop-shadow(0 10px 18px color-mix(in srgb,var(--wg-climate-color) 22%,transparent));
+  transform-origin:center;
+  animation:wgClimateArea 3.8s ease-in-out infinite;
+}
+.wg-climate-line{
+  fill:none;
+  stroke:var(--wg-climate-color);
+  stroke-width:3.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vector-effect:non-scaling-stroke;
+  stroke-dasharray:12 7;
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--wg-climate-color) 70%,transparent));
+  animation:wgClimateLine 2.4s linear infinite, wgClimateGlow 2.8s ease-in-out infinite alternate;
+}
+.wg-climate-point{
+  fill:#071426;
+  stroke:var(--wg-climate-color);
+  stroke-width:2.5;
+  vector-effect:non-scaling-stroke;
+  cursor:crosshair;
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--wg-climate-color) 70%,transparent));
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:wgClimatePoint 2s ease-in-out infinite;
+}
+.wg-climate-point:nth-of-type(2n){animation-delay:.25s}
+.wg-climate-point:nth-of-type(3n){animation-delay:.5s}
+.wg-climate-legend{
+  position:relative;
+  z-index:2;
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  padding:0 11px 9px;
+  color:var(--wg-muted);
+  font:9px ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@keyframes wgClimateLine{to{stroke-dashoffset:-38}}
+@keyframes wgClimateGlow{0%{filter:drop-shadow(0 0 3px color-mix(in srgb,var(--wg-climate-color) 55%,transparent))}100%{filter:drop-shadow(0 0 10px color-mix(in srgb,var(--wg-climate-color) 90%,transparent))}}
+@keyframes wgClimateArea{0%,100%{opacity:.09;transform:scaleY(.985)}50%{opacity:.17;transform:scaleY(1.01)}}
+@keyframes wgClimatePoint{0%,100%{transform:scale(.88)}50%{transform:scale(1.25)}}
+@keyframes wgClimateGrid{to{stroke-dashoffset:-45}}
+@keyframes wgClimateScan{0%{transform:translateY(-140%);opacity:0}15%{opacity:.7}100%{transform:translateY(620%);opacity:0}}
+@keyframes wgClimateStatus{0%,100%{opacity:.65}50%{opacity:1;text-shadow:0 0 10px rgba(52,211,153,.45)}}
+@media(max-width:700px){.wg-climate-chart svg{height:205px}.wg-climate-legend{font-size:8px}.wg-climate-chart-head{font-size:9px}}
+@media(prefers-reduced-motion:reduce){
+ .wg-climate-chart::after,.wg-climate-grid,.wg-climate-line,.wg-climate-area,.wg-climate-point,.wg-climate-status{animation:none!important}
+}
