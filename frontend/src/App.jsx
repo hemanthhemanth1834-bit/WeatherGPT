@@ -203,7 +203,10 @@ export default function App() {
         if (manual) setNotice("Geolocation is not available in this browser.");
         else {
           setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
-          setNotice("Location unavailable. Search for a location manually.");
+          setNotice("Location unavailable. Loading the reference default location: New Delhi.");
+          if (!savedFallback || savedFallback.length === 0) {
+            searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+          }
         }
         return;
       }
@@ -232,7 +235,10 @@ export default function App() {
           } catch {
             if (locRequestId.current !== requestId) return;
             setLocState({ source: "UNKNOWN", status: "ERROR" });
-            setNotice("GPS detected, but city lookup failed. Search for a location manually.");
+            setNotice("GPS detected, but city lookup failed. Loading the reference default location: New Delhi.");
+            if (!savedFallback || savedFallback.length === 0) {
+              await searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+            }
           } finally {
             if (locRequestId.current === requestId) setLocating(false);
           }
@@ -248,10 +254,12 @@ export default function App() {
             setNotice("Location unavailable. Search for a location manually.");
           } else {
             setLocState({ source: "UNKNOWN", status: "DENIED" });
-            setNotice("Location access was denied. Search for a location manually.");
+            setNotice("Location access was denied. Loading the reference default location: New Delhi.");
           }
           if (!manual && savedFallback && savedFallback.length > 0) {
             searchPlace(savedFallback[0], null, null, null, "SAVED");
+          } else if (!manual && (!savedFallback || savedFallback.length === 0)) {
+            searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
           }
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
