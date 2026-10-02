@@ -676,3 +676,6 @@ button, input, select, a { min-height: 0; }
 @keyframes wgHourlyPulse{0%,100%{r:5;opacity:.85}50%{r:7;opacity:1}}
 @media(max-width:700px){.wg-hourly-chart-head{align-items:flex-start;flex-direction:column;gap:.15rem}.wg-hourly-chart svg{height:185px}.wg-hourly-time{font-size:9px}.wg-hourly-axis{font-size:9px}.wg-hourly-legend{font-size:.55rem}}
 @media(prefers-reduced-motion:reduce){.wg-hourly-area,.wg-hourly-line,.wg-hourly-dot.current{animation:none}}
+
+.wg-hourly-live-status{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:.35rem 0 .15rem;padding:.35rem .55rem;border-radius:7px;background:rgba(34,197,94,.055);border:1px solid rgba(34,197,94,.13)}
+.wg-hourly-live-status span{font-size:.62rem;font-weight:900;letter-spacing:.08em;color:#4ade80}.wg-hourly-live-status small{font-size:.6rem;color:var(--wg-muted)}
