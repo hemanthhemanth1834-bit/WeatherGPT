@@ -1,6 +1,6 @@
 # SIH DEMO FLOW — 3–5 minute live run
 
-Total: ~4 minutes. Every step uses real production data.
+Total: ~4 minutes. Every step uses production data with explicit LIVE / COMPUTED / DEMO / STATIC labels where applicable.
 
 | # | Time | Action | Expected |
 |---|---|---|---|
@@ -14,8 +14,8 @@ Total: ~4 minutes. Every step uses real production data.
 | 8 | 2:45 | Air·Sea tab | LIVE ADDS METAR chip + marine direction/period/SST |
 | 9 | 3:05 | Agri tab (Cotton/Nagpur) + Risk Assess | Advisory + LOW–EXTREME drivers + travel line |
 | 10 | 3:25 | Language → Telugu, ask; mic button | Telugu reply; mic fallback message if blocked |
-| 11 | 3:45 | NWP tab → Providers health | 8/13 LIVE, WRF/MOSDAC NOT CONFIGURED, GFS temp |
-| 12 | 4:00 | Close: problem→solution→impact line | "Every number on screen came from a live, labelled source." |
+| 11 | 3:45 | NWP tab → Providers health | Provider health counts shown live; WRF/MOSDAC NOT CONFIGURED, GFS temperature source shown with provenance |
+| 12 | 4:00 | Close: problem→solution→impact line | "Every number on screen came from a labelled source; LIVE values are timestamped and computed/demo values are identified." |
 
 Fallback lines if anything stalls: "This panel shows its source and status —
 FALLBACK/ESTIMATED rather than guesses." Never claim official IMD status.
