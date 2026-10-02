@@ -119,14 +119,14 @@ def voice_status() -> dict:
         "provider": provider(),
         "configured": configured(),
         "mode": provider(),
-        "language_scope": "English",
+        "language_scope": "en, hi, mr, ta, te, bn, gu, pa, kn, ml, or",
         "fallback": "BROWSER_SPEECH_SYNTHESIS",
     }
 
 
 @app.post("/api/voice/tts")
 async def voice_tts(payload: dict):
-    """Synthesize English WeatherGPT speech through VibeVoice or free Edge-TTS."""
+    """Synthesize multilingual WeatherGPT speech through VibeVoice or free Edge-TTS."""
     from .services.vibevoice import synthesize
     return await synthesize(str(payload.get("text", "")), str(payload.get("speaker", "Carter")), str(payload.get("language", "en")))
 
