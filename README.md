@@ -63,7 +63,7 @@ originate from tools.
 ## Weather Data
 
 Open-Meteo NWP blend (**LIVE**): current, hourly, daily, sunrise/sunset,
-UV. AQI is an **ESTIMATED** placeholder band. Every payload carries
+UV. AQI uses **LIVE Open-Meteo Air Quality** data (US AQI + pollutant values); if the upstream service fails, the response is explicitly labelled FALLBACK/ESTIMATED. Every payload carries
 `data_source / status / updated_at_ist / confidence`; upstream failure
 yields a labelled **SIMULATED** estimate, never a crash.
 
@@ -76,7 +76,7 @@ evaluated and deliberately not used (see `THIRD_PARTY_NOTICES.md`).
 
 ## GFS / WRF / NWP
 
-- **GFS: LIVE** via the Open-Meteo blend (`GET /api/nwp/status`).
+- **GFS: LIVE** via an explicit Open-Meteo `model=gfs` request (`GET /api/nwp/status`).
 - **WRF: NOT CONFIGURED.** Optional local-file adapter (`services/wrf_adapter.py`,
   `Dockerfile.wrf` reference only, OFF by default) activates only when
   `WRF_ENABLED=true` plus a real GRIB2/NetCDF path is present.
@@ -148,7 +148,7 @@ explicit fallbacks when the browser denies mic/support. No keys involved.
 Frontend: React 19, Vite, Tailwind CSS 4, Leaflet + react-leaflet,
 lucide-react, react-markdown. Backend: FastAPI, uvicorn, pydantic,
 httpx/requests, python-dotenv, pytest. Data: Open-Meteo, RainViewer,
-NASA GIBS links, OSM/CARTO tiles.
+NASA GIBS links, OSM tiles.
 
 ## Installation
 
@@ -205,7 +205,7 @@ after the provider's quota window clears and then verify the deployed commit.
 
 WRF / MOSDAC / IMD feed / LLM keys: NOT CONFIGURED.
 Aviation uses LIVE NOAA ADDS when available and STATIC fallback when silent.
-Climate STATIC. AQI/marine/risk ESTIMATED. Alerts computed, unofficial.
+Climate STATIC. AQI is LIVE when Open-Meteo Air Quality responds; marine/risk/travel remain modelled or estimated as labelled. Alerts computed, unofficial.
 Voice needs a supporting browser. See per-panel labels.
 
 ## Attribution
