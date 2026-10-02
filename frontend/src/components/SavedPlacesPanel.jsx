@@ -84,6 +84,7 @@ export default function SavedPlacesPanel({ current }) {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [encryptionKey, setEncryptionKey] = useState(null);
+  const [encryptionSalt, setEncryptionSalt] = useState(null);
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
@@ -116,9 +117,10 @@ export default function SavedPlacesPanel({ current }) {
     }
     try {
       const initial = { ...emptyProfile(current || ""), ...(legacyProfile || {}) };
-      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const keyRecord = JSON.parse(await encryptProfile(initial, password));
+      const salt = base64ToBytes(keyRecord.salt);
       const key = await deriveKey(password, salt);
-      localStorage.setItem(STORAGE_KEY, await encryptProfile(initial, password));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(keyRecord));
       setEncryptionKey(key);
       localStorage.removeItem(LEGACY_KEY);
       setProfile(initial);
@@ -147,6 +149,7 @@ export default function SavedPlacesPanel({ current }) {
       const record = JSON.parse(localStorage.getItem(STORAGE_KEY));
       const key = await deriveKey(password, base64ToBytes(record.salt));
       setEncryptionKey(key);
+      setEncryptionSalt(salt);
       setLocked(false);
       setPassword("");
       setDirty(false);
@@ -169,7 +172,7 @@ export default function SavedPlacesPanel({ current }) {
       return;
     }
     try {
-      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const salt = encryptionSalt;
       const iv = crypto.getRandomValues(new Uint8Array(12));
       const encrypted = await crypto.subtle.encrypt(
         { name: "AES-GCM", iv },
@@ -192,6 +195,7 @@ export default function SavedPlacesPanel({ current }) {
     setLocked(true);
     setPassword("");
     setEncryptionKey(null);
+    setEncryptionSalt(null);
     setDirty(false);
     setError("");
     setMessage("Profile locked.");
