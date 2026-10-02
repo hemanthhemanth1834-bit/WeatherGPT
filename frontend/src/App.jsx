@@ -312,34 +312,23 @@ export default function App() {
         </div>
       </div>
 
-      <div className="wg-bottomnav">
-        <nav aria-label="Primary mobile">
-          {[["home", "🏠", "Home"], ["chat", "💬", "Chat"], ["map", "🗺", "Map"], ["alerts", "🚨", "Alerts"], ["__menu", "☰", "Menu"]].map(([id, ico, label]) => (
-            <button key={id} className="wg-bnav" aria-selected={tab === id} onClick={() => (id === "__menu" ? setDrawer(true) : goTab(id))}>
+      <div className="wg-bottomnav wg-ref-commandbar">
+        <nav aria-label="Command">
+          {[
+            ["home", "⌂", "Home"],
+            ["chat", "✦", "AI Chat"],
+            ["compare", "⇄", "Compare"],
+            ["alerts", "⚠", "Alerts"],
+            ["capabilities", "⚙", "Settings"],
+            ["capabilities", "▦", "Modules"],
+          ].map(([id, ico, label], index) => (
+            <button key={`${id}-${index}`} className="wg-bnav" aria-selected={tab === id} onClick={() => goTab(id)}>
               <span className="ico" aria-hidden="true">{ico}</span>
-              <span>{label}{id === "alerts" && alerts.length > 0 ? ` (${alerts.length})` : ""}</span>
+              <span>{label}</span>
             </button>
           ))}
         </nav>
       </div>
-
-      {drawer && (
-        <>
-          <div className="wg-drawer-veil" onClick={() => setDrawer(false)} aria-hidden="true" />
-          <div className="wg-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.4rem" }}>
-              <strong>WeatherGPT · SIH 2026</strong>
-              <button className="wg-btn-ghost" onClick={() => setDrawer(false)} aria-label="Close menu">✕</button>
-            </div>
-            {GROUPS.map(([group, links]) => (
-              <React.Fragment key={group}>
-                <div className="wg-sidegroup">{group}</div>
-                {links.map(([id, ico, label]) => sideLink(id, ico, label))}
-              </React.Fragment>
-            ))}
-          </div>
-        </>
-      )}
     </div>
   );
 }
