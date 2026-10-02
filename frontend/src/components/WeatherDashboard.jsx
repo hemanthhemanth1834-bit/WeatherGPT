@@ -102,6 +102,8 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
   const [solar, setSolar] = useState(null);
   const [brief, setBrief] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [liveHourly, setLiveHourly] = useState([]);
+  const [liveHourlyUpdated, setLiveHourlyUpdated] = useState(null);
 
   const exportWeather = (format) => {
     if (!weather) return;
@@ -129,6 +131,34 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
       fetchRegionalTalukas(weather.location).then(setAreas).catch(() => setAreas([]));
     }
   }, [weather?.location]);
+  useEffect(() => {
+    let cancelled = false;
+    const lat = Number(weather?.lat), lon = Number(weather?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    const u = new URL("https://api.open-meteo.com/v1/forecast");
+    u.searchParams.set("latitude", lat);
+    u.searchParams.set("longitude", lon);
+    u.searchParams.set("hourly", "temperature_2m,precipitation_probability,wind_speed_10m,relative_humidity_2m,weather_code");
+    u.searchParams.set("forecast_hours", "24");
+    u.searchParams.set("timezone", "auto");
+    fetch(u).then(r => r.ok ? r.json() : Promise.reject(new Error("Open-Meteo request failed")))
+      .then(d => {
+        if (cancelled || !d?.hourly?.time) return;
+        const h = d.hourly;
+        setLiveHourly(h.time.map((time,i) => ({
+          time: new Date(time).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}),
+          isoTime: time,
+          temp: h.temperature_2m?.[i],
+          rain_prob: h.precipitation_probability?.[i],
+          wind_speed: h.wind_speed_10m?.[i],
+          humidity: h.relative_humidity_2m?.[i],
+          weather_code: h.weather_code?.[i]
+        })));
+        setLiveHourlyUpdated(new Date());
+      })
+      .catch(() => { if (!cancelled) setLiveHourly([]); });
+    return () => { cancelled = true; };
+  }, [weather?.lat, weather?.lon]);
 
   useEffect(() => {
     let cancelled = false;
@@ -331,7 +361,8 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
             ))}
           </div>
         </div>
-        <TempSpark hourly={weather.hourly} metric={metric} />
+        <TempSpark hourly={liveHourly.length ? liveHourly : weather.hourly} metric={metric} />
+        <div className="wg-hourly-live-status"><span>● LIVE OPEN-METEO</span><small>{liveHourlyUpdated ? `Updated ${liveHourlyUpdated.toLocaleTimeString()}` : "Connecting to live forecast…"}</small></div>
         <div className="wg-scrollrow" style={{ marginTop: "0.4rem" }}>
           {(weather.hourly || []).map((h, i) => (
             <div key={i} className="wg-card" style={{ minWidth: "5.4rem", padding: "0.55rem", textAlign: "center" }}>
