@@ -86,6 +86,7 @@ export default function SavedPlacesPanel({ current }) {
   const [encryptionKey, setEncryptionKey] = useState(null);
   const [encryptionSalt, setEncryptionSalt] = useState(null);
   const [dirty, setDirty] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
 
   useEffect(() => {
     try {
@@ -210,8 +211,31 @@ export default function SavedPlacesPanel({ current }) {
           <p>Your profile is encrypted and locked. Enter your password to view or edit your details.</p>
           <label><span>Password</span><input className="wg-input" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && unlock()} placeholder="Enter your password" /></label>
           <button className="wg-btn" onClick={unlock}>Unlock account</button>
+          <button className="wg-btn-ghost" type="button" onClick={() => { setForgotMode(true); setError(""); }}>Forgot password?</button>
+          {forgotMode && (
+            <div className="wg-alert warn" role="alert">
+              <strong>Password recovery</strong>
+              <p>Your password is never stored, so it cannot be recovered. Resetting the account will permanently delete the encrypted profile on this device.</p>
+              <div className="wg-profile-actions">
+                <button className="wg-btn-ghost" type="button" onClick={() => setForgotMode(false)}>Cancel</button>
+                <button className="wg-btn" type="button" onClick={() => {
+                  localStorage.removeItem(STORAGE_KEY);
+                  setHasAccount(false);
+                  setLocked(true);
+                  setProfile(emptyProfile(current || ""));
+                  setPassword("");
+                  setConfirm("");
+                  setEncryptionKey(null);
+                  setEncryptionSalt(null);
+                  setForgotMode(false);
+                  setError("");
+                  setMessage("Account reset. Create a new password to continue.");
+                }}>Reset account</button>
+              </div>
+            </div>
+          )}
           {error && <div className="wg-alert warn" role="alert">{error}</div>}
-          <small>Password is never stored. Only an encrypted profile is stored on this device.</small>
+          <small>Password is never stored. If forgotten, the encrypted profile must be reset on this device.</small>
         </div>
       </section>
     );
