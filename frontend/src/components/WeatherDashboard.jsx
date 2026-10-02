@@ -30,12 +30,12 @@ function SourceLine({ source, status, hint }) {
 
 function openMeteoCondition(code) {
   const c = Number(code);
-  if (c === 0) return ["Clear sky", "Sun"];
-  if ([1,2].includes(c)) return ["Mainly clear", "CloudSun"];
-  if (c === 3) return ["Overcast", "Cloud"];
-  if ([45,48].includes(c)) return ["Fog", "CloudFog"];
-  if ([51,53,55].includes(c)) return ["Drizzle", "CloudDrizzle"];
-  if ([56,57].includes(c)) return ["Freezing drizzle", "CloudDrizzle"];
+  if (c === 0) return ["Clear", "Sun"];
+  if ([1,2].includes(c)) return ["Mostly clear", "CloudSun"];
+  if (c === 3) return ["Cloudy", "Cloud"];
+  if ([45,48].includes(c)) return ["Foggy", "CloudFog"];
+  if ([51,53,55].includes(c)) return ["Light rain", "CloudDrizzle"];
+  if ([56,57].includes(c)) return ["Freezing light rain", "CloudDrizzle"];
   if ([61,63,65].includes(c)) return ["Rain", "CloudRain"];
   if ([66,67].includes(c)) return ["Freezing rain", "CloudRain"];
   if ([71,73,75,77].includes(c)) return ["Snow", "Snowflake"];
