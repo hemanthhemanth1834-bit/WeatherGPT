@@ -87,6 +87,7 @@ export default function SavedPlacesPanel({ current }) {
   const [encryptionSalt, setEncryptionSalt] = useState(null);
   const [dirty, setDirty] = useState(false);
   const [forgotMode, setForgotMode] = useState(false);
+  const [forgotMode, setForgotMode] = useState(false);
 
   useEffect(() => {
     try {
@@ -150,7 +151,7 @@ export default function SavedPlacesPanel({ current }) {
       const record = JSON.parse(localStorage.getItem(STORAGE_KEY));
       const key = await deriveKey(password, base64ToBytes(record.salt));
       setEncryptionKey(key);
-      setEncryptionSalt(salt);
+      setEncryptionSalt(base64ToBytes(record.salt));
       setLocked(false);
       setPassword("");
       setDirty(false);
