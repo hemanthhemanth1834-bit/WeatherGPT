@@ -18,7 +18,6 @@ const ClimateAnalytics = lazy(() => import("./components/ClimateAnalytics"));
 const RiskPanel = lazy(() => import("./components/RiskPanel"));
 const NwpSatellitePanel = lazy(() => import("./components/NwpSatellitePanel"));
 const ProvidersPanel = lazy(() => import("./components/ProvidersPanel"));
-const SavedPlacesPanel = lazy(() => import("./components/SavedPlacesPanel"));
 const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
 const CapabilitiesHub = lazy(() => import("./components/CapabilitiesHub"));
 const ReferenceModulePanel = lazy(() => import("./components/ReferenceModulePanel"));
@@ -283,7 +282,6 @@ export default function App() {
           {tab === "risk" && <RiskPanel location={place} />}
           {tab === "nwp" && <><NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="nwp" /><div style={{ marginTop: "0.8rem" }}><ProvidersPanel /></div></>}
           {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
-          {tab === "saved" && <SavedPlacesPanel current={place} saved={saved} weather={weather} onSelect={(name) => searchPlace(name)} onAddCurrent={() => remember(place)} onRemove={removeSaved} />}
           {tab === "about" && <AboutDeveloper />}
           {tab === "capabilities" && <CapabilitiesHub onOpen={(t) => setTab(t)} />}
           {["life_cast","roadwatch","treeguard","trip_planner","utilitywatch","solar","deep_cast","evacuation"].includes(tab) && <ReferenceModulePanel module={tab} weather={weather} onTab={setTab} onAsk={askFromTab} />}
