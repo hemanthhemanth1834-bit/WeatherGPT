@@ -83,6 +83,8 @@ export default function SavedPlacesPanel({ current }) {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [encryptionKey, setEncryptionKey] = useState(null);
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     try {
@@ -114,13 +116,17 @@ export default function SavedPlacesPanel({ current }) {
     }
     try {
       const initial = { ...emptyProfile(current || ""), ...(legacyProfile || {}) };
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKey(password, salt);
       localStorage.setItem(STORAGE_KEY, await encryptProfile(initial, password));
+      setEncryptionKey(key);
       localStorage.removeItem(LEGACY_KEY);
       setProfile(initial);
       setHasAccount(true);
       setLocked(false);
       setPassword("");
       setConfirm("");
+      setDirty(false);
       setLegacyProfile(null);
       setMessage("Account created. Your profile is encrypted on this device.");
     } catch {
@@ -138,22 +144,45 @@ export default function SavedPlacesPanel({ current }) {
     try {
       const value = await decryptProfile(localStorage.getItem(STORAGE_KEY), password);
       setProfile({ ...emptyProfile(current || ""), ...value });
+      const record = JSON.parse(localStorage.getItem(STORAGE_KEY));
+      const key = await deriveKey(password, base64ToBytes(record.salt));
+      setEncryptionKey(key);
       setLocked(false);
       setPassword("");
+      setDirty(false);
     } catch {
       setError("Incorrect password. Your profile remains locked.");
       setPassword("");
     }
   };
 
-  const updateProfile = async (field, value) => {
-    const next = { ...profile, [field]: value };
-    setProfile(next);
+  const updateProfile = (field, value) => {
+    setProfile((prev) => ({ ...prev, [field]: value }));
+    setDirty(true);
+    setMessage("Unsaved changes");
+  };
+
+  const saveProfile = async () => {
+    setError("");
+    if (!encryptionKey) {
+      setError("Unlock the account again before saving.");
+      return;
+    }
     try {
-      localStorage.setItem(STORAGE_KEY, await encryptProfile(next, password));
-      setMessage("Saved securely.");
-      window.clearTimeout(updateProfile.timer);
-      updateProfile.timer = window.setTimeout(() => setMessage(""), 1600);
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const encrypted = await crypto.subtle.encrypt(
+        { name: "AES-GCM", iv },
+        encryptionKey,
+        new TextEncoder().encode(JSON.stringify(profile))
+      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        version: 1, algorithm: "AES-256-GCM", kdf: "PBKDF2-SHA256", iterations: 210000,
+        salt: bytesToBase64(salt), iv: bytesToBase64(iv),
+        data: bytesToBase64(new Uint8Array(encrypted))
+      }));
+      setDirty(false);
+      setMessage("✓ Saved securely");
     } catch {
       setError("Could not save the encrypted profile.");
     }
@@ -162,6 +191,8 @@ export default function SavedPlacesPanel({ current }) {
   const lock = () => {
     setLocked(true);
     setPassword("");
+    setEncryptionKey(null);
+    setDirty(false);
     setError("");
     setMessage("Profile locked.");
   };
@@ -207,7 +238,7 @@ export default function SavedPlacesPanel({ current }) {
             <h2>👤 Profile Information</h2>
             <p>Your details are protected by your password and stored as encrypted data on this device.</p>
           </div>
-          <button className="wg-btn-ghost" onClick={lock}>🔒 Lock account</button>
+          <div className="wg-profile-actions"><button className="wg-btn" onClick={saveProfile} disabled={!dirty}>💾 Save changes</button><button className="wg-btn-ghost" onClick={lock}>🔒 Lock account</button></div>
         </div>
         <div className="wg-profile-grid">
           <label><span>Full name</span><input className="wg-input" value={profile.name} onChange={(e)=>updateProfile("name",e.target.value)} placeholder="Enter your name" /></label>
@@ -219,7 +250,7 @@ export default function SavedPlacesPanel({ current }) {
         </div>
         <div className="wg-profile-preferences">
           <label><input type="checkbox" checked={profile.notifications} onChange={(e)=>updateProfile("notifications",e.target.checked)} /> Weather and safety notifications</label>
-          <span>{message || "✓ Changes are encrypted and saved automatically"}</span>
+          <span>{message || "Changes are not saved until you select Save changes"}</span>
         </div>
       </div>
     </section>
