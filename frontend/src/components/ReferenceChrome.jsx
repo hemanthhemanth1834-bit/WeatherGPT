@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./ReferenceChrome.css";
 import {
-  Activity, Bell, Bot, CloudLightning, CloudSun, Database, Download,
+  Activity, Bell, Bot, CloudLightning, CloudRain, CloudSun, Database, Download,
   Globe, Layers, LayoutDashboard, MapPin, Navigation, PhoneCall, Radio,
   Settings, ShieldAlert, Sparkles, Sun, Trees, TrendingUp, User, Waves,
   ArrowRightLeft, FileText, Car, Sprout, Zap, Type, X, Menu
@@ -71,7 +71,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
 
     <header className="wg-ref-header">
       <div className="wg-ref-alertbar">
-        <div className="wg-ref-alert-text"><span className="wg-ref-pulse" /><b>IMD / NDMA BULLETIN:</b><span>Live severe-weather status available in Alerts.</span></div>
+        <div className="wg-ref-alert-text"><span className="wg-ref-pulse" /><b>IMD / NDMA BULLETIN:</b><span>{alertCount > 0 ? `${alertCount} active severe weather advisory issued for ${location}, ${state}.` : `Live severe-weather status available in Alerts.`}</span></div>
         <button onClick={() => go("alerts")}><PhoneCall size={14} /> Emergency Contacts</button>
       </div>
 
@@ -88,7 +88,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
 
         <div className="wg-ref-header-actions">
           <button className="wg-ref-weather-pill" onClick={() => go("home")} title="Change Weather Animated Theme & Ambience">
-            <span className="wg-ref-mini-weather">☁</span><span><b>{temp}°C <Sparkles size={11} /></b><small>Theme: Auto</small></span>
+            <span className="wg-ref-mini-weather"><CloudRain size={14}/></span><span><b>{temp}°C <Sparkles size={11} /></b><small>Theme: Auto</small></span>
           </button>
           <button title="Open Dual Station Weather Comparison Matrix" onClick={() => go("compare")}><ArrowRightLeft size={16}/></button>
           <button title="Font Scale: 112%" onClick={() => document.documentElement.classList.toggle("wg-font-large")}><Type size={14}/><span>A+</span></button>
