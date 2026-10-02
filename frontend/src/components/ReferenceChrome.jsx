@@ -33,7 +33,6 @@ const GROUPS = [
     ["solar", Sun, "Solar Energy Potential"],
   ]],
   ["User & Diagnostics", [
-    ["saved", User, "User Account"],
     ["capabilities", Database, "System & Admin"],
   ]],
 ];
