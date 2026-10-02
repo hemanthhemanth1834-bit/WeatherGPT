@@ -5,6 +5,7 @@ import ReferenceChrome from "./components/ReferenceChrome";
 import { fetchActiveAlerts, fetchCurrentWeather, fetchReverseGeocode, sendChatQuery } from "./services/api";
 
 /* Secondary views ride in lazy chunks; home + chat entry stays lean. */
+/* Navigation cleanup: account/settings controls are intentionally not exposed. */
 const HomePanel = lazy(() => import("./components/HomePanel"));
 const WeatherDashboard = lazy(() => import("./components/WeatherDashboard"));
 const GISMap = lazy(() => import("./components/GISMap"));
