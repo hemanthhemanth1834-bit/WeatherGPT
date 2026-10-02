@@ -65,35 +65,63 @@ function ExplainBlock({ title, children }) {
   );
 }
 
+function LiveRadarPreview({ weather }) {
+  const [frame, setFrame] = useState(null);
+  useEffect(() => {
+    const lat = Number(weather?.lat), lon = Number(weather?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
+    let cancelled = false;
+    fetch("https://api.rainviewer.com/public/weather-maps.json")
+      .then(r => r.json())
+      .then(d => {
+        const latest = d?.radar?.past?.at(-1);
+        if (!latest || cancelled) return;
+        const host = d?.host || "https://tilecache.rainviewer.com";
+        setFrame(`${host}${latest.path}/512/5/${lat}/${lon}/2/1_1.png`);
+      })
+      .catch(() => !cancelled && setFrame(null));
+    return () => { cancelled = true; };
+  }, [weather?.lat, weather?.lon]);
+
+  return (
+    <div className="wg-explain-live">
+      {frame ? <img src={frame} alt="Live precipitation radar around the selected location" /> : <div className="wg-explain-live-empty">LIVE RADAR LOADING…</div>}
+      <div className="wg-explain-live-overlay"><span>● LIVE RADAR</span><small>{weather?.location || "Selected location"} · recent precipitation</small></div>
+    </div>
+  );
+}
+
 function ExplanationGrid() {
   const items = [
-    ["LIVE WEATHER","Shows the latest available weather telemetry for the selected location. Temperature, feels-like temperature, rain probability, wind, humidity and air-quality values are presented with the provider status and update time."],
-    ["AI DEEP-CAST","Turns numerical weather-model information into a human-readable forecast and scenario analysis. Model output is guidance, not a guaranteed prediction; official warnings remain the authority for emergencies."],
-    ["SYNOPTIC TRAJECTORY","The 7-day view shows how temperature, precipitation probability and wind are expected to evolve day by day. It helps you see trends rather than treating one hour as the whole forecast."],
-    ["LIVE WEATHER GRAPH","The animated line chart plots hourly observations/forecast values across recent history and upcoming hours. Change the metric to inspect temperature, precipitation, wind, humidity or pressure and hover points for exact values."],
-    ["REAL-TIME MAP","The map uses a real geographic basemap and live weather layers where available. Station pins show fetched telemetry; radar and satellite layers visualize external geospatial data. Clicking the map can select a location."],
-    ["DISASTER & EVACUATION","This area combines weather hazards, alerts and geographic context for emergency decision support. It does not replace instructions from government disaster-management or emergency authorities."],
-    ["SECTORAL INTELLIGENCE","Each hub translates weather conditions into a specific use case: farming, roads, trees, travel, lifestyle and solar energy. The displayed advice should be interpreted together with the underlying weather conditions."],
-    ["DATA SOURCES","Weather data is fetched from free/public services used by the application. Open-Meteo provides forecast variables; RainViewer supplies radar visualization where available; NASA GIBS provides satellite imagery; OpenStreetMap provides map data. Provider availability and coverage can change."],
-    ["LIVE / DEMO / UNAVAILABLE","LIVE means the application received current provider data. DEMO means an example or simulation is being shown. UNAVAILABLE means the provider did not return usable data. The interface should never treat a demo value as a live observation."]
+    ["LIVE WEATHER","Current conditions, rain chance, wind, humidity and AQI."],
+    ["AI DEEP-CAST","Weather-model guidance turned into plain-language scenarios."],
+    ["7-DAY OUTLOOK","See how temperature, rain and wind change over the week."],
+    ["LIVE GRAPH","Hourly history + forecast. Switch metrics and hover for values."],
+    ["LIVE MAP","Real map, stations, radar and satellite layers."],
+    ["RISK & EVACUATION","Weather-risk context for planning; official alerts come first."],
+    ["SECTOR HUBS","Weather translated for farming, roads, travel, lifestyle and solar."],
+    ["DATA STATUS","LIVE = provider data · DEMO = example · UNAVAILABLE = no usable data."]
   ];
   return (
-    <section className="wg-ref-section" aria-label="How WeatherGPT works">
-      <div className="wg-ref-section-head">
-        <div><span className="wg-chip live">HOW IT WORKS</span><h2>Understand Every WeatherGPT Panel</h2><p style={{color:"var(--wg-muted)",maxWidth:"58rem"}}>WeatherGPT is a decision-support dashboard. Every card, graph and map is designed to tell you what the value represents, where it comes from, and how it should be interpreted.</p></div>
+    <section className="wg-ref-section wg-explain-section" aria-label="How WeatherGPT works">
+      <div className="wg-ref-section-head wg-explain-head">
+        <div>
+          <span className="wg-chip live">HOW IT WORKS</span>
+          <h2>Understand Every WeatherGPT Panel</h2>
+          <p>Quick guide to what each panel shows and how to read it.</p>
+        </div>
+        <LiveRadarPreview weather={window.__wgWeatherForExplain} />
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(250px,1fr))",gap:".75rem"}}>
-        {items.map(([title,text]) => <article key={title} className="wg-card" style={{padding:"1rem"}}><strong style={{display:"block",marginBottom:".35rem"}}>{title}</strong><span style={{color:"var(--wg-muted)",lineHeight:1.6}}>{text}</span></article>)}
+      <div className="wg-explain-grid">
+        {items.map(([title,text]) => (
+          <article key={title} className="wg-card wg-explain-card">
+            <strong>{title}</strong><span>{text}</span>
+          </article>
+        ))}
       </div>
-      <ExplainBlock title="How to read the numbers">
-        <p><b>Temperature</b> is the air temperature. <b>Feels like</b> accounts for effects such as humidity and wind. <b>Rain probability</b> is the forecast likelihood of measurable precipitation for the relevant period; it is not the amount of rain.</p>
-        <p><b>Wind</b> is reported as speed, while <b>humidity</b> describes the moisture content of the air. <b>AQI</b> is an air-quality indicator when supplied by the connected provider; a missing AQI is shown as unavailable rather than invented.</p>
-      </ExplainBlock>
-      <ExplainBlock title="How to read the graph">
-        <p>The line represents the selected weather variable over time. The left-to-right direction is time, not a stock price. A rising line means the selected variable is increasing; a falling line means it is decreasing. Use the time-range and metric controls to change the view.</p>
-      </ExplainBlock>
-      <ExplainBlock title="Why forecasts can change">
-        <p>Weather forecasts are numerical-model outputs and are updated as new model runs and observations become available. Different models can disagree, especially farther into the future or near rapidly changing storms. WeatherGPT therefore presents forecast information as an evolving estimate rather than a certainty.</p>
+      <ExplainBlock title="Need more detail?">
+        <p><b>Temperature</b> = air temperature · <b>Feels like</b> = humidity/wind effect · <b>Rain %</b> = probability, not rainfall amount.</p>
+        <p><b>Graph:</b> left → right is time. <b>Forecasts:</b> they update as new observations and model runs arrive, so values can change.</p>
       </ExplainBlock>
     </section>
   );
@@ -162,6 +190,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
   const askLocation = weather?.location || "my city";
   const topAlert = alerts?.[0];
+  useEffect(() => { window.__wgWeatherForExplain = weather; return () => { window.__wgWeatherForExplain = null; }; }, [weather]);
   const daily = weather?.daily || [];
   const maxTemps = daily.map((d) => Number(d.temp_max)).filter(Number.isFinite);
   const minTemps = daily.map((d) => Number(d.temp_min)).filter(Number.isFinite);
