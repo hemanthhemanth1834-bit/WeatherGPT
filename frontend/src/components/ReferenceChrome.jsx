@@ -8,7 +8,8 @@ import {
 } from "lucide-react";
 import Live3DIcon from "./Live3DIcon";
 
-// User Account is intentionally excluded from the main navigation.\nconst GROUPS = [
+// User Account and password settings are removed from the platform navigation.
+const GROUPS = [
   ["Core Meteorology", [
     ["home", LayoutDashboard, "Overview"],
     ["dashboard", CloudSun, "Live Weather"],
