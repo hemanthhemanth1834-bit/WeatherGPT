@@ -2,9 +2,8 @@
 
 WeatherGPT remains deployable without a GPU. When VIBEVOICE_TTS_URL is
 configured, this service proxies text to a separately hosted VibeVoice
-server and returns audio. The bridge supports both the current
-OpenAI-compatible /audio/speech contract and the original simple
-{text, speaker, language} contract used by earlier WeatherGPT bridges.
+server and returns audio. The bridge supports both the OpenAI-compatible
+/audio/speech contract and the simple {text, speaker, language} contract.
 """
 
 import base64
@@ -16,10 +15,11 @@ from fastapi.responses import Response
 
 VIBEVOICE_TTS_URL = os.getenv("VIBEVOICE_TTS_URL", "").strip()
 VIBEVOICE_API_KEY = os.getenv("VIBEVOICE_API_KEY", "").strip()
+# Realtime 0.5B is the model intended for this integration.
 VIBEVOICE_MODEL = os.getenv(
-    "VIBEVOICE_MODEL", "vibevoice/VibeVoice-1.5B"
+    "VIBEVOICE_MODEL", "vibevoice/VibeVoice-Realtime-0.5B"
 ).strip()
-VIBEVOICE_VOICE = os.getenv("VIBEVOICE_VOICE", "Carter").strip()
+VIBEVOICE_VOICE = os.getenv("VIBEVOICE_VOICE", "default").strip()
 VIBEVOICE_TIMEOUT = float(os.getenv("VIBEVOICE_TIMEOUT_SECONDS", "60"))
 
 
@@ -33,11 +33,7 @@ def _openai_compatible(url: str) -> bool:
 
 
 def _decode_json_audio(data: dict) -> bytes:
-    audio_b64 = (
-        data.get("audio_base64")
-        or data.get("audio")
-        or data.get("data")
-    )
+    audio_b64 = data.get("audio_base64") or data.get("audio") or data.get("data")
     if not isinstance(audio_b64, str):
         raise HTTPException(status_code=502, detail="VibeVoice returned no audio")
     try:
@@ -48,7 +44,7 @@ def _decode_json_audio(data: dict) -> bytes:
         ) from exc
 
 
-async def synthesize(text: str, speaker: str = "Carter") -> Response:
+async def synthesize(text: str, speaker: str = "default") -> Response:
     if not configured():
         raise HTTPException(status_code=503, detail="VibeVoice TTS is not configured")
 
