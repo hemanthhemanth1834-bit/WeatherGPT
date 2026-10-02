@@ -152,8 +152,8 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
             <h1>AI Weather &amp; <span>Planetary Disaster Intelligence</span></h1>
             <p>Autonomous multi-model meteorological consensus, early warning disaster blueprints, dynamic live-traffic evacuation routing, and hyperlocal sectoral advisories.</p>
             <div className="wg-ref-hero-actions">
-              <button className="wg-btn" onClick={() => onTab("dashboard")}>☁ AI Weather Deep-Cast</button>
-              <button className="wg-btn-ghost" onClick={() => onTab("alerts")}>🚨 Disaster &amp; Evacuation Hub</button>
+              <button className="wg-btn" onClick={() => onTab("deep_cast")}>☁ AI Weather Deep-Cast</button>
+              <button className="wg-btn-ghost" onClick={() => onTab("evacuation")}>🚨 Disaster &amp; Evacuation Hub</button>
               <button className="wg-btn-ghost" onClick={() => onAsk(`What should I know about weather and risks in ${askLocation} today?`)}>✦ Ask WeatherGPT Copilot</button>
             </div>
           </div>
@@ -182,8 +182,8 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
       <Section eyebrow="AI INTELLIGENCE" title="Deep-Cast & Disaster Engines">
         <div className="wg-ref-feature-grid">
-          <FeatureCard icon="✦" title="AI Deep-Cast Ensemble" text="ECMWF, GFS, WRF & IMD consensus, thermodynamic CAPE stability, and What-If simulation sandbox." meta="4 MODELS" action="Explore Soundings" onClick={() => onTab("dashboard")} />
-          <FeatureCard icon="⌁" title="Evacuation Routing" text="Traffic-aware line-path escape routes avoiding flooded subways, high-ground shelters & SOS beacon." meta="LIVE TRAFFIC" action="Launch Evacuation Map" onClick={() => onTab("map")} />
+          <FeatureCard icon="✦" title="AI Deep-Cast Ensemble" text="ECMWF, GFS, WRF & IMD consensus, thermodynamic CAPE stability, and What-If simulation sandbox." meta="4 MODELS" action="Explore Soundings" onClick={() => onTab("deep_cast")} />
+          <FeatureCard icon="⌁" title="Evacuation Routing" text="Traffic-aware line-path escape routes avoiding flooded subways, high-ground shelters & SOS beacon." meta="LIVE TRAFFIC" action="Launch Evacuation Map" onClick={() => onTab("evacuation")} />
           <FeatureCard icon="◈" title="FloodWatch Digital Twin" text="Real-time CWC river gauges, ward-level inundation mapping, and reservoir spillway alerts." meta="HYDROLOGY" action="View Digital Twin" onClick={() => onTab("risk")} />
           <FeatureCard icon="◷" title="12-Month Climate Trends" text="Compare regional temperature & precipitation against 1991–2020 climatological normal to spot shifts." meta="30-YR NORMAL" action="Analyze Anomalies" onClick={() => onTab("climate")} />
         </div>
@@ -204,7 +204,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
         <div className="wg-ref-synoptic wg-card">
           <div className="wg-ref-synoptic-head"><span>Day-by-day temperature ranges, rain probability curve, and wind velocity projections for {askLocation}</span><button className="wg-btn-ghost" onClick={() => onAsk(`Give me synoptic trend analysis for ${askLocation}.`)}>Synoptic Trend Analysis →</button></div>
           <div className="wg-ref-synoptic-days">
-            {daily.slice(0, 7).map((d, i) => <button key={i} onClick={() => onTab("dashboard")}><b>{i === 0 ? "TODAY" : d.day || d.date?.slice(5) || `D+${i}`}</b><span>{d.temp_max ?? "—"}° / {d.temp_min ?? "—"}°</span><small>🌧 {rainProbByDate[d.date] ?? d.rain_prob ?? 0}%</small><em>💨 {d.wind_speed ?? "—"}</em></button>)}
+            {daily.slice(0, 7).map((d, i) => <button key={i} onClick={() => onTab("dashboard")}><b>{i === 0 ? "TODAY" : d.day || d.date?.slice(5) || `D+${i}`}</b><span>{d.temp_max ?? "—"}° / {d.temp_min ?? "—"}°</span><small>🌧 {rainProbByDate[d.date] ?? d.rain_prob ?? 0}%</small><em>💨 {d.wind_speed ?? d.wind_max ?? "—"}</em></button>)}
             {!daily.length && <div className="wg-ref-empty">Load a location to populate live synoptic trajectory.</div>}
           </div>
         </div>
