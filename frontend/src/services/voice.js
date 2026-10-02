@@ -30,6 +30,7 @@ class VoiceEngine {
     this.recognition = null;
     this.listening = false;
     this.audio = null;
+    this.audioUrl = null;
     if (typeof window !== "undefined") {
       const Impl = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (Impl) {
@@ -104,7 +105,7 @@ class VoiceEngine {
       return;
     }
 
-    if (lang === "en" || lang === "auto") {
+    if (BCP47[lang]) {
       try {
         const base = import.meta.env.VITE_API_URL || "/api";
         const response = await fetch(`${base}/voice/tts`, {
@@ -120,15 +121,19 @@ class VoiceEngine {
           const blob = await response.blob();
           const url = URL.createObjectURL(blob);
           this.audio?.pause?.();
+          if (this.audioUrl) URL.revokeObjectURL(this.audioUrl);
+          this.audioUrl = url;
           this.audio = new Audio(url);
           this.audio.onended = () => {
             URL.revokeObjectURL(url);
             this.audio = null;
+            this.audioUrl = null;
             onEnd?.();
           };
           this.audio.onerror = () => {
             URL.revokeObjectURL(url);
             this.audio = null;
+            this.audioUrl = null;
             this.browserSpeak(text, lang, onEnd);
           };
           await this.audio.play();
@@ -164,6 +169,10 @@ class VoiceEngine {
       this.audio.pause();
       this.audio.currentTime = 0;
       this.audio = null;
+    }
+    if (this.audioUrl) {
+      URL.revokeObjectURL(this.audioUrl);
+      this.audioUrl = null;
     }
   }
 }
