@@ -100,7 +100,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
           <div className="wg-ref-language"><Globe size={15}/><select value={language === "auto" ? "en" : language} onChange={(e) => onLanguageChange?.(e.target.value)}>
             <option value="en">English (EN)</option><option value="hi">हिन्दी (Hindi)</option><option value="ta">தமிழ் (Tamil)</option><option value="te">తెలుగు (Telugu)</option><option value="ml">മലയാളം (Malayalam)</option><option value="kn">ಕನ್ನಡ (Kannada)</option><option value="bn">বাংলা (Bengali)</option><option value="mr">मराठी (Marathi)</option><option value="gu">ગુજરાતી (Gujarati)</option>
           </select></div>
-          <button className="wg-ref-user" onClick={() => go("saved")}><span>J</span><b>John</b></button>
+          <button className="wg-ref-user" onClick={() => go("capabilities")} title="Administrator account — full WeatherGPT access"><span>H</span><b>Admin</b></button>
         </div>
       </div>
     </header>
