@@ -246,6 +246,20 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
         <div className="wg-ref-emergency-links"><a href="tel:112">Dial 112 (National)</a><a href="tel:1078">1078 (NDMA)</a><a href="tel:1070">1070 (Relief Comm.)</a></div>
       </div>
 
+      <div className="wg-ref-bottom-command" aria-label="Reference command navigation">
+        {[
+          ["home", "⌂", "Home"],
+          ["chat", "✦", "AI Chat"],
+          ["compare", "⇄", "Compare"],
+          ["alerts", "⚠", "Alerts"],
+          ["__settings", "⚙", "Settings"],
+          ["capabilities", "▦", "Modules"],
+        ].map(([id, icon, label]) => (
+          <button key={id} onClick={() => id === "__settings" ? onTab("capabilities") : onTab(id)}>
+            <span>{icon}</span><b>{label}</b>
+          </button>
+        ))}
+      </div>
       <footer className="wg-ref-footer"><span>WEATHERGPT · AI WEATHER INTELLIGENCE</span><span>Theme: Auto · Live provider status labels</span><span>Open-Meteo · RainViewer · NASA GIBS · public geospatial sources</span></footer>
     </section>
   );
