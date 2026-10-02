@@ -140,8 +140,11 @@ BCP-47 voice mapping. Analysis API: `POST /api/language/analyze`.
 
 ## Voice
 
-Speech → Web Speech STT → intent → weather tool → reply → TTS, with
-explicit fallbacks when the browser denies mic/support. No keys involved.
+Speech → Web Speech STT → intent → weather tool → reply → TTS, with explicit
+fallbacks when the browser denies mic/support. Browser-native speech requires
+no key. Optional VibeVoice-Realtime-0.5B output is supported through a separately
+hosted inference bridge and is labelled/configured independently; it is not
+assumed to be live unless that bridge is configured.
 
 ## Technology Stack
 
