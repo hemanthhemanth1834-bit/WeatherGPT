@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { fetchEngineStatus, fetchProvidersHealth } from "../services/api";
-import { CAPABILITIES } from "../services/capabilityRegistry.generated";
 
 const STATUS_ORDER = ["LIVE","OFFICIAL","COMPUTED","FALLBACK","ESTIMATED","SIMULATED","DEMO","STATIC","NOT_CONFIGURED"];
 const TONE = { LIVE:"live", OFFICIAL:"live", COMPUTED:"estimated", FALLBACK:"estimated", ESTIMATED:"estimated", SIMULATED:"demo", DEMO:"demo", STATIC:"static", NOT_CONFIGURED:"off" };
@@ -11,20 +10,10 @@ function statusLabel(value) {
 }
 
 export default function CapabilitiesHub({ onOpen }) {
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All");
-  const [statuses, setStatuses] = useState([]);
   const [providers, setProviders] = useState(null);
   const [engine, setEngine] = useState(null);
   const [diagnosticState, setDiagnosticState] = useState("idle");
   const [diagnosticTime, setDiagnosticTime] = useState(null);
-
-  const categories = useMemo(() => ["All", ...new Set(CAPABILITIES.map((c) => c.category))], []);
-  const counts = useMemo(() => ({
-    total: CAPABILITIES.length,
-    reachable: CAPABILITIES.filter((c) => c.tab).length,
-    live: CAPABILITIES.filter((c) => ["LIVE","OFFICIAL","COMPUTED"].includes(c.status)).length
-  }), []);
 
   const runDiagnostics = async () => {
     setDiagnosticState("running");
@@ -37,26 +26,8 @@ export default function CapabilitiesHub({ onOpen }) {
 
   useEffect(() => { runDiagnostics(); }, []);
 
-  const shown = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return CAPABILITIES.filter((c) => {
-      if (category !== "All" && c.category !== category) return false;
-      if (statuses.length && !statuses.includes(c.status)) return false;
-      return !q || `${c.id} ${c.name} ${c.category} ${c.source} ${c.provider}`.toLowerCase().includes(q);
-    });
-  }, [query, category, statuses]);
-
-  const grouped = useMemo(() => {
-    const map = new Map();
-    shown.forEach((c) => {
-      if (!map.has(c.category)) map.set(c.category, []);
-      map.get(c.category).push(c);
-    });
-    return [...map.entries()];
-  }, [shown]);
-
   const providerRows = providers?.providers || [];
-  const liveProviderCount = providerRows.filter((p) => ["LIVE","AVAILABLE"].includes(p.status)).length;
+  const liveProviderCount = providerRows.filter((p) => ["LIVE", "AVAILABLE"].includes(p.status)).length;
   const engineName = engine?.engine || engine?.name || engine?.status || "Tool-grounded weather engine";
 
   return (
@@ -89,9 +60,9 @@ export default function CapabilitiesHub({ onOpen }) {
           <small>{providerRows.length ? `${providerRows.length} providers reported` : "Live provider health"}</small>
         </article>
         <article className="wg-admin-status-card wg-admin-purple">
-          <span>Capability Registry</span>
-          <strong>{counts.total} MAPPED</strong>
-          <small>{counts.reachable} app modules · {counts.live} live/computed/official</small>
+          <span>Local User Data</span>
+          <strong>PROTECTED</strong>
+          <small>Password-protected profile and browser preferences</small>
         </article>
       </div>
 
@@ -128,41 +99,9 @@ export default function CapabilitiesHub({ onOpen }) {
         </div>
       </section>
 
-      <section className="wg-admin-panel wg-card">
-        <div className="wg-admin-panel-head">
-          <h2>Platform Diagnostics</h2>
-          <span>Read-only operational checks</span>
-        </div>
-        <div className="wg-admin-actions">
-          <button className="wg-admin-action" onClick={runDiagnostics}>↻ Refresh provider health</button>
-          <button className="wg-admin-action" onClick={() => onOpen?.("capabilities")}>⌘ Open capability registry</button>
-          <button className="wg-admin-action" onClick={() => onOpen?.("alerts")}>⚠ Open alert center</button>
-        </div>
-      </section>
 
-      <section className="wg-admin-panel wg-card">
-        <div className="wg-admin-panel-head">
-          <h2>Capability Registry</h2>
-          <span>{shown.length} results</span>
-        </div>
-        <div className="wg-admin-filters">
-          <input className="wg-input" type="search" placeholder="Search capabilities, providers, weather tools…" value={query} onChange={(e) => setQuery(e.target.value)} />
-          <select className="wg-input" value={category} onChange={(e) => setCategory(e.target.value)}>{categories.map((x) => <option key={x}>{x}</option>)}</select>
-        </div>
-        <div className="wg-admin-status-filters">
-          {STATUS_ORDER.map((s) => <button key={s} className="wg-tab" aria-selected={statuses.includes(s)} onClick={() => setStatuses((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev,s])}>{s}</button>)}
-          {statuses.length > 0 && <button className="wg-btn-ghost" onClick={() => setStatuses([])}>Clear filters</button>}
-        </div>
-        {grouped.map(([cat, items]) => (
-          <div className="wg-admin-cap-group" key={cat}>
-            <h3>{cat} <small>· {items.length}</small></h3>
-            {items.map((item) => <div className="wg-admin-cap-row" key={item.id}>
-              <span className="wg-mono">{item.id}</span><strong>{item.name}</strong><span className={`wg-chip ${TONE[item.status] || "static"}`}>{item.status}</span><span>{item.source}</span>
-              {item.tab && <button className="wg-btn-ghost" onClick={() => onOpen(item.tab)}>Open →</button>}
-            </div>)}
-          </div>
-        ))}
-      </section>
+
+
     </section>
   );
 }
