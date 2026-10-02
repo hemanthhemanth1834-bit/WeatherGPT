@@ -33,7 +33,7 @@ NOT CONFIGURED`).
 ## Key Features
 
 - Live current + 24-hour + 7-day forecasts for any Indian place (gazetteer + live geocoding)
-- Chat in 11 languages (en, hi, mr, ta, te, bn, gu, pa, kn, ml, or) with voice input/output
+- Chat in 11 languages (en, hi, mr, ta, te, bn, gu, pa, kn, ml, or) with multilingual voice input/output
 - Computed CAP-style alerts with severity filters and audio broadcast
 - Deterministic LOW–EXTREME risk engine with published thresholds
 - Leaflet GIS: live RainViewer radar, illustrative alert zones and cyclone line
@@ -142,9 +142,7 @@ BCP-47 voice mapping. Analysis API: `POST /api/language/analyze`.
 
 Speech → Web Speech STT → intent → weather tool → reply → TTS, with explicit
 fallbacks when the browser denies mic/support. Browser-native speech requires
-no key. Optional VibeVoice-Realtime-0.5B output is supported through a separately
-hosted inference bridge and is labelled/configured independently; it is not
-assumed to be live unless that bridge is configured.
+no key. The default server-side path uses free Edge-TTS with Indian-language neural voices and no API key. Optional VibeVoice-Realtime-0.5B can take priority when a separate inference bridge is configured. Browser SpeechSynthesis remains the final fallback.
 
 ## Technology Stack
 
