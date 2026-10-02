@@ -504,3 +504,113 @@
 @media(prefers-reduced-motion:reduce){
  .wg-climate-chart::after,.wg-climate-grid,.wg-climate-line,.wg-climate-area,.wg-climate-point,.wg-climate-status{animation:none!important}
 }
+
+
+/* AI WEATHER ASSISTANT — clean, readable workspace */
+.wg-ai-assistant{width:100%;min-width:0}
+.wg-ai-assistant-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 22rem;
+  gap:1rem;
+  width:100%;
+  min-width:0;
+  align-items:start;
+}
+.wg-ai-chat-column{
+  display:flex;
+  flex-direction:column;
+  gap:.7rem;
+  min-width:0;
+  min-height:24rem;
+  max-height:calc(100vh - 170px);
+}
+.wg-ai-message-list{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  display:flex;
+  flex-direction:column;
+  gap:.7rem;
+  padding:0 .35rem .25rem 0;
+  scrollbar-width:thin;
+}
+.wg-ai-message-list .wg-card{max-width:92%;box-sizing:border-box}
+.wg-ai-message-list article{overflow-wrap:anywhere}
+.wg-ai-context{
+  display:flex;
+  flex-direction:column;
+  gap:.8rem;
+  min-width:0;
+  position:sticky;
+  top:1rem;
+}
+.wg-ai-context-card{
+  padding:1rem 1.05rem!important;
+  overflow:hidden;
+}
+.wg-ai-context-details{
+  margin-top:.65rem;
+  display:flex;
+  flex-direction:column;
+  gap:.55rem;
+  font-size:.82rem;
+  line-height:1.45;
+}
+.wg-ai-context-details span{
+  display:block;
+  padding:.45rem .55rem;
+  border-radius:.55rem;
+  background:rgba(148,163,184,.055);
+}
+.wg-ai-context-details strong{color:#e2e8f0}
+.wg-ai-explain-text{
+  font-size:.78rem;
+  color:var(--wg-muted);
+  line-height:1.55;
+  margin:.45rem 0 0;
+}
+.wg-ai-jump-buttons{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:.45rem;
+  margin-top:.6rem;
+}
+.wg-ai-jump-buttons .wg-btn-ghost{
+  width:100%;
+  justify-content:center;
+}
+.wg-ai-assistant .wg-scrollrow{
+  display:flex;
+  flex-wrap:wrap;
+  gap:.45rem;
+  overflow:visible;
+  min-width:0;
+  padding:0;
+}
+.wg-ai-assistant .wg-scrollrow .wg-chip,
+.wg-ai-assistant .wg-scrollrow .wg-btn-ghost{
+  white-space:normal;
+  text-align:left;
+  line-height:1.25;
+}
+.wg-ai-assistant form{
+  min-width:0;
+}
+.wg-ai-assistant form .wg-input{
+  min-width:0;
+  flex:1;
+}
+@media(max-width:1100px){
+  .wg-ai-assistant-layout{grid-template-columns:minmax(0,1fr) 19rem}
+}
+@media(max-width:900px){
+  .wg-ai-assistant-layout{grid-template-columns:1fr}
+  .wg-ai-context{position:static}
+  .wg-ai-chat-column{max-height:none}
+}
+@media(max-width:600px){
+  .wg-ai-message-list .wg-card{max-width:100%}
+  .wg-ai-jump-buttons{grid-template-columns:1fr}
+  .wg-ai-assistant form{display:grid!important;grid-template-columns:1fr auto auto}
+}
