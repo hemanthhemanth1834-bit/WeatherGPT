@@ -11,8 +11,8 @@ const GROUPS = [
   ["Core Meteorology", [
     ["home", LayoutDashboard, "Overview"],
     ["dashboard", CloudSun, "Live Weather"],
-    ["nwp", Sparkles, "AI Weather Deep-Cast"],
-    ["chat", Activity, "Life Cast"],
+    ["deep_cast", Sparkles, "AI Weather Deep-Cast"],
+    ["life_cast", Activity, "Life Cast"],
     ["compare", ArrowRightLeft, "Station Comparison"],
     ["climate", TrendingUp, "Climate Trends"],
     ["alerts", Radio, "Live News Broadcast"],
@@ -26,11 +26,11 @@ const GROUPS = [
   ]],
   ["Sectoral Intelligence", [
     ["agri", Sprout, "Farm / Crop Advisory"],
-    ["chat", Car, "RoadWatch"],
-    ["climate", Trees, "TreeGuard"],
-    ["chat", Navigation, "Trip Planner"],
-    ["dashboard", Zap, "UtilityWatch"],
-    ["dashboard", Sun, "Solar Energy Potential"],
+    ["roadwatch", Car, "RoadWatch"],
+    ["treeguard", Trees, "TreeGuard"],
+    ["trip_planner", Navigation, "Trip Planner"],
+    ["utilitywatch", Zap, "UtilityWatch"],
+    ["solar", Sun, "Solar Energy Potential"],
   ]],
   ["User & Diagnostics", [
     ["saved", User, "User Account"],
