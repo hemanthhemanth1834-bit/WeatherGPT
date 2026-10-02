@@ -70,6 +70,6 @@ and are excluded from version control.
   terms) — teams with strict license policies should review it; a
   swap to plain Leaflet bindings is straightforward since map usage
   is isolated in `GISMap.jsx`.
-- Project license for the original code in this tree: **not yet
-  selected** (see README → License). Until one is chosen, all rights
-  are reserved by default.
+- Project license for the original code in this tree: **MIT License** (see `LICENSE`).
+  Third-party packages, data services, tiles, and fonts remain under their
+  respective upstream terms.
