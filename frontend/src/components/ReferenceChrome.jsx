@@ -116,7 +116,6 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
           {GROUPS.map(([group, items]) => <div className="wg-ref-nav-group" key={group}><div className="wg-ref-nav-heading">{group}</div>{items.map(([id, Icon, label]) => <NavButton key={label} id={id} Icon={Icon} label={label} active={tab === id || (tab === "home" && id === "home")} onTab={onTab}/>)}</div>)}
           <button className="wg-ref-settings-row" onClick={() => go("capabilities")}><Settings size={16}/>Settings &amp; Preferences</button>
         </div>
-        <div className="wg-ref-engine"><div><b>WeatherGPT AI Engine</b><span>v2.5 PRO</span></div><p>Ministry of Earth Sciences &amp; IMD Open Telemetry Standards</p></div>
       </aside>
       <main className="wg-ref-content">{children}</main>
     </div>
