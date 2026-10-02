@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import Live3DIcon from "./Live3DIcon";
+import Solar3DScene from "./Solar3DScene";
 
 const MODULES = {
   life_cast: ["SECTORAL INTELLIGENCE","Life Cast","Personal lifestyle weather forecasts for jogging, cycling, laundry drying, drone flights, and outdoor health ratings.",["Outdoor Activity","Health & Comfort","Laundry & Drying","Drone / Cycling"]],
@@ -67,7 +68,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
       <style>{`
         .wg-solar-page{--solar-gold:#fbbf24;--solar-orange:#f59e0b;--solar-cyan:#22d3ee;--solar-green:#10b981;--solar-purple:#a78bfa;color:#e5edf9}
         .wg-solar-page *{box-sizing:border-box}
-        .wg-solar-hero{position:relative;overflow:hidden;padding:1.9rem 2.1rem;border:1px solid rgba(245,158,11,.34);border-radius:28px;background:radial-gradient(circle at 90% 20%,rgba(245,158,11,.12),transparent 35%),linear-gradient(120deg,rgba(15,31,58,.96),rgba(24,27,42,.94));box-shadow:inset 0 1px rgba(255,255,255,.06),0 20px 55px rgba(0,0,0,.2)}
+        .wg-solar-3d-scene{position:absolute;right:0;top:0;width:46%;height:100%;opacity:.92;pointer-events:none;mask-image:linear-gradient(90deg,transparent 0%,black 28%,black 100%)}.wg-solar-3d-scene canvas{display:block;width:100%!important;height:100%!important}.wg-solar-hero{position:relative;overflow:hidden;padding:1.9rem 2.1rem;border:1px solid rgba(245,158,11,.34);border-radius:28px;background:radial-gradient(circle at 90% 20%,rgba(245,158,11,.12),transparent 35%),linear-gradient(120deg,rgba(15,31,58,.96),rgba(24,27,42,.94));box-shadow:inset 0 1px rgba(255,255,255,.06),0 20px 55px rgba(0,0,0,.2)}
         .wg-solar-hero:after{content:"";position:absolute;left:42%;top:-30%;height:180%;width:2px;background:linear-gradient(transparent,rgba(34,211,238,.45),transparent);transform:rotate(1deg)}
         .wg-solar-kicker{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap}
         .wg-solar-icon{width:48px;height:48px;border-radius:15px;display:grid;place-items:center;background:#f59e0b;color:#081426;box-shadow:0 8px 25px rgba(245,158,11,.25)}
@@ -76,8 +77,8 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
         .wg-solar-title-row{display:grid;grid-template-columns:minmax(240px,1fr) minmax(220px,.8fr) auto;gap:1.4rem;align-items:center;margin-top:1rem}
         .wg-solar-title-row h1{margin:0;font-size:2.45rem;line-height:.98;letter-spacing:-.045em;color:#f5f7fb}
         .wg-solar-location{font-size:1.35rem;color:#94a3b8}
-        .wg-solar-hero-copy{margin:.9rem 0 0;max-width:900px;color:#cbd5e1;font-size:1rem;line-height:1.65}
-        .wg-solar-array{padding:.8rem 1rem;border:1px solid rgba(148,163,184,.15);border-radius:20px;background:rgba(2,8,23,.6);min-width:245px}
+        .wg-solar-hero-copy{position:relative;z-index:2;margin:.9rem 0 0;max-width:900px;color:#cbd5e1;font-size:1rem;line-height:1.65}
+        .wg-solar-array{position:relative;z-index:3;padding:.8rem 1rem;border:1px solid rgba(148,163,184,.15);border-radius:20px;background:rgba(2,8,23,.6);min-width:245px}
         .wg-solar-array small{display:block;color:#94a3b8;font-weight:800;font-size:.65rem;letter-spacing:.08em}
         .wg-solar-array strong{color:#fbbf24;font-size:1.1rem}
         .wg-solar-array-buttons{display:flex;gap:.35rem;margin-top:.45rem}
@@ -107,8 +108,8 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
         .wg-solar-callout{margin-top:.8rem;padding:.85rem 1rem;border:1px solid rgba(245,158,11,.28);border-radius:17px;background:linear-gradient(90deg,rgba(245,158,11,.1),rgba(15,23,42,.6));color:#fbbf24;font-weight:900}.wg-solar-callout small{display:block;color:#94a3b8;font-weight:500;margin-top:.3rem}
         .wg-solar-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-top:1rem}.wg-solar-detail{padding:1rem;border:1px solid rgba(148,163,184,.1);border-radius:20px;background:#0b1629}.wg-solar-detail strong{display:block;font-size:.75rem}.wg-solar-detail p{margin:.35rem 0 0;color:#8fa0b6;font-size:.7rem;line-height:1.5}
         .wg-solar-note{margin-top:1rem;padding:.8rem 1rem;border-radius:15px;background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.12);color:#94a3b8;font-size:.72rem;line-height:1.55}
-        @media(max-width:1050px){.wg-solar-title-row{grid-template-columns:1fr}.wg-solar-array{width:100%}.wg-solar-metrics{grid-template-columns:repeat(2,1fr)}.wg-solar-main{grid-template-columns:1fr}}
-        @media(max-width:650px){.wg-solar-hero{padding:1.2rem}.wg-solar-title-row h1{font-size:2rem}.wg-solar-location{font-size:1rem}.wg-solar-metrics,.wg-solar-detail-grid{grid-template-columns:1fr}.wg-solar-card{min-height:150px}.wg-solar-panel{padding:1rem}.wg-solar-tabs span{width:100%;margin-left:0}.wg-solar-chart text{font-size:8px}}
+        @media(max-width:1050px){.wg-solar-3d-scene{width:55%;opacity:.55}.wg-solar-title-row{grid-template-columns:1fr}.wg-solar-array{width:100%}.wg-solar-metrics{grid-template-columns:repeat(2,1fr)}.wg-solar-main{grid-template-columns:1fr}}
+        @media(max-width:650px){.wg-solar-3d-scene{width:100%;opacity:.25}.wg-solar-hero{padding:1.2rem}.wg-solar-title-row h1{font-size:2rem}.wg-solar-location{font-size:1rem}.wg-solar-metrics,.wg-solar-detail-grid{grid-template-columns:1fr}.wg-solar-card{min-height:150px}.wg-solar-panel{padding:1rem}.wg-solar-tabs span{width:100%;margin-left:0}.wg-solar-chart text{font-size:8px}}
       `}</style>
 
       <div className="wg-solar-hero">
@@ -125,7 +126,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
             <div className="wg-solar-array-buttons">{[3,5,10,25].map(k => <button key={k} className={ratedKw===k?"active":""} onClick={()=>setRatedKw(k)}>{k}k</button>)}</div>
           </div>
         </div>
-        <p className="wg-solar-hero-copy">Atmospheric solar potential modeled from available UV index, cloud cover and daylight timing. Generation figures are transparent <b>ESTIMATES</b>, not metered PV output.</p>
+        <Solar3DScene cloud={data.cloud} uv={data.uv} ratedKw={ratedKw} altitude={data.altitude} />\n        <p className="wg-solar-hero-copy">Atmospheric solar potential modeled from available UV index, cloud cover and daylight timing. Generation figures are transparent <b>ESTIMATES</b>, not metered PV output.</p>
       </div>
 
       <div className="wg-solar-metrics">
