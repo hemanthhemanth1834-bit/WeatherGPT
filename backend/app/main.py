@@ -113,19 +113,20 @@ def health() -> dict:
 
 @app.get("/api/voice/status")
 def voice_status() -> dict:
-    """Voice provider status; VibeVoice is optional and never blocks WeatherGPT."""
-    from .services.vibevoice import configured
+    """Server-side TTS status with free Edge-TTS fallback."""
+    from .services.vibevoice import configured, provider
     return {
-        "provider": "VibeVoice-Realtime-0.5B",
+        "provider": provider(),
         "configured": configured(),
-        "mode": "VIBEVOICE" if configured() else "BROWSER_FALLBACK",
+        "mode": provider(),
         "language_scope": "English",
+        "fallback": "BROWSER_SPEECH_SYNTHESIS",
     }
 
 
 @app.post("/api/voice/tts")
 async def voice_tts(payload: dict):
-    """Synthesize English WeatherGPT speech through an optional VibeVoice bridge."""
+    """Synthesize English WeatherGPT speech through VibeVoice or free Edge-TTS."""
     from .services.vibevoice import synthesize
     return await synthesize(str(payload.get("text", "")), str(payload.get("speaker", "Carter")))
 
