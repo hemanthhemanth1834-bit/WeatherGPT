@@ -1,7 +1,6 @@
 # SIH 2026 PRESENTATION PACKAGE — WeatherGPT
 
-All claims below are verified against frozen commit `63767fe` and live
-production https://weathergpt-kappa-pink.vercel.app. Nothing invented.
+Claims below describe the repository architecture and documented verification history. Current tests and provider health must be rerun after subsequent commits; deployment is intentionally not modified by this maintenance pass.
 
 ---
 
@@ -26,7 +25,7 @@ deterministic tools → free providers → provenance/validation → grounded re
 (See `docs/ARCHITECTURE.md`.)
 
 **S6 AI Agent.** Detect language → extract place → classify intent → call tool
-→ template reply. 14 tools. Hallucination tests. Optional LLM adapters,
+→ template reply. 19 tools. Hallucination tests. Optional LLM adapters,
 deterministic default. (See `docs/AI_AGENT.md`.)
 
 **S7 Live Data Sources.** Open-Meteo ×5, NOAA ADDS, RainViewer, NASA GIBS,
@@ -75,7 +74,7 @@ Close: "Every number on screen came from a live, labelled source."
 (2:45) Air·Sea — LIVE ADDS chip, marine direction/period/SST.
 (3:05) Agri (Cotton/Nagpur) + Risk Assess — drivers + travel line.
 (3:25) Language → Telugu question; mic button (fallback message if blocked).
-(3:45) NWP tab — Providers health: 8/13 LIVE, WRF/MOSDAC NOT CONFIGURED.
+(3:45) NWP tab — Providers health: 8/14 LIVE, WRF/MOSDAC NOT CONFIGURED.
 (4:00) Close: problem → solution → "every number from a live, labelled source."
 
 ## 3. 60-SECOND ELEVATOR PITCH
@@ -108,14 +107,14 @@ disaster cells, researchers — in their language.
 
 ## 6. AI AGENT ARCHITECTURE
 
-`docs/AI_AGENT.md`: language → place → intent → 14 deterministic tools →
+`docs/AI_AGENT.md`: language → place → intent → 19 deterministic tools →
 templated reply + speech; hallucination regression tests; optional LLM
 adapters (none configured → deterministic).
 
 ## 7. FREE-DATA / PROVIDER ARCHITECTURE
 
-`docs/DATA_SOURCES.md` + live `/api/providers/health`: 8 LIVE free providers,
-3 portal-only, all probed; fallback chain LIVE → FALLBACK → ESTIMATED/
+`docs/DATA_SOURCES.md` + live `/api/providers/health`: 8 LIVE core providers,
+4 explicitly non-live/metadata-only entries, all probed; fallback chain LIVE → FALLBACK → ESTIMATED/
 SIMULATED with timestamps; key-gated tiers evaluated and declined.
 
 ## 8. SECURITY + HALLUCINATION PREVENTION
