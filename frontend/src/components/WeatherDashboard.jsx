@@ -46,20 +46,53 @@ function LifeTips({ weather }) {
   );
 }
 
-function TempSpark({ hourly }) {  if (!hourly?.length) return null;
-  const temps = hourly.slice(0, 24).map((h) => h.temp);
-  const min = Math.min(...temps);
-  const span = Math.max(...temps) - min || 1;
-  const pts = temps.map((t, i) => `${(i / (temps.length - 1)) * 100},${34 - ((t - min) / span) * 28}`).join(" ");
+function TempSpark({ hourly, metric }) {
+  if (!hourly?.length) return null;
+  const rows = hourly.slice(0, 24);
+  const cfg = {
+    temp: ["Temperature", "°C", h => Number(h.temp)],
+    rain: ["Rain probability", "%", h => Number(h.rain_prob)],
+    wind: ["Wind speed", "km/h", h => Number(h.wind_speed)],
+    hum: ["Humidity", "%", h => Number(h.humidity)]
+  }[metric] || ["Temperature", "°C", h => Number(h.temp)];
+  const values = rows.map(cfg[2]).map(Number);
+  const min = Math.min(...values.filter(Number.isFinite));
+  const max = Math.max(...values.filter(Number.isFinite));
+  const pad = Math.max((max - min) * .15, .5);
+  const lo = min - pad, hi = max + pad;
+  const W = 1000, H = 230, L = 54, R = 18, T = 18, B = 38;
+  const pts = rows.map((h,i) => {
+    const v = Number(cfg[2](h));
+    const x = L + i / Math.max(1, rows.length - 1) * (W-L-R);
+    const y = H-B - ((v-lo)/(hi-lo))*(H-T-B);
+    return {x,y,v,h};
+  });
+  const path = pts.map((p,i) => (i ? "L " : "M ") + p.x.toFixed(1) + " " + p.y.toFixed(1)).join(" ");
+  const area = path + ` L ${pts.at(-1)?.x || L} ${H-B} L ${pts[0]?.x || L} ${H-B} Z`;
+  const format = v => metric === "rain" || metric === "hum" ? Math.round(v) : v.toFixed(1);
   return (
-    <svg viewBox="0 0 100 36" role="img" aria-label="24-hour temperature curve" style={{ width: "100%", height: "3.2rem" }}>
-      <polyline points={pts} fill="none" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" />
-      {temps.filter((_, i) => i % 6 === 0).map((t, k) => (
-        <text key={k} x={(k * 6 / (temps.length - 1)) * 100} y="35" fontSize="4" fill="#93a1b8">{t}°</text>
-      ))}
-    </svg>
+    <div className="wg-hourly-chart" role="img" aria-label={`24 hour ${cfg[0]} chart`}>
+      <div className="wg-hourly-chart-head">
+        <div><b>{cfg[0]}</b><span>{format(values.at(-1))} {cfg[1]} now</span></div>
+        <small>Last 24 hours · hourly forecast</small>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+        {[0,1,2,3].map(i => {
+          const y = T + i*((H-T-B)/3), v = hi-i*((hi-lo)/3);
+          return <g key={i}><line x1={L} x2={W-R} y1={y} y2={y} className="wg-hourly-grid"/><text x="6" y={y+4} className="wg-hourly-axis">{format(v)}</text></g>;
+        })}
+        {pts.filter((_,i)=>i%Math.max(1,Math.floor(rows.length/6))===0).map((p,i)=>
+          <text key={i} x={p.x} y={H-10} textAnchor="middle" className="wg-hourly-time">{String(p.h.time).slice(-5)}</text>
+        )}
+        <path d={area} className="wg-hourly-area"/>
+        <path d={path} className="wg-hourly-line"/>
+        {pts.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r={i===pts.length-1?5:3} className={i===pts.length-1?"wg-hourly-dot current":"wg-hourly-dot"}><title>{p.h.time}: {format(p.v)} {cfg[1]}</title></circle>)}
+      </svg>
+      <div className="wg-hourly-legend"><span>Y-axis: {cfg[1]}</span><span>X-axis: local time</span><span>● {rows.length} real hourly points</span></div>
+    </div>
   );
 }
+
 
 export default function WeatherDashboard({ weather, busy, onAsk }) {
   const [areas, setAreas] = useState([]);
@@ -298,7 +331,7 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
             ))}
           </div>
         </div>
-        <TempSpark hourly={weather.hourly} />
+        <TempSpark hourly={weather.hourly} metric={metric} />
         <div className="wg-scrollrow" style={{ marginTop: "0.4rem" }}>
           {(weather.hourly || []).map((h, i) => (
             <div key={i} className="wg-card" style={{ minWidth: "5.4rem", padding: "0.55rem", textAlign: "center" }}>
