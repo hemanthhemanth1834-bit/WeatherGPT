@@ -227,3 +227,133 @@
 @media(prefers-reduced-motion:reduce){
  .wg-ref-app *,.wg-ref-app *::before,.wg-ref-app *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
+
+
+/* HIGH-3D LIVE WEATHER GRAPH — animated telemetry surface */
+.wg-market-chart{
+  position:relative;
+  overflow:hidden;
+  transform-style:preserve-3d;
+  perspective:1100px;
+  transition:transform .45s cubic-bezier(.22,.61,.36,1),box-shadow .45s ease;
+}
+.wg-market-chart:hover{
+  transform:perspective(1100px) rotateX(1.5deg) translateY(-3px);
+  box-shadow:0 22px 55px rgba(0,0,0,.34),0 0 35px rgba(34,211,238,.08),inset 0 1px rgba(255,255,255,.08);
+}
+.wg-market-svg{
+  position:relative;
+  isolation:isolate;
+  transform:translateZ(0);
+  box-shadow:inset 0 0 55px rgba(34,211,238,.035),inset 0 -28px 45px rgba(2,6,23,.38);
+}
+.wg-market-svg::before{
+  content:"";
+  position:absolute;
+  inset:-35%;
+  z-index:0;
+  pointer-events:none;
+  background:radial-gradient(ellipse at 50% 62%,rgba(34,211,238,.14),transparent 38%),radial-gradient(ellipse at 20% 30%,rgba(59,130,246,.09),transparent 30%);
+  animation:wgChartAura 7s ease-in-out infinite alternate;
+}
+.wg-market-svg::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;
+  top:-20%;
+  height:24%;
+  z-index:4;
+  pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(103,232,249,.09),transparent);
+  border-top:1px solid rgba(103,232,249,.12);
+  filter:blur(.2px);
+  animation:wgChartScan 5.5s linear infinite;
+}
+.wg-market-svg svg{position:relative;z-index:2;transform:translateZ(8px);transform-style:preserve-3d}
+.wg-market-svg line{
+  stroke:rgba(148,163,184,.14);
+  stroke-dasharray:2 7;
+  animation:wgGridFlow 9s linear infinite;
+}
+.wg-market-area{
+  fill:rgba(14,165,233,.14);
+  filter:drop-shadow(0 12px 20px rgba(14,165,233,.12));
+  transform-origin:center;
+  animation:wgAreaBreath 3.8s ease-in-out infinite;
+}
+.wg-market-line{
+  stroke:#67e8f9;
+  stroke-width:3.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vector-effect:non-scaling-stroke;
+  stroke-dasharray:16 9;
+  filter:drop-shadow(0 0 4px rgba(56,189,248,.8)) drop-shadow(0 0 12px rgba(34,211,238,.38));
+  animation:wgLineFlow 2.2s linear infinite, wgLineGlow 2.8s ease-in-out infinite alternate;
+}
+.wg-market-point{
+  fill:#06111f;
+  stroke:#67e8f9;
+  stroke-width:2.5;
+  cursor:crosshair;
+  filter:drop-shadow(0 0 5px rgba(34,211,238,.65));
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:wgPointPulse 2.4s ease-in-out infinite;
+}
+.wg-market-point:nth-of-type(2n){animation-delay:.35s}
+.wg-market-point:nth-of-type(3n){animation-delay:.7s}
+.wg-market-live-pulse{
+  fill:rgba(34,211,238,.16);
+  stroke:rgba(103,232,249,.4);
+  stroke-width:1.5;
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:wgLiveChartPulse 1.65s ease-out infinite;
+}
+.wg-market-live-dot{
+  fill:#a5f3fc;
+  stroke:#22d3ee;
+  stroke-width:2;
+  filter:drop-shadow(0 0 5px #22d3ee) drop-shadow(0 0 13px rgba(34,211,238,.75));
+  transform-box:fill-box;
+  transform-origin:center;
+  animation:wgLiveChartDot 1.15s ease-in-out infinite;
+}
+.wg-market-cross{
+  stroke:rgba(103,232,249,.65);
+  stroke-width:1.2;
+  stroke-dasharray:3 5;
+  filter:drop-shadow(0 0 5px rgba(34,211,238,.4));
+}
+.wg-market-tooltip{
+  fill:rgba(2,8,23,.96);
+  stroke:rgba(103,232,249,.65);
+  stroke-width:1;
+  filter:drop-shadow(0 10px 22px rgba(0,0,0,.45));
+}
+.wg-market-controls button,.wg-market-metrics button{
+  transition:transform .2s ease,box-shadow .25s ease,border-color .25s ease,background .25s ease;
+}
+.wg-market-controls button:hover,.wg-market-metrics button:hover{
+  transform:translateY(-2px) translateZ(5px);
+  box-shadow:0 7px 18px rgba(0,0,0,.22),0 0 12px rgba(34,211,238,.08);
+}
+.wg-market-controls button.active,.wg-market-metrics button.active{
+  box-shadow:0 0 18px rgba(34,211,238,.12),inset 0 0 12px rgba(34,211,238,.06);
+}
+@keyframes wgLineFlow{to{stroke-dashoffset:-50}}
+@keyframes wgLineGlow{0%{filter:drop-shadow(0 0 3px rgba(56,189,248,.65)) drop-shadow(0 0 7px rgba(34,211,238,.22))}100%{filter:drop-shadow(0 0 6px rgba(103,232,249,.95)) drop-shadow(0 0 18px rgba(34,211,238,.5))}}
+@keyframes wgAreaBreath{0%,100%{opacity:.72}50%{opacity:1}}
+@keyframes wgPointPulse{0%,100%{transform:scale(.9)}50%{transform:scale(1.35)}}
+@keyframes wgLiveChartPulse{0%{transform:scale(.55);opacity:.9}75%{transform:scale(2.5);opacity:.05}100%{transform:scale(2.7);opacity:0}}
+@keyframes wgLiveChartDot{0%,100%{transform:scale(.9);filter:drop-shadow(0 0 4px #22d3ee)}50%{transform:scale(1.28);filter:drop-shadow(0 0 7px #22d3ee) drop-shadow(0 0 18px rgba(34,211,238,.75))}}
+@keyframes wgChartScan{0%{transform:translateY(-120%);opacity:0}15%{opacity:.8}100%{transform:translateY(560%);opacity:0}}
+@keyframes wgChartAura{0%{transform:translate3d(-2%,-1%,0) scale(.96)}100%{transform:translate3d(2%,1%,0) scale(1.06)}}
+@keyframes wgGridFlow{to{stroke-dashoffset:-45}}
+@media(prefers-reduced-motion:reduce){
+ .wg-market-chart,.wg-market-svg::before,.wg-market-svg::after,.wg-market-svg svg,
+ .wg-market-line,.wg-market-area,.wg-market-point,.wg-market-live-pulse,.wg-market-live-dot,
+ .wg-market-svg line{animation:none!important}
+ .wg-market-chart:hover{transform:none}
+}
