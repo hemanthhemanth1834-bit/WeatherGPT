@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
 import WxIcon from "./WxIcon";
 
-const RISK_TONE = { LOW: "live", MODERATE: "static", HIGH: "demo", EXTREME: "off" };
-
 function agoLabel(ist) {
   if (!ist) return "";
   const m = ist.match(/(\d+)\s+(\w+)\s+(\d{4}),\s+(\d+):(\d+)/);
