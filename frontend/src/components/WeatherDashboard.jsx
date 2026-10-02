@@ -27,6 +27,33 @@ function SourceLine({ source, status, hint }) {
   );
 }
 
+
+function openMeteoCondition(code) {
+  const c = Number(code);
+  if (c === 0) return ["Clear sky", "Sun"];
+  if ([1,2].includes(c)) return ["Mainly clear", "CloudSun"];
+  if (c === 3) return ["Overcast", "Cloud"];
+  if ([45,48].includes(c)) return ["Fog", "CloudFog"];
+  if ([51,53,55].includes(c)) return ["Drizzle", "CloudDrizzle"];
+  if ([56,57].includes(c)) return ["Freezing drizzle", "CloudDrizzle"];
+  if ([61,63,65].includes(c)) return ["Rain", "CloudRain"];
+  if ([66,67].includes(c)) return ["Freezing rain", "CloudRain"];
+  if ([71,73,75,77].includes(c)) return ["Snow", "Snowflake"];
+  if ([80,81,82].includes(c)) return ["Rain showers", "CloudRain"];
+  if ([85,86].includes(c)) return ["Snow showers", "Snowflake"];
+  if (c === 95) return ["Thunderstorm", "CloudLightning"];
+  if ([96,99].includes(c)) return ["Thunderstorm with hail", "CloudLightning"];
+  return ["Unknown", "Cloud"];
+}
+
+function formatForecastDay(isoDate, index, timezone) {
+  const date = new Date(`${isoDate}T12:00:00`);
+  const label = index === 0
+    ? "Today"
+    : new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: timezone || undefined }).format(date);
+  return label;
+}
+
 function LifeTips({ weather }) {
   if (!weather) return null;
   const tips = [];
@@ -104,6 +131,9 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
   const [speaking, setSpeaking] = useState(false);
   const [liveHourly, setLiveHourly] = useState([]);
   const [liveHourlyUpdated, setLiveHourlyUpdated] = useState(null);
+  const [liveDaily, setLiveDaily] = useState([]);
+  const [liveDailyUpdated, setLiveDailyUpdated] = useState(null);
+  const [liveDailyError, setLiveDailyError] = useState(false);
 
   const exportWeather = (format) => {
     if (!weather) return;
@@ -127,11 +157,6 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
   };
 
   useEffect(() => {
-    if (weather?.location) {
-      fetchRegionalTalukas(weather.location).then(setAreas).catch(() => setAreas([]));
-    }
-  }, [weather?.location]);
-  useEffect(() => {
     let cancelled = false;
     const lat = Number(weather?.lat), lon = Number(weather?.lon);
     if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
@@ -141,7 +166,7 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
     u.searchParams.set("hourly", "temperature_2m,precipitation_probability,wind_speed_10m,relative_humidity_2m,weather_code");
     u.searchParams.set("forecast_hours", "24");
     u.searchParams.set("timezone", "auto");
-    fetch(u).then(r => r.ok ? r.json() : Promise.reject(new Error("Open-Meteo request failed")))
+    const load = () => fetch(u).then(r => r.ok ? r.json() : Promise.reject(new Error("Open-Meteo request failed")))
       .then(d => {
         if (cancelled || !d?.hourly?.time) return;
         const h = d.hourly;
@@ -157,8 +182,62 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
         setLiveHourlyUpdated(new Date());
       })
       .catch(() => { if (!cancelled) setLiveHourly([]); });
-    return () => { cancelled = true; };
+    load();
+    const timer = setInterval(load, 10 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(timer); };
   }, [weather?.lat, weather?.lon]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const lat = Number(weather?.lat), lon = Number(weather?.lon);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      setLiveDaily([]);
+      return;
+    }
+    const u = new URL("https://api.open-meteo.com/v1/forecast");
+    u.searchParams.set("latitude", lat);
+    u.searchParams.set("longitude", lon);
+    u.searchParams.set("daily", "weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max");
+    u.searchParams.set("forecast_days", "7");
+    u.searchParams.set("timezone", "auto");
+    const load = () => {
+      setLiveDailyError(false);
+      fetch(u)
+        .then(r => r.ok ? r.json() : Promise.reject(new Error("Open-Meteo daily request failed")))
+        .then(d => {
+          if (cancelled || !d?.daily?.time) return;
+          const x = d.daily;
+          const rows = x.time.map((date, i) => {
+            const [condition, icon] = openMeteoCondition(x.weather_code?.[i]);
+            return {
+              date,
+              day: formatForecastDay(date, i, d.timezone),
+              condition,
+              icon,
+              weather_code: x.weather_code?.[i],
+              rain_sum: x.precipitation_sum?.[i],
+              rain_prob: x.precipitation_probability_max?.[i],
+              temp_max: x.temperature_2m_max?.[i],
+              temp_min: x.temperature_2m_min?.[i],
+              wind_speed: x.wind_speed_10m_max?.[i],
+              source: "Open-Meteo"
+            };
+          });
+          setLiveDaily(rows);
+          setLiveDailyUpdated(new Date());
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setLiveDaily([]);
+            setLiveDailyError(true);
+          }
+        });
+    };
+    load();
+    const timer = setInterval(load, 10 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [weather?.lat, weather?.lon]);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -381,19 +460,23 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
       </div>
 
       <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
-        <h3 style={{ margin: "0 0 0.6rem", fontSize: "0.8rem" }}>7-day outlook</h3>
-        <SourceLine source={`${weather.data_source} · daily NWP`} status={weather.status} />
+        <div style={{ display: "flex", justifyContent: "space-between", gap: "0.8rem", alignItems: "center", flexWrap: "wrap" }}>
+          <h3 style={{ margin: 0, fontSize: "0.8rem" }}>7-day outlook</h3>
+          <span className="wg-hourly-live-status"><span>● LIVE OPEN-METEO FORECAST</span><small>{liveDailyUpdated ? `Updated ${liveDailyUpdated.toLocaleTimeString()}` : "Connecting to live forecast…"}</small></span>
+        </div>
+        <SourceLine source="Open-Meteo · daily forecast" status={liveDaily.length ? "LIVE" : "UNAVAILABLE"} hint={liveDailyError ? "Live daily feed unavailable" : "Forecast model data · refreshed every 10 min"} />
         <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem", marginTop: "0.5rem" }}>
-          {(weather.daily || []).map((d, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "0.7rem", fontSize: "0.82rem", padding: "0.45rem 0.6rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
+          {(liveDaily.length ? liveDaily : []).map((d, i) => (
+            <div key={d.date || i} style={{ display: "flex", alignItems: "center", gap: "0.7rem", fontSize: "0.82rem", padding: "0.45rem 0.6rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
               <strong style={{ width: "4.2rem" }}>{d.day}</strong>
               <span aria-hidden="true">{glyphFor(d.icon)}</span>
               <span style={{ flex: 1, color: "var(--wg-muted)" }}>{d.condition}</span>
-              <span className="wg-mono">💧{d.rain_sum}mm</span>
-              <strong>{d.temp_max}°</strong>
-              <span style={{ color: "var(--wg-muted)" }}>{d.temp_min}°</span>
+              <span className="wg-mono">💧{Number(d.rain_sum ?? 0).toFixed(1)}mm</span>
+              <strong>{Number.isFinite(Number(d.temp_max)) ? Number(d.temp_max).toFixed(1) : "—"}°</strong>
+              <span style={{ color: "var(--wg-muted)" }}>{Number.isFinite(Number(d.temp_min)) ? Number(d.temp_min).toFixed(1) : "—"}°</span>
             </div>
           ))}
+          {!liveDaily.length && <div className="wg-ref-empty">Live Open-Meteo daily forecast is unavailable right now.</div>}
         </div>
       </div>
     </section>
