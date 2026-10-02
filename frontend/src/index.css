@@ -603,3 +603,10 @@ button, input, select, a { min-height: 0; }
 .wg-ref-pin-another em{margin-left:auto;color:var(--wg-accent);font-style:normal;font-size:.58rem;font-weight:800}
 .wg-ref-map-side div{gap:2px}
 .wg-ref-map-side .wg-ref-gps{color:#6ee7b7}
+
+
+/* Reference mini-map geography labels */
+.wg-ref-map-ocean{position:absolute;z-index:2;pointer-events:none;font-size:.52rem;letter-spacing:.12em;font-weight:800;opacity:.42;white-space:nowrap}
+.wg-ref-map-ocean.arabian{left:7%;top:49%;transform:rotate(-12deg)}
+.wg-ref-map-ocean.bay{right:4%;top:50%;transform:rotate(10deg)}
+.wg-ref-map-ocean.indian{left:35%;bottom:5%;font-size:.55rem}
