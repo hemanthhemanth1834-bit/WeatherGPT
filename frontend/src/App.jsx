@@ -20,7 +20,8 @@ const NwpSatellitePanel = lazy(() => import("./components/NwpSatellitePanel"));
 const ProvidersPanel = lazy(() => import("./components/ProvidersPanel"));
 const SavedPlacesPanel = lazy(() => import("./components/SavedPlacesPanel"));
 const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
-const CapabilitiesHub = lazy(() => import("./components/CapabilitiesHub"));\nconst ReferenceModulePanel = lazy(() => import("./components/ReferenceModulePanel"));
+const CapabilitiesHub = lazy(() => import("./components/CapabilitiesHub"));
+const ReferenceModulePanel = lazy(() => import("./components/ReferenceModulePanel"));
 
 
 const SAVED_KEY = "weathergpt.savedPlaces";
@@ -48,7 +49,8 @@ function OpeningMessage() {
   };
 }
 
-// Dedicated reference intelligence routes\nexport default function App() {
+// Dedicated reference intelligence routes
+export default function App() {
   const [tab, setTab] = useState("home");
   const [persona, setPersona] = useState("general");
   const [language, setLanguage] = useState("auto");
@@ -283,7 +285,8 @@ function OpeningMessage() {
           {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
           {tab === "saved" && <SavedPlacesPanel current={place} saved={saved} weather={weather} onSelect={(name) => searchPlace(name)} onAddCurrent={() => remember(place)} onRemove={removeSaved} />}
           {tab === "about" && <AboutDeveloper />}
-          {tab === "capabilities" && <CapabilitiesHub onOpen={(t) => setTab(t)} />}\n          {["life_cast","roadwatch","treeguard","trip_planner","utilitywatch","solar","deep_cast","evacuation"].includes(tab) && <ReferenceModulePanel module={tab} weather={weather} onTab={setTab} onAsk={askFromTab} />}
+          {tab === "capabilities" && <CapabilitiesHub onOpen={(t) => setTab(t)} />}
+          {["life_cast","roadwatch","treeguard","trip_planner","utilitywatch","solar","deep_cast","evacuation"].includes(tab) && <ReferenceModulePanel module={tab} weather={weather} onTab={setTab} onAsk={askFromTab} />}
         </Suspense>
       </main>
     </ReferenceChrome>
