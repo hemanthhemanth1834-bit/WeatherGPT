@@ -11,8 +11,9 @@ farmers, pilots, and disaster cells.
 **Why not normal weather apps?** Apps show tables; WeatherGPT answers
 questions ("is it safe to travel?", "spray today?") with evidence attached.
 
-**Where does data come from?** Open-Meteo ×5, NOAA ADDS, RainViewer, NASA
-GIBS, BigDataCloud, GDACS, OSM — all free, probed live (`/api/providers/health`).
+**Where does data come from?** Open-Meteo services, NOAA ADDS, RainViewer, NASA GIBS, BigDataCloud,
+GDACS, USGS, NASA EONET and OSM — free/public sources where permitted;
+current availability is shown by `/api/providers/health`.
 
 **How do you prevent hallucinations?** Numbers originate only in tools;
 templates fill them in; tests assert every °C figure exists in the payload;
