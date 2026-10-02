@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./ReferenceChrome.css";
 import {
-  Activity, Bell, Bot, CloudLightning, CloudRain, CloudSun, Database, Download,
+  Activity, Bell, Bot, CloudLightning, CloudRain, CloudSun, Download,
   Globe, Layers, LayoutDashboard, MapPin, Navigation, PhoneCall, Radio,
   Settings, ShieldAlert, Sparkles, Sun, Trees, TrendingUp, Waves,
   ArrowRightLeft, FileText, Car, Sprout, Zap, Type, X, Menu
@@ -31,9 +31,6 @@ import Live3DIcon from "./Live3DIcon";
     ["trip_planner", Navigation, "Trip Planner"],
     ["utilitywatch", Zap, "UtilityWatch"],
     ["solar", Sun, "Solar Energy Potential"],
-  ]],
-  ["User & Diagnostics", [
-    ["capabilities", Database, "System & Admin"],
   ]],
 ];
 
@@ -104,7 +101,6 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
       <div className="wg-ref-mobile-drawer-head"><b>Navigation Menu</b><button onClick={() => setMobileOpen(false)} aria-label="Close navigation"><X size={18}/></button></div>
       <div className="wg-ref-mobile-drawer-scroll">
         {GROUPS.map(([group, items]) => <div className="wg-ref-nav-group" key={group}><div className="wg-ref-nav-heading">{group}</div>{items.map(([id, Icon, label]) => <NavButton key={label} id={id} Icon={Icon} label={label} active={tab === id} onTab={go}/>)}</div>)}
-        <button className="wg-ref-settings-row" onClick={() => go("capabilities")}><Live3DIcon kind="settings" size="xs" label="Settings"/>Settings &amp; Preferences</button>
       </div>
     </aside>
 
@@ -112,7 +108,6 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
       <aside className="wg-ref-sidebar">
         <div className="wg-ref-sidebar-scroll">
           {GROUPS.map(([group, items]) => <div className="wg-ref-nav-group" key={group}><div className="wg-ref-nav-heading">{group}</div>{items.map(([id, Icon, label]) => <NavButton key={label} id={id} Icon={Icon} label={label} active={tab === id || (tab === "home" && id === "home")} onTab={onTab}/>)}</div>)}
-          <button className="wg-ref-settings-row" onClick={() => go("capabilities")}><Settings size={16}/>Settings &amp; Preferences</button>
         </div>
       </aside>
       <main className="wg-ref-content">{children}</main>
