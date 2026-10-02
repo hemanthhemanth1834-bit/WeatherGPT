@@ -128,7 +128,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
         .wg-solar-stats{display:grid;grid-template-columns:1fr 1fr;gap:.65rem;margin-top:.7rem}.wg-solar-stat{padding:.85rem;border-radius:16px;background:#070f21}.wg-solar-stat small{display:block;color:#718096;font-size:.6rem;font-weight:900;text-transform:uppercase}.wg-solar-stat strong{display:block;margin-top:.35rem;font-size:1rem}.wg-solar-stat em{font-style:normal;color:#fbbf24;font-size:.65rem}
         .wg-solar-chart-wrap{margin-top:.7rem;overflow:hidden}.wg-solar-chart{width:100%;height:auto;display:block}.wg-solar-chart text{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;fill:#7f8ea3}.wg-solar-chart-grid{stroke:rgba(148,163,184,.12);stroke-dasharray:3 8}.wg-solar-actual{fill:rgba(245,158,11,.2)}.wg-solar-ceiling{fill:none;stroke:#38bdf8;stroke-width:3;stroke-dasharray:5 7}.wg-solar-line{fill:none;stroke:#f59e0b;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(245,158,11,.5))}
 
-        /* Full-page 3D solar interaction layer */
+        /* Full-page 3D solar interaction layer — LIVE MOTION */
         .wg-solar-page{perspective:1400px}
         .wg-solar-hero,.wg-solar-panel,.wg-solar-card{transform-style:preserve-3d}
         .wg-solar-3d-scene{position:absolute;right:0;top:0;width:55%;height:100%;opacity:.96;pointer-events:none;mask-image:linear-gradient(90deg,transparent 0%,rgba(0,0,0,.3) 22%,black 55%,black 100%);z-index:1}
@@ -143,7 +143,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
         .wg-solar-tabs button{transition:transform .25s,box-shadow .25s,background .25s}
         .wg-solar-tabs button:hover{transform:translateY(-2px)}
         .wg-solar-panel:hover{transform:translateY(-3px);box-shadow:0 24px 50px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.045)}
-        .wg-solar-sun{animation:wgSunPulse 2.4s ease-in-out infinite;transition:left .08s linear,top .08s linear}
+        .wg-solar-sun{animation:wgSunPulse 2.4s ease-in-out infinite;transition:left .04s linear,top .04s linear;will-change:left,top,transform}
         .wg-solar-sun.is-traveling{animation:wgSunTravelGlow 1.8s ease-in-out infinite}
         @keyframes wgSunTravelGlow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
         @keyframes wgSunPulse{0%,100%{transform:scale(1);box-shadow:0 0 0 9px rgba(245,158,11,.12),0 0 35px rgba(245,158,11,.65)}50%{transform:scale(1.18);box-shadow:0 0 0 15px rgba(245,158,11,.08),0 0 52px rgba(245,158,11,.82)}}
@@ -152,7 +152,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
         .wg-solar-chart-wrap{position:relative}
         .wg-solar-chart-marker{position:absolute;width:13px;height:13px;border-radius:50%;background:#fbbf24;border:2px solid #fff;box-shadow:0 0 0 6px rgba(251,191,36,.13),0 0 20px rgba(251,191,36,.72);pointer-events:none;z-index:2;transition:left .7s ease,top .7s ease}
         .wg-solar-chart-marker.off{opacity:.25}
-        .wg-solar-chart-scan{position:absolute;top:7%;bottom:8%;width:1px;background:linear-gradient(transparent,rgba(251,191,36,.55),transparent);box-shadow:0 0 14px rgba(251,191,36,.32);pointer-events:none;z-index:1;transition:left .08s linear}
+        .wg-solar-chart-scan{position:absolute;will-change:left;top:7%;bottom:8%;width:1px;background:linear-gradient(transparent,rgba(251,191,36,.55),transparent);box-shadow:0 0 14px rgba(251,191,36,.32);pointer-events:none;z-index:1;transition:left .08s linear}
         .wg-solar-flow-line{fill:none;stroke:rgba(255,255,255,.8);stroke-width:2;stroke-dasharray:2 18;stroke-linecap:round;opacity:.8;animation:wgChartFlow 1.1s linear infinite}
         @keyframes wgChartFlow{to{stroke-dashoffset:-20}}
         .wg-solar-generation-glow{animation:wgGenerationGlow 1.8s ease-in-out infinite}
