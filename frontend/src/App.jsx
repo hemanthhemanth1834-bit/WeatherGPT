@@ -250,7 +250,7 @@ export default function App() {
 
 
   const goTab = useCallback((name) => {
-    const map = { open_map: "map", open_dashboard: "dashboard", open_agri: "agri", open_alerts: "alerts", open_compare: "compare" };
+    const map = { open_map: "map", open_dashboard: "dashboard", open_agri: "agri", open_alerts: "alerts", open_compare: "compare", live_news: "alerts" };
     setTab(map[name] || name);
   }, []);
 
