@@ -1,7 +1,6 @@
-/* Browser-native voice engine (Web Speech API). Original implementation.
-   Speech recognition and synthesis depend on the browser/provider; every
-   failure surfaces a human-readable message so the UI can fall back
-   to typed input. No keys, no network calls of our own. */
+/* Voice engine: browser STT + optional VibeVoice TTS.
+   VibeVoice is preferred for English output when the WeatherGPT backend
+   has VIBEVOICE_TTS_URL configured. Browser speech remains the fallback. */
 
 const BCP47 = {
   auto: "en-IN",
@@ -30,6 +29,7 @@ class VoiceEngine {
   constructor() {
     this.recognition = null;
     this.listening = false;
+    this.audio = null;
     if (typeof window !== "undefined") {
       const Impl = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (Impl) {
@@ -98,7 +98,50 @@ class VoiceEngine {
     }
   }
 
-  speak(text, lang = "en", onEnd) {
+  async speak(text, lang = "en", onEnd) {
+    if (!text) {
+      onEnd?.();
+      return;
+    }
+
+    if (lang === "en" || lang === "auto") {
+      try {
+        const base = import.meta.env.VITE_API_URL || "/api";
+        const response = await fetch(`${base}/voice/tts`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text: String(text).slice(0, 4000),
+            speaker: "Carter",
+          }),
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          this.audio?.pause?.();
+          this.audio = new Audio(url);
+          this.audio.onended = () => {
+            URL.revokeObjectURL(url);
+            this.audio = null;
+            onEnd?.();
+          };
+          this.audio.onerror = () => {
+            URL.revokeObjectURL(url);
+            this.audio = null;
+            this.browserSpeak(text, lang, onEnd);
+          };
+          await this.audio.play();
+          return;
+        }
+      } catch {
+        // Optional VibeVoice unavailable; use browser TTS below.
+      }
+    }
+
+    this.browserSpeak(text, lang, onEnd);
+  }
+
+  browserSpeak(text, lang = "en", onEnd) {
     if (!this.synth || !text) {
       onEnd?.();
       return;
@@ -116,6 +159,11 @@ class VoiceEngine {
 
   stopSpeaking() {
     this.synth?.cancel();
+    if (this.audio) {
+      this.audio.pause();
+      this.audio.currentTime = 0;
+      this.audio = null;
+    }
   }
 }
 
