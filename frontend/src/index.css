@@ -656,3 +656,23 @@ button, input, select, a { min-height: 0; }
   .wg-ref-mobile-drawer-scroll{padding:14px 10px 28px;overflow:auto}
   .wg-ref-mobile-drawer .wg-ref-nav-group{margin-bottom:16px}
 }
+
+
+/* CLEAR 24-HOUR NWP CHART */
+.wg-hourly-chart{margin:.65rem 0 .2rem;padding:.7rem .75rem .55rem;border:1px solid rgba(56,189,248,.18);border-radius:12px;background:linear-gradient(180deg,rgba(7,20,38,.78),rgba(4,12,25,.62));box-shadow:inset 0 1px rgba(255,255,255,.04)}
+.wg-hourly-chart-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.2rem}
+.wg-hourly-chart-head div{display:flex;align-items:baseline;gap:.6rem}.wg-hourly-chart-head b{font-size:.78rem}.wg-hourly-chart-head span{font-size:.7rem;color:#67e8f9;font-family:ui-monospace,monospace}.wg-hourly-chart-head small{font-size:.62rem;color:var(--wg-muted)}
+.wg-hourly-chart svg{width:100%;height:215px;display:block;overflow:visible}
+.wg-hourly-grid{stroke:rgba(148,163,184,.13);stroke-dasharray:3 7}
+.wg-hourly-axis{fill:#94a3b8;font-size:12px;font-family:ui-monospace,monospace}
+.wg-hourly-time{fill:#94a3b8;font-size:12px;font-family:ui-monospace,monospace;font-weight:700}
+.wg-hourly-area{fill:rgba(56,189,248,.12);animation:wgHourlyArea 3s ease-in-out infinite alternate}
+.wg-hourly-line{fill:none;stroke:#38bdf8;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px rgba(56,189,248,.65));stroke-dasharray:14 8;animation:wgHourlyFlow 2s linear infinite}
+.wg-hourly-dot{fill:#071426;stroke:#67e8f9;stroke-width:2;transition:r .2s ease;filter:drop-shadow(0 0 3px rgba(56,189,248,.6))}
+.wg-hourly-dot.current{fill:#a5f3fc;stroke:#22d3ee;stroke-width:2.5;filter:drop-shadow(0 0 6px #22d3ee) drop-shadow(0 0 15px rgba(34,211,238,.55));animation:wgHourlyPulse 1.4s ease-in-out infinite}
+.wg-hourly-legend{display:flex;justify-content:space-between;gap:.5rem;color:var(--wg-muted);font-size:.62rem;padding:.15rem .1rem 0}
+@keyframes wgHourlyFlow{to{stroke-dashoffset:-44}}
+@keyframes wgHourlyArea{from{opacity:.45}to{opacity:.9}}
+@keyframes wgHourlyPulse{0%,100%{r:5;opacity:.85}50%{r:7;opacity:1}}
+@media(max-width:700px){.wg-hourly-chart-head{align-items:flex-start;flex-direction:column;gap:.15rem}.wg-hourly-chart svg{height:185px}.wg-hourly-time{font-size:9px}.wg-hourly-axis{font-size:9px}.wg-hourly-legend{font-size:.55rem}}
+@media(prefers-reduced-motion:reduce){.wg-hourly-area,.wg-hourly-line,.wg-hourly-dot.current{animation:none}}
