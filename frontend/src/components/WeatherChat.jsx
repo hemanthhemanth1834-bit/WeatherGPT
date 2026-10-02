@@ -129,10 +129,10 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
   const prompts = PROMPTS[persona] || PROMPTS.general;
 
   return (
-    <section aria-label="AI weather chat" style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: "0.8rem" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(16rem,1fr))", gap: "0.8rem" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.7rem", minHeight: "24rem", maxHeight: "62vh" }}>
-          <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "0.7rem", paddingRight: "0.2rem" }} role="log" aria-live="polite" aria-label="Conversation">
+    <section className="wg-ai-assistant" aria-label="AI weather assistant">
+      <div className="wg-ai-assistant-layout">
+        <div className="wg-ai-chat-column">
+          <div className="wg-ai-message-list" role="log" aria-live="polite" aria-label="Conversation">
             {messages.map((msg) => (
               <article key={msg.id} className="wg-card wg-enter"
                 style={{ padding: "0.85rem 1rem", alignSelf: msg.sender === "user" ? "flex-end" : "flex-start", maxWidth: "100%", borderColor: msg.sender === "user" ? "rgba(56,189,248,.35)" : undefined }}>
@@ -206,10 +206,10 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
           </div>
         </div>
 
-        <aside aria-label="Conversation context" style={{ display: "flex", flexDirection: "column", gap: "0.7rem", alignContent: "start" }}>
-          <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
+        <aside className="wg-ai-context" aria-label="Conversation context">
+          <div className="wg-card wg-ai-context-card">
             <div className="wg-section-title">Context</div>
-            <div style={{ marginTop: "0.5rem", fontSize: "0.83rem", display: "flex", flexDirection: "column", gap: "0.3rem" }}>
+            <div className="wg-ai-context-details">
               <span>👤 Profile: <strong>{PERSONA_LABEL[persona] || persona}</strong></span>
               <span>🗣 Language: <strong>{LANG_LABEL[language] || language}</strong></span>
               <span>📍 Focus: <strong>{lastWeather ? `${lastWeather.location}, ${lastWeather.state}` : "—"}</strong></span>
@@ -220,7 +220,7 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
           </div>
           <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
             <div className="wg-section-title">How answers are made</div>
-            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)", lineHeight: 1.6, margin: "0.4rem 0 0" }}>
+            <p className="wg-ai-explain-text">
               Speech → text → intent → live weather tools → reply → speech.
               Figures always come from data tools, never invented. Voice needs a supporting browser.
             </p>
@@ -228,7 +228,7 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
           </div>
           <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
             <div className="wg-section-title">Jump to</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.5rem" }}>
+            <div className="wg-ai-jump-buttons">
               <button className="wg-btn-ghost" onClick={() => onTab("open_dashboard")}>Forecast</button>
               <button className="wg-btn-ghost" onClick={() => onTab("open_map")}>Radar</button>
               <button className="wg-btn-ghost" onClick={() => onTab("open_alerts")}>Alerts</button>
