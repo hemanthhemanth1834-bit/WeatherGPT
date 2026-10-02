@@ -1,4 +1,5 @@
 import React from "react";
+import Live3DIcon from "./Live3DIcon";
 
 const MODULES = {
   life_cast: ["SECTORAL INTELLIGENCE","Life Cast","Personal lifestyle weather forecasts for jogging, cycling, laundry drying, drone flights, and outdoor health ratings.",["Outdoor Activity","Health & Comfort","Laundry & Drying","Drone / Cycling"]],
@@ -22,7 +23,7 @@ export default function ReferenceModulePanel({ module, weather, onTab, onAsk }) 
       <div className="wg-ref-feature-grid">
         {item[3].map((title) => (
           <button className="wg-ref-feature wg-card hoverable" key={title} onClick={() => onAsk?.(item[1] + ": " + title + " for " + place + ".")}>
-            <span className="wg-ref-icon">✦</span>
+            <span className="wg-ref-icon"><Live3DIcon kind={module === "solar" ? "solar" : module === "evacuation" ? "alert" : module === "roadwatch" ? "road" : module === "treeguard" ? "tree" : module === "trip_planner" ? "trip" : module === "life_cast" ? "life" : module === "deep_cast" ? "ai" : "weather"} size="sm" label={title} /></span>
             <span className="wg-ref-feature-copy"><strong>{title}</strong><span>Live, transparent WeatherGPT decision-support context for this reference feature.</span><small className="wg-ref-feature-action">Open / Ask WeatherGPT →</small></span>
             <span className="wg-ref-arrow">↗</span>
           </button>
