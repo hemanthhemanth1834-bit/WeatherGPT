@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { fetchRiskAssessment } from "../services/api";
+import { fetchCurrentWeather, fetchRiskAssessment } from "../services/api";
 import WxIcon from "./WxIcon";
 
 const RISK_TONE = { LOW: "live", MODERATE: "static", HIGH: "demo", EXTREME: "off" };
@@ -47,7 +47,7 @@ function StationCard({ name, tag, weather, active, onClick }) {
         <>
           <span className="wg-ref-station-place">{weather.location}, {weather.state || "India"}</span>
           <span className="wg-ref-station-weather"><WxIcon icon={weather.icon} size={38} /><b>{weather.current_temp}°</b><span>{weather.condition}</span></span>
-          <span className="wg-ref-station-metrics">Rain {weather.hourly?.[0]?.rain_prob ?? 0}% · {weather.wind_speed} km/h · Hum {weather.humidity}%</span>
+          <span className="wg-ref-station-metrics">Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}% · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"}</span>
         </>
       ) : (
         <span className="wg-ref-station-weather muted">Select/search this place for live telemetry</span>
@@ -63,6 +63,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
   const [stationCount, setStationCount] = useState(3);
   const [metric, setMetric] = useState("temperature");
   const [bulletin, setBulletin] = useState(0);
+  const [regionalWeather, setRegionalWeather] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +80,22 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
     const id = setInterval(() => onRefresh(weather.location), 10 * 60 * 1000);
     return () => clearInterval(id);
   }, [auto, weather?.location, onRefresh]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const stations = ["New Delhi", "Mumbai", "Bengaluru", "Chennai"];
+    Promise.allSettled(stations.map((name) => fetchCurrentWeather(name)))
+      .then((results) => {
+        if (cancelled) return;
+        const next = {};
+        results.forEach((result, index) => {
+          if (result.status === "fulfilled" && result.value) next[stations[index]] = result.value;
+        });
+        setRegionalWeather(next);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [weather?.location]);
 
   const askLocation = weather?.location || "my city";
   const topAlert = alerts?.[0];
@@ -154,7 +171,10 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
       <Section eyebrow="PRIORITY OBSERVATION NETWORK" title="Pinned Weather Dashboard">
         <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 4 STATIONS</b> · Live concurrent telemetry across priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh</label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setStationCount((n) => n === 4 ? 3 : 4)}>Select &amp; Manage</button></span></div>
         <div className="wg-ref-station-grid">
-          {regional.slice(0, stationCount).map(([name, tag], i) => <StationCard key={name} name={name} tag={tag} weather={i === 0 ? weather : null} active={i === 0 && !!weather} onClick={() => onTab("dashboard")} />)}
+          {regional.slice(0, stationCount).map(([name, tag], i) => {
+            const stationWeather = i === 0 && weather ? weather : regionalWeather[name] || null;
+            return <StationCard key={name} name={name} tag={tag} weather={stationWeather} active={i === 0 && !!stationWeather} onClick={() => onTab("dashboard")} />;
+          })}
         </div>
         {stationCount < 4 && <button className="wg-ref-pin-another wg-card" onClick={() => setStationCount(4)}>＋ <span><b>Pin Another Station</b><small>Monitor up to 4 stations ({stationCount} active)</small></span></button>}
       </Section>
