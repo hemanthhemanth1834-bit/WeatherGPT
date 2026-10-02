@@ -136,3 +136,9 @@
 @keyframes wg3d-pulse{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.12)}}
 @keyframes wg3d-live{0%,100%{opacity:.65;transform:scale(.8)}50%{opacity:1;transform:scale(1.25)}}
 @media(prefers-reduced-motion:reduce){.wg-live3d-core,.wg-live3d-orbit,.wg-live3d-glow,.wg-live3d-live-dot{animation:none}}
+
+/* Make the realistic 3D language consistent across every compact UI icon */
+.wg-ref-icon{display:flex;align-items:center;justify-content:center;min-width:42px;min-height:42px}
+.wg-ref-icon .wg-live3d{width:38px;height:38px}
+.wg-ref-feature:hover .wg-live3d-core{transform:translateZ(13px) rotateX(3deg) rotateY(-12deg) scale(1.08)}
+.wg-ref-section .wg-btn::before,.wg-ref-section .wg-btn-ghost::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.8);animation:wg3d-live 1.4s ease-in-out infinite}
