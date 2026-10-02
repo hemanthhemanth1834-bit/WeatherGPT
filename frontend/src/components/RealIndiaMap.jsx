@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { fetchCurrentWeather } from "../services/api";
+import { fetchCurrentWeather, fetchReverseGeocode } from "../services/api";
 
 const HUBS = [
   ["New Delhi", 28.6139, 77.2090], ["Mumbai", 19.0760, 72.8777],
@@ -33,7 +33,7 @@ export default function RealIndiaMap({ weather, onAsk }) {
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19, attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
-    mapRef.current = map;
+    map.on("click", async (e) => {\n      const { lat: clickLat, lng: clickLon } = e.latlng;\n      try {\n        const place = await fetchReverseGeocode(clickLat, clickLon);\n        const name = place?.name || place?.city || `${clickLat.toFixed(2)}, ${clickLon.toFixed(2)}`;\n        onAsk?.(`Live weather and hazards for ${name}`);\n      } catch { onAsk?.(`Live weather and hazards at ${clickLat.toFixed(2)}, ${clickLon.toFixed(2)}`); }\n    });\n    mapRef.current = map;
     return () => { map.remove(); mapRef.current = null; };
   }, []);
 
@@ -104,7 +104,7 @@ export default function RealIndiaMap({ weather, onAsk }) {
 
   return <div className="wg-real-map">
     <div ref={host} className="wg-real-map-canvas" />
-    <div className="wg-real-map-status">
+    <div className="wg-real-map-controls">{["gps","radar","satellite"].map(x => <button key={x} className={mode === x ? "active" : ""} onClick={() => { if (x === "gps" && weather?.lat && weather?.lon) mapRef.current?.setView([weather.lat, weather.lon], 8, {animate:true}); else setMode(x); }}>{x === "gps" ? "GPS" : x === "radar" ? "Radar" : "Satellite"}</button>)}</div>\n    <div className="wg-real-map-status">
       <span className="wg-real-live-dot" /> REAL-TIME MAP
       {radarTime && mode === "radar" && <small>{new Date(radarTime*1000).toLocaleTimeString()}</small>}
     </div>
