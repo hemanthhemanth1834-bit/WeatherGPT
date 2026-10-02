@@ -3,5 +3,15 @@
   "framework": "vite",
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "rewrites": [{ "source": "/api/:path*", "destination": "/api/index.py" }]
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/index.py"
+    }
+  ],
+  "build": {
+    "env": {
+      "UV_LINK_MODE": "copy"
+    }
+  }
 }
