@@ -69,7 +69,7 @@ export default function CapabilitiesHub() {
         <article className="wg-admin-status-card wg-admin-purple">
           <span>User Data</span>
           <strong>LOCAL</strong>
-          <small>Password-protected local profile</small>
+          <small>Local browser profile</small>
         </article>
       </div>
 
@@ -100,7 +100,7 @@ export default function CapabilitiesHub() {
           <span>On this device</span>
         </div>
         <div className="wg-admin-collections">
-          <div><strong>Local profile</strong><span>Profile details are stored locally in the browser.</span><b>PROTECTED</b></div>
+          <div><strong>Local profile</strong><span>Profile details are stored locally in the browser.</span><b>LOCAL</b></div>
           <div><strong>Browser preferences</strong><span>Theme, language and notification settings remain on the device.</span><b>LOCAL</b></div>
         </div>
       </section>
