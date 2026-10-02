@@ -24,11 +24,25 @@ VIBEVOICE_TIMEOUT = float(os.getenv("VIBEVOICE_TIMEOUT_SECONDS", "60"))
 
 # Free Edge neural voice used when no VibeVoice server is configured.
 EDGE_TTS_VOICE = os.getenv("EDGE_TTS_VOICE", "en-US-ChristopherNeural").strip()
+EDGE_TTS_VOICES = {
+    "en": "en-IN-NeerjaNeural", "auto": "en-IN-NeerjaNeural",
+    "hi": "hi-IN-SwaraNeural", "mr": "mr-IN-AarohiNeural",
+    "ta": "ta-IN-PallaviNeural", "te": "te-IN-ShrutiNeural",
+    "bn": "bn-IN-TanishaaNeural", "gu": "gu-IN-DhwaniNeural",
+    "pa": "pa-IN-OjasNeural", "kn": "kn-IN-SapnaNeural",
+    "ml": "ml-IN-SobhanaNeural", "or": "or-IN-SubhasiniNeural",
+}
 
 
 def configured() -> bool:
-    """Return whether any server-side TTS provider is available."""
-    return True
+    """Return whether a server-side TTS provider is available."""
+    if VIBEVOICE_TTS_URL:
+        return True
+    try:
+        import edge_tts
+        return True
+    except ImportError:
+        return False
 
 
 def provider() -> str:
@@ -52,12 +66,13 @@ def _decode_json_audio(data: dict) -> bytes:
         ) from exc
 
 
-async def _edge_tts(text: str) -> Response:
+async def _edge_tts(text: str, language: str = "en") -> Response:
     """Synthesize MP3 using edge-tts without an API key or GPU."""
     try:
         import edge_tts
 
-        communicate = edge_tts.Communicate(text, EDGE_TTS_VOICE)
+        voice = EDGE_TTS_VOICES.get((language or "en").lower(), EDGE_TTS_VOICE)
+        communicate = edge_tts.Communicate(text, voice)
         audio = io.BytesIO()
         async for chunk in communicate.stream():
             if chunk.get("type") == "audio":
@@ -74,14 +89,14 @@ async def _edge_tts(text: str) -> Response:
     return Response(content=content, media_type="audio/mpeg")
 
 
-async def synthesize(text: str, speaker: str = "default") -> Response:
+async def synthesize(text: str, speaker: str = "default", language: str = "en") -> Response:
     clean = " ".join(str(text or "").split())[:4000]
     if not clean:
         raise HTTPException(status_code=422, detail="Text is required")
 
     # Keep VibeVoice as an optional higher-priority provider when supplied.
     if not VIBEVOICE_TTS_URL:
-        return await _edge_tts(clean)
+        return await _edge_tts(clean, language)
 
     headers = {"Accept": "audio/wav, audio/*, application/json"}
     if VIBEVOICE_API_KEY:
