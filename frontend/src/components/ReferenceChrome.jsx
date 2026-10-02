@@ -71,11 +71,6 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
     <div className="wg-ref-atmosphere" aria-hidden="true"><div className="wg-ref-cloud" /><div className="wg-ref-rain" /><div className="wg-ref-rain wg-ref-rain-2" /></div>
 
     <header className="wg-ref-header">
-      <div className="wg-ref-alertbar">
-        <div className="wg-ref-alert-text"><span className="wg-ref-pulse" /><b>IMD / NDMA BULLETIN:</b><span>{alertCount > 0 ? `${alertCount} active severe weather advisory issued for ${location}, ${state}.` : `Live severe-weather status available in Alerts.`}</span></div>
-        <button onClick={() => go("alerts")}><PhoneCall size={14} /> Emergency Contacts</button>
-      </div>
-
       <div className="wg-ref-header-main">
         <button className="wg-ref-menu-btn" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20}/></button>
         <div className="wg-ref-brand">
