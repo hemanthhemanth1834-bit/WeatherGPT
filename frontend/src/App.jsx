@@ -264,7 +264,7 @@ export default function App() {
 
 
   return (
-    <ReferenceChrome tab={tab} onTab={goTab} weather={weather} alertCount={alerts.length}>
+    <ReferenceChrome tab={tab} onTab={goTab} weather={weather} alertCount={alerts.length} language={language === "auto" ? "en" : language} onLanguageChange={setLanguage}>
       <main className="wg-wrap wg-reference-main">
         {tab === "chat" && <WeatherChat messages={messages} busy={busy} language={language} persona={persona} onAsk={ask} onTab={goTab} micTick={micTick} />}
         <Suspense fallback={<div role="status" style={{ display: "flex", justifyContent: "center", padding: "4rem" }}><div className="wg-spin" aria-label="Loading panel" /></div>}>
