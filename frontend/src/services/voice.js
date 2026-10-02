@@ -1,6 +1,6 @@
-/* Voice engine: browser STT + optional VibeVoice TTS.
-   VibeVoice is preferred for English output when the WeatherGPT backend
-   has VIBEVOICE_TTS_URL configured. Browser speech remains the fallback. */
+/* Voice engine: browser STT + free server TTS with browser fallback.
+   The backend prefers optional VibeVoice when configured, otherwise uses
+   free Edge-TTS. Browser speech remains the final fallback. */
 
 const BCP47 = {
   auto: "en-IN",
@@ -113,6 +113,7 @@ class VoiceEngine {
           body: JSON.stringify({
             text: String(text).slice(0, 4000),
             speaker: "Carter",
+            language: lang,
           }),
         });
         if (response.ok) {
