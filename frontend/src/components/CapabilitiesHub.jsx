@@ -10,12 +10,14 @@ export default function CapabilitiesHub() {
   const [state, setState] = useState("checking");
   const [checkedAt, setCheckedAt] = useState(null);
   const [saveMessage, setSaveMessage] = useState("");
+  const [matrix, setMatrix] = useState(null);
 
   const runDiagnostics = async () => {
     setState("checking");
-    const [p, e] = await Promise.allSettled([fetchProvidersHealth(true), fetchEngineStatus()]);
+    const [p, e, m] = await Promise.allSettled([fetchProvidersHealth(true), fetchEngineStatus(), fetch("/api/platform/capabilities").then((r) => r.ok ? r.json() : Promise.reject(new Error("matrix")))]);
     if (p.status === "fulfilled") setProviders(p.value);
     if (e.status === "fulfilled") setEngine(e.value);
+    if (m.status === "fulfilled") setMatrix(m.value);
     setCheckedAt(new Date());
     setState(p.status === "fulfilled" && e.status === "fulfilled" ? "ready" : "partial");
   };
@@ -75,6 +77,23 @@ export default function CapabilitiesHub() {
       </div>
 
       <LiveEvidencePanel />
+
+      {matrix && <section className="wg-admin-panel wg-card">
+        <div className="wg-admin-panel-head">
+          <h2>Free-First Integration Matrix</h2>
+          <span>No paid credential required for the core path</span>
+        </div>
+        <div className="wg-admin-table">
+          {(matrix.free_sources || []).map((x) => <div className="wg-admin-row" key={x.name}>
+            <strong>{x.name}</strong><span>{x.kind}</span><span className="wg-chip live">{x.status}</span><span className="wg-mono">{x.auth}</span>
+          </div>)}
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:".65rem",marginTop:".8rem"}}>
+          {(matrix.optional_adapters || []).map((x) => <div key={x.name} style={{padding:".8rem",border:"1px solid rgba(148,163,184,.14)",borderRadius:12}}>
+            <strong>{x.name}</strong><div style={{fontSize:".78rem",color:"var(--wg-muted)",margin:".35rem 0"}}>{x.requirement}</div><span className={x.status === "LIVE" ? "wg-chip live" : "wg-chip static"}>{x.status}</span>
+          </div>)}
+        </div>
+      </section>}
 
       <section className="wg-admin-panel wg-card">
         <div className="wg-admin-panel-head">
