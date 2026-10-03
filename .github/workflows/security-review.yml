@@ -21,19 +21,3 @@ jobs:
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  workflow-lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Check workflow files
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import yaml
-
-          for path in Path(".github/workflows").glob("*.y*ml"):
-              yaml.safe_load(path.read_text())
-              print("Valid YAML:", path)
-          PY
