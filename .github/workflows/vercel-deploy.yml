@@ -39,10 +39,10 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Link existing Vercel project
-        run: vercel link --project="$VERCEL_PROJECT_ID" --scope="$VERCEL_ORG_ID" --yes --token="$VERCEL_TOKEN"
+        run: vercel link --project="$VERCEL_PROJECT_ID" --team="$VERCEL_ORG_ID" --yes --token="$VERCEL_TOKEN"
 
       - name: Deploy current main to production
-        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN" --scope="$VERCEL_ORG_ID"
+        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN" --team="$VERCEL_ORG_ID"
 
       - name: Verify production
         run: |
