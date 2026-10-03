@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Circle, CircleMarker, MapContainer, Marker, Polyline, Popup, TileLayer, useMap } from "react-leaflet";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { fetchActiveAlerts, fetchCycloneTrack, fetchEarthquakes, fetchWildfires } from "../services/api";
 
 function dot(color, glyph) {
@@ -21,14 +21,6 @@ function pin(color) {
   });
 }
 
-function FlyTo({ center }) {
-  const map = useMap();
-  useEffect(() => {
-    if (center) map.flyTo(center, 7, { duration: 1.2 });
-  }, [center, map]);
-  return null;
-}
-
 function stampLabel(epoch) {
   return new Date(epoch * 1000).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
@@ -36,6 +28,12 @@ function stampLabel(epoch) {
 const SEVERITY_COLOR = { Red: "#ef4444", Orange: "#f97316", Yellow: "#eab308" };
 
 export default function GISMap({ weather, onAsk }) {
+  const mapNode = useRef(null);
+  const mapRef = useRef(null);
+  const baseRef = useRef(null);
+  const radarRef = useRef(null);
+  const overlaysRef = useRef(null);
+  const askRef = useRef(onAsk);
   const [alerts, setAlerts] = useState([]);
   const [track, setTrack] = useState(null);
   const [quakes, setQuakes] = useState([]);
@@ -47,6 +45,33 @@ export default function GISMap({ weather, onAsk }) {
   const [focus, setFocus] = useState(null);
   const [problem, setProblem] = useState("");
   const timer = useRef(null);
+
+  useEffect(() => {
+    askRef.current = onAsk;
+  }, [onAsk]);
+
+  useEffect(() => {
+    if (!mapNode.current || mapRef.current) return undefined;
+    const map = L.map(mapNode.current, { center: [21.5, 82.0], zoom: 5, scrollWheelZoom: true });
+    baseRef.current = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map);
+    overlaysRef.current = L.layerGroup().addTo(map);
+    mapRef.current = map;
+    return () => {
+      clearInterval(timer.current);
+      map.remove();
+      mapRef.current = null;
+      baseRef.current = null;
+      radarRef.current = null;
+      overlaysRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (focus && mapRef.current) mapRef.current.flyTo(focus, 7, { duration: 1.2 });
+  }, [focus]);
 
   useEffect(() => {
     (async () => {
@@ -89,8 +114,83 @@ export default function GISMap({ weather, onAsk }) {
 
   useEffect(() => () => clearInterval(timer.current), []);
 
-  const line = track?.features?.find((f) => f.geometry?.type === "LineString")?.geometry.coordinates.map(([lon, lat]) => [lat, lon]) || [];
-  const point = track?.features?.find((f) => f.geometry?.type === "Point");
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (radarRef.current) {
+      map.removeLayer(radarRef.current);
+      radarRef.current = null;
+    }
+    const frame = frames[frameIdx];
+    if (layers.radar && frame) {
+      radarRef.current = L.tileLayer(frame.url, {
+        opacity: 0.7,
+        zIndex: 200,
+        attribution: 'Radar &copy; <a href="https://www.rainviewer.com/">RainViewer</a>',
+      }).addTo(map);
+    }
+  }, [frames, frameIdx, layers.radar]);
+
+  useEffect(() => {
+    const group = overlaysRef.current;
+    if (!group) return;
+    group.clearLayers();
+
+    const line = track?.features?.find((f) => f.geometry?.type === "LineString")?.geometry.coordinates.map(([lon, lat]) => [lat, lon]) || [];
+    const point = track?.features?.find((f) => f.geometry?.type === "Point");
+
+    if (layers.track && line.length > 0) {
+      L.polyline(line, { color: "#ef4444", weight: 3, dashArray: "6 8" }).addTo(group);
+    }
+    if (layers.track && point) {
+      L.marker([point.geometry.coordinates[1], point.geometry.coordinates[0]], { icon: dot("#ef4444", "🌀") })
+        .bindPopup("<strong>Illustrative storm position (DEMO)</strong><br>Not a live cyclone bulletin.")
+        .addTo(group);
+    }
+    if (weather) {
+      const marker = L.marker([weather.lat, weather.lon], { icon: pin("#38bdf8") }).addTo(group);
+      marker.bindPopup(`<strong>${weather.location}</strong><br>${weather.current_temp}°C · ${weather.condition}<br><button data-wg-ask="1">Ask WeatherGPT →</button>`);
+      marker.on("popupopen", (event) => {
+        const button = event.popup.getElement()?.querySelector("[data-wg-ask]");
+        if (button) button.onclick = () => askRef.current?.(weather.location);
+      });
+    }
+    if (layers.quakes) {
+      quakes.forEach((q, i) => {
+        if (q.lat == null) return;
+        L.circleMarker([q.lat, q.lon], {
+          radius: 4 + Math.min(10, q.magnitude || 0),
+          color: "#c084fc",
+          fillColor: "#c084fc",
+          fillOpacity: 0.55,
+          weight: 1,
+        }).bindPopup(`<strong>M${q.magnitude} — ${q.place}</strong><br>Depth ${q.depth_km} km · USGS (official third-party)<br><a href="${q.url}" target="_blank" rel="noreferrer">USGS event page</a>`).addTo(group);
+      });
+    }
+    if (layers.fires) {
+      fires.forEach((f, i) => {
+        L.marker([f.lat, f.lon], { icon: dot("#fb923c", "🔥") })
+          .bindPopup(`<strong>${f.title}</strong><br>${f.date ? f.date.slice(0, 10) : ""} · NASA EONET<br><a href="${f.report_url}" target="_blank" rel="noreferrer">Event report</a>`)
+          .addTo(group);
+      });
+    }
+    if (layers.alerts) {
+      alerts.forEach((a) => {
+        const circle = L.circle([a.lat, a.lon], {
+          radius: 70000,
+          color: SEVERITY_COLOR[a.severity] || "#eab308",
+          fillOpacity: 0.22,
+          weight: 2,
+        }).bindPopup(`<strong>[${a.severity}] ${a.headline}</strong><br>${a.area_desc}<br><button data-wg-ask="1">Ask WeatherGPT →</button>`);
+        circle.on("popupopen", (event) => {
+          const button = event.popup.getElement()?.querySelector("[data-wg-ask]");
+          if (button) button.onclick = () => askRef.current?.(a.district);
+        });
+        circle.addTo(group);
+      });
+    }
+  }, [alerts, track, quakes, fires, weather, layers]);
+
   const frame = frames[frameIdx];
 
   return (
@@ -113,21 +213,14 @@ export default function GISMap({ weather, onAsk }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center" }} role="group" aria-label="Region quick filters">
           <span style={{ fontSize: "0.7rem", color: "var(--wg-muted)" }}>Region:</span>
           {[["All India", [21.5, 82.0]], ["North", [30.5, 78.0]], ["South", [13.0, 78.0]], ["West", [20.5, 73.5]], ["East", [24.0, 87.5]], ["Central", [23.5, 80.0]]].map(([label, center]) => (
-            <button key={label} className="wg-tab" style={{ fontSize: "0.7rem", padding: "0.3rem 0.6rem" }} onClick={() => setFocus(center)}>
-              {label}
-            </button>
+            <button key={label} className="wg-tab" style={{ fontSize: "0.7rem", padding: "0.3rem 0.6rem" }} onClick={() => setFocus(center)}>{label}</button>
           ))}
         </div>
         {frames.length > 1 && layers.radar && (
           <div style={{ display: "flex", gap: "0.6rem", alignItems: "center" }} aria-label="Radar timeline">
-            <button className="wg-btn-ghost" style={{ minWidth: "3rem" }} onClick={() => setPlaying(!playing)} aria-label={playing ? "Pause radar loop" : "Play radar loop"}>
-              {playing ? "⏸" : "▶"}
-            </button>
-            <input type="range" min={0} max={frames.length - 1} value={frameIdx} onChange={(e) => { setFrameIdx(Number(e.target.value)); setPlaying(false); }}
-              aria-label="Radar frame" style={{ flex: 1, accentColor: "var(--wg-accent)" }} />
-            <span className="wg-mono" style={{ fontSize: "0.7rem", color: "var(--wg-muted)", minWidth: "7.5rem" }}>
-              frame {frameIdx + 1}/{frames.length} · {frame ? stampLabel(frame.time) : "—"}
-            </span>
+            <button className="wg-btn-ghost" style={{ minWidth: "3rem" }} onClick={() => setPlaying(!playing)} aria-label={playing ? "Pause radar loop" : "Play radar loop"}>{playing ? "⏸" : "▶"}</button>
+            <input type="range" min={0} max={frames.length - 1} value={frameIdx} onChange={(e) => { setFrameIdx(Number(e.target.value)); setPlaying(false); }} aria-label="Radar frame" style={{ flex: 1, accentColor: "var(--wg-accent)" }} />
+            <span className="wg-mono" style={{ fontSize: "0.7rem", color: "var(--wg-muted)", minWidth: "7.5rem" }}>frame {frameIdx + 1}/{frames.length} · {frame ? stampLabel(frame.time) : "—"}</span>
           </div>
         )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center", fontSize: "0.68rem", color: "var(--wg-muted)" }} aria-label="Legend">
@@ -142,66 +235,8 @@ export default function GISMap({ weather, onAsk }) {
       </div>
 
       {problem && <div className="wg-alert warn" role="alert">{problem}</div>}
-
       <div style={{ height: "60vh", minHeight: "22rem", borderRadius: "var(--wg-radius)", overflow: "hidden", border: "1px solid var(--wg-line)" }}>
-        <MapContainer center={[21.5, 82.0]} zoom={5} scrollWheelZoom style={{ height: "100%", width: "100%" }}>
-          <FlyTo center={focus} />
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          {layers.radar && frame && (
-            <TileLayer key={frame.url} url={frame.url} opacity={0.7} zIndex={200} attribution="Radar &copy; <a href='https://www.rainviewer.com/'>RainViewer</a>" />
-          )}
-          {layers.track && line.length > 0 && (
-            <Polyline positions={line} pathOptions={{ color: "#ef4444", weight: 3, dashArray: "6 8" }} />
-          )}
-          {layers.track && point && (
-            <Marker position={[point.geometry.coordinates[1], point.geometry.coordinates[0]]} icon={dot("#ef4444", "🌀")}>
-              <Popup><strong>Illustrative storm position (DEMO)</strong><br />Not a live cyclone bulletin.</Popup>
-            </Marker>
-          )}
-          {weather && (
-            <Marker position={[weather.lat, weather.lon]} icon={pin("#38bdf8")}>
-              <Popup>
-                <strong>{weather.location}</strong><br />
-                {weather.current_temp}°C · {weather.condition}<br />
-                <button onClick={() => onAsk(weather.location)}>Ask WeatherGPT →</button>
-              </Popup>
-            </Marker>
-          )}
-          {layers.quakes && quakes.map((q, i) => (
-            q.lat != null && (
-              <CircleMarker key={`q${i}`} center={[q.lat, q.lon]}
-                radius={4 + Math.min(10, (q.magnitude || 0))}
-                pathOptions={{ color: "#c084fc", fillColor: "#c084fc", fillOpacity: 0.55, weight: 1 }}>
-                <Popup>
-                  <strong>M{q.magnitude} — {q.place}</strong>
-                  <br />Depth {q.depth_km} km · USGS (official third-party)
-                  <br /><a href={q.url} target="_blank" rel="noreferrer">USGS event page</a>
-                </Popup>
-              </CircleMarker>
-            )
-          ))}
-          {layers.fires && fires.map((f, i) => (
-            <Marker key={`f${i}`} position={[f.lat, f.lon]} icon={dot("#fb923c", "🔥")}>
-              <Popup>
-                <strong>{f.title}</strong>
-                <br />{f.date ? f.date.slice(0, 10) : ""} · NASA EONET
-                <br /><a href={f.report_url} target="_blank" rel="noreferrer">Event report</a>
-              </Popup>
-            </Marker>
-          ))}
-          {layers.alerts && alerts.map((a) => (
-            <Circle key={a.id} center={[a.lat, a.lon]} radius={70000}
-              pathOptions={{ color: SEVERITY_COLOR[a.severity] || "#eab308", fillOpacity: 0.22, weight: 2 }}>
-              <Popup>
-                <strong>[{a.severity}] {a.headline}</strong><br />{a.area_desc}<br />
-                <button onClick={() => onAsk(a.district)}>Ask WeatherGPT →</button>
-              </Popup>
-            </Circle>
-          ))}
-        </MapContainer>
+        <div ref={mapNode} style={{ height: "100%", width: "100%" }} aria-label="Interactive weather map" />
       </div>
       <p style={{ fontSize: "0.72rem", color: "var(--wg-muted)", margin: 0 }}>
         Basemap © OpenStreetMap contributors · Radar © RainViewer (live frames) · Zones and track are application illustrations, not official warnings.
