@@ -16,7 +16,7 @@ static apps don't answer local questions ("spray today?", "safe to travel?").
 intelligence that answers with live, source-labelled evidence — chat, GIS,
 alerts, advisories, analytics.
 
-**S4 Innovation.** Provably grounded AI: every figure traced to a live tool
+**S4 Innovation.** Provably grounded AI: every figure traced to a deterministic tool
 (regression-tested); honest LIVE→NOT CONFIGURED provenance on every card;
 11 Indian languages with voice.
 
@@ -125,10 +125,7 @@ tool-originated figures only, payload-membership tests, unavailable-data replies
 
 ## 9. TESTING / PERFORMANCE EVIDENCE
 
-64/64 pytest (risk/geo/chat/intents/providers/API/CORS/hardening), oxlint
-0 errors, Vite build ~374KB entry with lazy chunks, 16-screen scripted QA
-(0 console errors, 0 failed requests, 0 overflow at 1440/390/430px),
-14/14 production smoke checks per deploy with IST timestamps.
+Historical verification evidence is retained in repository history. Current pytest, oxlint, build, browser QA, and production smoke results must be recorded from the current commit.
 
 ## 10. LIMITATIONS + FUTURE SCOPE
 
@@ -147,6 +144,6 @@ validated thresholds.
 - [x] Elevator pitch + 20 Q&A ready
 - [x] Architecture/data/agent/security docs synchronized
 - [x] License (MIT) + attribution + third-party notices present
-- [x] Tests/build/lint/production QA green
+- [ ] Current tests/build/lint/production QA rerun for the latest commit
 - [x] No secrets; honest labels everywhere
 - [x] Identity correct: Muchakarla Hemanth Kumar, SRKIT, CSE–AI/ML, 2024–2028
