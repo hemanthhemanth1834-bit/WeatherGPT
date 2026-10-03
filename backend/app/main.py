@@ -27,6 +27,7 @@ from .services.history import climate_history
 from .services.imd_rss import get_imd_rss_warnings
 from .services.indian_sources_service import get_indian_sources_status
 from .services.nwp_service import get_nwp_status
+from .services.free_capabilities import capability_matrix
 from .services.providers import health_snapshot
 from .services.risk_engine import assess_risk
 from .services.satellite_service import get_satellite_info
@@ -500,6 +501,13 @@ def risk(location: str = Query("Pune"), lat: Optional[float] = None,
     except Exception:
         raise HTTPException(status_code=502, detail="Risk engine temporarily unavailable")
 
+
+
+
+@app.get("/api/platform/capabilities")
+def platform_capabilities() -> dict:
+    """Free-first provider matrix and optional adapter readiness."""
+    return capability_matrix()
 
 @app.get("/api/nwp/status")
 def nwp() -> dict:
