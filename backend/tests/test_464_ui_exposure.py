@@ -6,6 +6,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 MATRIX = ROOT / "docs" / "464_CAPABILITY_MATRIX.md"
 REGISTRY = ROOT / "frontend" / "src" / "services" / "capabilityRegistry.generated.js"
 APP = ROOT / "frontend" / "src" / "App.jsx"
+NAV = ROOT / "frontend" / "src" / "components" / "ReferenceChrome.jsx"
 
 
 def _matrix_ids():
@@ -30,10 +31,11 @@ def _registry():
 
 
 def _app_tabs():
-    text = APP.read_text(encoding="utf-8")
-    groups = re.search(r"GROUPS = \[(.*?)\];", text, re.DOTALL).group(1)
+    nav_text = NAV.read_text(encoding="utf-8")
+    app_text = APP.read_text(encoding="utf-8")
+    groups = re.search(r"GROUPS = \[(.*?)\];", nav_text, re.DOTALL).group(1)
     tabs = set(re.findall(r'\["([a-z_]+)",', groups))
-    renders = set(re.findall(r'\{tab === "([a-z_]+)"', text))
+    renders = set(re.findall(r'\{tab === "([a-z_]+)"', app_text))
     return tabs, renders
 
 
