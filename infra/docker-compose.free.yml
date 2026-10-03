@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    profiles: ["data"]
+    environment:
+      POSTGRES_DB: weathergpt
+      POSTGRES_USER: weathergpt
+      POSTGRES_PASSWORD: change-me
+    ports: ["5432:5432"]
+    volumes:
+      - weather_pg:/var/lib/postgresql/data
+
+  redis:
+    image: valkey/valkey:8
+    profiles: ["cache"]
+    ports: ["6379:6379"]
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    profiles: ["realtime"]
+    ports: ["1883:1883", "9001:9001"]
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - weather_mqtt:/mosquitto/data
+      - weather_mqtt_log:/mosquitto/log
+
+volumes:
+  weather_pg:
+  weather_mqtt:
+  weather_mqtt_log:
