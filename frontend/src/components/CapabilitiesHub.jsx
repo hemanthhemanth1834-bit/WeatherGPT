@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchEngineStatus, fetchProvidersHealth } from "../services/api";
+import LiveEvidencePanel from "./LiveEvidencePanel";
 
 const TONE = { LIVE:"live", AVAILABLE:"live", OFFICIAL:"live", COMPUTED:"estimated", FALLBACK:"estimated", ESTIMATED:"estimated", STATIC:"static", DEMO:"demo", NOT_CONFIGURED:"off", ERROR:"off" };
 
@@ -42,7 +43,7 @@ export default function CapabilitiesHub() {
         <div>
           <div className="wg-admin-kicker">SYSTEM CONTROL CENTER</div>
           <h1>System &amp; Admin</h1>
-          <p>Live health, weather-provider status and local privacy information.</p>
+          <p>Live health, free-source matrix, Earth-observation evidence and local privacy information.</p>
         </div>
         <div className="wg-admin-actions-top"><button className="wg-admin-action" onClick={saveDiagnosticReport} disabled={!checkedAt}>💾 Save report</button><button className="wg-admin-diagnostic" onClick={runDiagnostics} disabled={state === "checking"}>
           ↻ {state === "checking" ? "Checking…" : "Run Health Diagnostics"}
@@ -72,6 +73,8 @@ export default function CapabilitiesHub() {
           <small>Local browser profile</small>
         </article>
       </div>
+
+      <LiveEvidencePanel />
 
       <section className="wg-admin-panel wg-card">
         <div className="wg-admin-panel-head">
