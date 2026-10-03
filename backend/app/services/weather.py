@@ -76,7 +76,7 @@ def get_weather(lat: float, lon: float, place: str, state: str,
                 model: str = "auto") -> WeatherData:
     """Cached entry point used by routes and the chat engine.
 
-    model: 'auto' (Open-Meteo blend) or 'gfs' (GFS global via Open-Meteo).
+    model: 'auto' (Open-Meteo blend), 'gfs', 'ecmwf', or 'icon'.
     """
     selection = "gfs" if (model or "").lower() == "gfs" else "auto"
     key = f"wx:{round(lat, 3)}:{round(lon, 3)}:{place}:{state}:{selection}"
@@ -87,9 +87,10 @@ def get_weather(lat: float, lon: float, place: str, state: str,
 def _download(lat: float, lon: float, place: str, state: str, model: str = "auto") -> WeatherData:
     ist = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
     current_hour = datetime.datetime.now(ist).strftime("%Y-%m-%dT%H:00")
-    model_param = "&models=gfs_global" if model == "gfs" else ""
-    model_label = ("GFS global (via Open-Meteo)" if model == "gfs"
-                   else "Open-Meteo NWP blend (GFS + ICON + ECMWF HRES)")
+    model_params = {"gfs": "&models=gfs_seamless", "ecmwf": "&models=ecmwf_ifs025", "icon": "&models=icon_seamless"}
+    model_param = model_params.get(model, "")
+    model_labels = {"gfs": "GFS global (via Open-Meteo)", "ecmwf": "ECMWF IFS (via Open-Meteo)", "icon": "DWD ICON (via Open-Meteo)"}
+    model_label = model_labels.get(model, "Open-Meteo NWP blend (GFS + ICON + ECMWF HRES)")
     try:
         url = (
             "https://api.open-meteo.com/v1/forecast"
