@@ -76,7 +76,7 @@ evaluated and deliberately not used (see `THIRD_PARTY_NOTICES.md`).
 
 ## GFS / WRF / NWP
 
-- **GFS: LIVE** via an explicit Open-Meteo `model=gfs` request (`GET /api/nwp/status`).
+- **GFS: LIVE** via an explicit Open-Meteo `models=gfs_seamless` request (`GET /api/nwp/status`).
 - **WRF: NOT CONFIGURED.** Optional local-file adapter (`services/wrf_adapter.py`,
   `Dockerfile.wrf` reference only, OFF by default) activates only when
   `WRF_ENABLED=true` plus a real GRIB2/NetCDF path is present.
@@ -179,9 +179,9 @@ cd frontend && npm run dev   # http://localhost:5173
 ## Testing
 
 ```bash
-cd backend && python -m pytest -q     # run the complete backend suite; latest reported baseline: 100 passing tests
+cd backend && python -m pytest -q     # run the complete backend suite
 cd frontend && npm run build          # production bundle check (entry ~374KB; Earth/Leaflet lazy)
-cd frontend && npx oxlint src         # lint (0 errors in the latest reported baseline)
+cd frontend && npx oxlint src         # lint
 ```
 
 Outbound provider calls use timeout + retry with backoff (`services/http.py`).
