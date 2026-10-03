@@ -1,6 +1,6 @@
 # DATA SOURCES — WeatherGPT SIH 2026
 
-Verified live on 30 Sep–01 Oct 2026 (see `/api/providers/health`).
+Provider statuses are runtime-dependent; use `/api/providers/health` for the current live probe. The table below documents the configured sources and their intended status.
 
 | Provider | Purpose | Status | Free / Key | Limitations |
 |---|---|---|---|---|
@@ -9,7 +9,7 @@ Verified live on 30 Sep–01 Oct 2026 (see `/api/providers/health`).
 | Open-Meteo Air Quality | US AQI + 6 pollutants | LIVE | Free, no key | Modelled, not CPCB station |
 | Open-Meteo Marine | waves/dir/period/SST | LIVE | Free, no key | Wave model, not buoys |
 | Open-Meteo Archive (ERA5) | yearly/monthly history | LIVE | Free, no key | Reanalysis, 2–5 day lag |
-| GFS via Open-Meteo | `?model=gfs` selector | LIVE | Free, no key | Single-model run, no cycle meta |
+| GFS via Open-Meteo | `models=gfs_seamless` selector | LIVE | Free, no key | Single-model run, no cycle meta |
 | RainViewer | radar tiles + timeline | LIVE | Free, no key | Composite, ~10 min delay |
 | NASA GIBS | satellite viewer links + tile pattern | LIVE | Free, no key | Viewed at provider, not proxied |
 | NOAA ADDS | METAR/TAF 6 Indian airports | LIVE | Free, no key | US source; outages fall back STATIC |
