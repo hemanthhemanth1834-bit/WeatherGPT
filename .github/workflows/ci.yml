@@ -97,43 +97,27 @@ jobs:
           python-version: "3.11"
       - name: Install backend dependencies
         run: python -m pip install --upgrade pip && pip install -r requirements.txt
-      - name: Start local backend
+      - name: Verify local TTS and WebSocket routes
         run: |
-          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/weathergpt-backend.log 2>&1 &
-          for attempt in {1..30}; do
-            if curl -fsS http://127.0.0.1:8000/api/health >/dev/null; then
-              echo "Local backend healthy."
-              break
-            fi
-            sleep 2
-          done
-      - name: Verify local TTS and WebSocket
-        run: |
-          python -m pip install --disable-pip-version-check websocket-client requests
           python - <<'PY'
-          import requests
-          import websocket
+          from fastapi.testclient import TestClient
+          from app.main import app
 
-          base = "http://127.0.0.1:8000"
-          tts = requests.post(
-              base + "/api/voice/tts",
-              json={"text": "WeatherGPT test", "language": "en"},
-              timeout=60,
-          )
-          print("TTS:", tts.status_code, len(tts.content))
-          if tts.status_code != 200 or not tts.content:
-              raise SystemExit("Local TTS smoke test failed.")
+          with TestClient(app) as client:
+              tts = client.post(
+                  "/api/voice/tts",
+                  json={"text": "WeatherGPT test", "language": "en"},
+              )
+              print("TTS:", tts.status_code, len(tts.content))
+              if tts.status_code != 200 or not tts.content:
+                  raise SystemExit("Local TTS smoke test failed.")
 
-          ws = websocket.create_connection(
-              "ws://127.0.0.1:8000/ws/alerts",
-              timeout=20,
-          )
-          ws.send("health-check")
-          message = ws.recv()
-          print("WebSocket:", message[:160])
-          ws.close()
-          if "heartbeat_ack" not in message:
-              raise SystemExit("Local WebSocket smoke test failed.")
+              with client.websocket_connect("/ws/alerts") as ws:
+                  ws.send_text("health-check")
+                  message = ws.receive_json()
+                  print("WebSocket:", message)
+                  if message.get("type") != "heartbeat_ack":
+                      raise SystemExit("Local WebSocket smoke test failed.")
           PY
 
   browser-smoke:
