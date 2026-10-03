@@ -1,16 +1,16 @@
 # SECURITY — WeatherGPT SIH 2026
 
-Implemented and verified in production.
+Implemented controls documented here. Production verification must be rerun after subsequent code or deployment changes.
 
 - **Secrets**: none in code, git, or bundles. LLM/provider keys (if ever set)
   live only in server environment variables. `.env` git-ignored;
   `.env.example` holds placeholders. Verified by pre-push secret scans.
 - **CORS**: explicit allowlist from `CORS_ALLOW_ORIGINS`; wildcard `*`
   automatically disables credentials. Production sets the site origin.
-  Verified: production origin echoed, foreign origin rejected.
+  Production CORS verification is deployment-dependent and should be rerun after deployment.
 - **Rate limiting**: best-effort per-IP sliding window — 300/min default,
   60/min chat+compare, 30/min climate+explain — JSON 429 + `Retry-After` + ACAO,
-  documented BEST-EFFORT PER INSTANCE. Tested (pass + block + tier paths).
+  documented BEST-EFFORT PER INSTANCE. Test paths are covered by the backend suite; rerun them for the current commit.
 - **Validation**: pydantic models everywhere; chat query capped at 500 chars
   (422 beyond); query params typed (422 on bad types); guarded endpoints
   return honest 502s, never stack traces.
