@@ -86,6 +86,42 @@ jobs:
           print("Production smoke checks passed.")
           PY
 
+  browser-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install free browser test stack
+        run: |
+          python -m pip install --disable-pip-version-check playwright
+          python -m playwright install --with-deps chromium
+      - name: Verify production UI
+        env:
+          WEATHERGPT_URL: https://weathergpt-kappa-pink.vercel.app
+        run: |
+          python - <<'PY'
+          import os
+          from playwright.sync_api import sync_playwright
+
+          url = os.environ["WEATHERGPT_URL"]
+          with sync_playwright() as p:
+              browser = p.chromium.launch()
+              context = browser.new_context(
+                  geolocation={"latitude": 16.5062, "longitude": 80.6480},
+                  permissions=["geolocation"],
+                  viewport={"width": 390, "height": 844},
+              )
+              page = context.new_page()
+              severe = []
+              page.on("console", lambda msg: severe.append(msg.text) if msg.type == "error" else None)
+              page.goto(url, wait_until="networkidle", timeout=60000)
+              if "WeatherGPT" not in page.title():
+                  raise SystemExit(f"Unexpected page title: {page.title()!r}")
+              if page.locator("body").inner_text(timeout=10000).strip() == "":
+                  raise SystemExit("Production page rendered empty")
+              print("Mobile viewport UI loaded:", page.title())
+              print("Console errors:", severe[:10])
+              browser.close()
+          PY
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
