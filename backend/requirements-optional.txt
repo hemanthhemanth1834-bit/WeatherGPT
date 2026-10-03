@@ -1,7 +1,7 @@
 # Optional free/open-source adapters
 # Install only when enabling the corresponding feature.
 paho-mqtt>=2.1.0
-redis>=6.0.0
+redis>=8.1.0
 psycopg[binary]>=3.2.0
 xarray>=2025.1.0
 netCDF4>=1.7.2
