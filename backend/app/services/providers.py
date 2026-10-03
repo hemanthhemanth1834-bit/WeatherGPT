@@ -101,10 +101,10 @@ PROVIDERS: List[Dict[str, Any]] = [
      "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
     {"name": "NDMA / Bhuvan / Vedas", "role": "india", "kind": "portals reachable; login-gated data",
      "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
-    {"name": "WRF feed", "role": "nwp", "kind": "no feed provisioned",
-     "needs_key": True, "probe": None},
-    {"name": "LLM provider", "role": "ai", "kind": "none configured; deterministic tools",
-     "needs_key": True, "probe": None},
+    {"name": "WRF feed", "role": "nwp", "kind": "no live feed provisioned; free WRF is optional/local",
+     "needs_key": False, "probe": None, "fixed": "NOT_CONFIGURED"},
+    {"name": "LLM provider", "role": "ai", "kind": "none configured; free local Ollama is optional",
+     "needs_key": False, "probe": None, "fixed": "NOT_CONFIGURED"},
 ]
 
 STATUS_UNAVAILABLE = {"OPENWEATHER": "not implemented (key-gated; OM covers needs)",
