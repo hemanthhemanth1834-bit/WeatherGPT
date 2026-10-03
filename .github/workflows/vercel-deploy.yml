@@ -28,18 +28,20 @@ jobs:
       - name: Checkout latest main
         uses: actions/checkout@v5
 
-      - name: Check Vercel token
+      - name: Check and normalize Vercel token
         run: |
-          if [ -z "$VERCEL_TOKEN" ]; then
-            echo "::error::VERCEL_TOKEN GitHub secret is not configured."
+          VERCEL_TOKEN_CLEAN="$(printf '%s' "$VERCEL_TOKEN" | tr -d '[:space:]')"
+          if [ -z "$VERCEL_TOKEN_CLEAN" ]; then
+            echo "::error::VERCEL_TOKEN GitHub secret is empty."
             exit 1
           fi
+          echo "VERCEL_TOKEN_CLEAN=$VERCEL_TOKEN_CLEAN" >> "$GITHUB_ENV"
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Link existing Vercel project
-        run: vercel link --project="$VERCEL_PROJECT_ID" --team="$VERCEL_ORG_ID" --yes --token="$VERCEL_TOKEN"
+        run: vercel link --project="$VERCEL_PROJECT_ID" --team="$VERCEL_ORG_ID" --yes --token="$VERCEL_TOKEN_CLEAN"
 
       - name: Deploy current main to production
         run: vercel deploy --prod --yes --token="$VERCEL_TOKEN" --team="$VERCEL_ORG_ID"
