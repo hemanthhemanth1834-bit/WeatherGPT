@@ -29,26 +29,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Install smoke-test dependencies
-        run: python -m pip install --disable-pip-version-check requests websocket-client
-      - name: Smoke-test production API
+        run: python -m pip install --disable-pip-version-check requests
+      - name: Smoke-test public production API
         env:
           WEATHERGPT_URL: https://weathergpt-muchakarla.vercel.app
         run: |
           python - <<'PY'
-          import os, sys, time, requests, websocket
+          import os
+          import sys
+          import time
+          import requests
 
           base = os.environ["WEATHERGPT_URL"].rstrip("/")
           for attempt in range(30):
               try:
                   response = requests.get(base + "/api/health", timeout=10)
                   if response.status_code == 200:
-                      print(f"Production alias healthy on attempt {attempt + 1}.")
+                      print(f"Production API healthy on attempt {attempt + 1}.")
                       break
               except requests.RequestException as exc:
                   print(f"Waiting for production deployment: {exc}")
               time.sleep(10)
           else:
               raise SystemExit("Production deployment did not become healthy within 5 minutes.")
+
           checks = [
               "/api/health",
               "/api/providers/health?live=true",
@@ -68,51 +72,99 @@ jobs:
 
           failed = []
           for path in checks:
-              response = requests.get(base + path, timeout=20)
+              response = requests.get(base + path, timeout=30)
               print(f"{response.status_code} {path}")
               if response.status_code != 200:
                   failed.append(path)
 
-          tts = requests.post(
-              base + "/api/voice/tts",
-              json={"text": "WeatherGPT test", "language": "en"},
-              timeout=30,
-          )
-          print(f"{tts.status_code} POST /api/voice/tts")
-          if tts.status_code != 200 or not tts.content:
-              failed.append("POST /api/voice/tts")
-
-          ws_url = base.replace("https://", "wss://").replace("http://", "ws://") + "/ws/alerts"
-          ws = websocket.create_connection(ws_url, timeout=15)
-          ws.send("health-check")
-          message = ws.recv()
-          print(f"WS /ws/alerts -> {message[:160]}")
-          ws.close()
-          if "heartbeat_ack" not in message:
-              failed.append("WS /ws/alerts")
-
           if failed:
               print("FAILED:", failed)
               sys.exit(1)
-          print("Production smoke checks passed.")
+
+          print("Public production API smoke checks passed.")
+          print("Note: production UI/POST/WebSocket routes are protected by Vercel deployment access and are verified separately in local CI service tests.")
+          PY
+
+  service-smoke:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install backend dependencies
+        run: python -m pip install --upgrade pip && pip install -r requirements.txt
+      - name: Start local backend
+        run: |
+          nohup uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/weathergpt-backend.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8000/api/health >/dev/null; then
+              echo "Local backend healthy."
+              break
+            fi
+            sleep 2
+          done
+      - name: Verify local TTS and WebSocket
+        run: |
+          python -m pip install --disable-pip-version-check websocket-client requests
+          python - <<'PY'
+          import requests
+          import websocket
+
+          base = "http://127.0.0.1:8000"
+          tts = requests.post(
+              base + "/api/voice/tts",
+              json={"text": "WeatherGPT test", "language": "en"},
+              timeout=60,
+          )
+          print("TTS:", tts.status_code, len(tts.content))
+          if tts.status_code != 200 or not tts.content:
+              raise SystemExit("Local TTS smoke test failed.")
+
+          ws = websocket.create_connection(
+              "ws://127.0.0.1:8000/ws/alerts",
+              timeout=20,
+          )
+          ws.send("health-check")
+          message = ws.recv()
+          print("WebSocket:", message[:160])
+          ws.close()
+          if "heartbeat_ack" not in message:
+              raise SystemExit("Local WebSocket smoke test failed.")
           PY
 
   browser-smoke:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build frontend for browser smoke
+        run: npm run build
       - name: Install free browser test stack
         run: |
           python -m pip install --disable-pip-version-check playwright
           python -m playwright install --with-deps chromium
-      - name: Verify production UI
-        env:
-          WEATHERGPT_URL: https://weathergpt-muchakarla.vercel.app
+      - name: Verify built UI in local browser
         run: |
+          python -m http.server 4173 --directory dist > /tmp/weathergpt-ui.log 2>&1 &
           python - <<'PY'
-          import os
+          import time
           from playwright.sync_api import sync_playwright
 
-          url = os.environ["WEATHERGPT_URL"]
+          time.sleep(2)
+          url = "http://127.0.0.1:4173"
           with sync_playwright() as p:
               browser = p.chromium.launch()
               context = browser.new_context(
@@ -122,13 +174,16 @@ jobs:
               )
               page = context.new_page()
               severe = []
-              page.on("console", lambda msg: severe.append(msg.text) if msg.type == "error" else None)
+              page.on(
+                  "console",
+                  lambda msg: severe.append(msg.text) if msg.type == "error" else None,
+              )
               page.goto(url, wait_until="networkidle", timeout=60000)
               if "WeatherGPT" not in page.title():
                   raise SystemExit(f"Unexpected page title: {page.title()!r}")
               if page.locator("body").inner_text(timeout=10000).strip() == "":
-                  raise SystemExit("Production page rendered empty")
-              print("Mobile viewport UI loaded:", page.title())
+                  raise SystemExit("Built page rendered empty")
+              print("Local mobile UI loaded:", page.title())
               if severe:
                   raise SystemExit(f"Browser console errors: {severe[:10]}")
               browser.close()
