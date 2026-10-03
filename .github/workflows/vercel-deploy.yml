@@ -28,28 +28,33 @@ jobs:
       - name: Checkout latest main
         uses: actions/checkout@v5
 
-      - name: Check and normalize Vercel token
+      - name: Validate Vercel token
+        shell: bash
         run: |
-          VERCEL_TOKEN_CLEAN="$(printf '%s' "$VERCEL_TOKEN" | tr -d '[:space:]')"
-          if [ -z "$VERCEL_TOKEN_CLEAN" ]; then
+          token="$(printf '%s' "$VERCEL_TOKEN" | tr -d '[:space:]')"
+          if [ -z "$token" ]; then
             echo "::error::VERCEL_TOKEN GitHub secret is empty."
             exit 1
           fi
-          echo "VERCEL_TOKEN_CLEAN=$VERCEL_TOKEN_CLEAN" >> "$GITHUB_ENV"
+          if [[ "$token" == *"<"* || "$token" == *">"* || "$token" == "yourVercelpersonalaccesstoken" ]]; then
+            echo "::error::VERCEL_TOKEN still contains a placeholder. Replace the GitHub Actions secret VERCEL_TOKEN with the real Vercel Personal Access Token."
+            exit 1
+          fi
+          echo "::add-mask::$token"
+          echo "VERCEL_TOKEN_CLEAN=$token" >> "$GITHUB_ENV"
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Link existing Vercel project
-        run: vercel link --project="$VERCEL_PROJECT_ID" --team="$VERCEL_ORG_ID" --yes --token="$VERCEL_TOKEN_CLEAN"
+        run: vercel link --project="$VERCEL_PROJECT_ID" --scope="$VERCEL_ORG_ID" --yes --token="$VERCEL_TOKEN_CLEAN"
 
       - name: Deploy current main to production
-        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN" --team="$VERCEL_ORG_ID"
+        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN_CLEAN" --scope="$VERCEL_ORG_ID"
 
       - name: Verify production
         run: |
           python - <<'PY'
-          import json
           import urllib.request
 
           base = "https://weathergpt-kappa-pink.vercel.app"
