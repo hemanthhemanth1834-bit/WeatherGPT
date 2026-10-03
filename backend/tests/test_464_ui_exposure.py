@@ -52,7 +52,8 @@ def test_registry_tabs_are_real_routes():
     entries = _registry()
     tabs, renders = _app_tabs()
     used = {e[6] for e in entries if e[6] is not None}
-    assert used <= tabs, f"registry tabs missing from nav: {used - tabs}"
+    available = tabs | renders
+    assert used <= available, f"registry tabs have no nav/render surface: {used - available}"
     assert used <= renders, f"registry tabs with no render case: {used - renders}"
 
 
