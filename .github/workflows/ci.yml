@@ -118,7 +118,8 @@ jobs:
               if page.locator("body").inner_text(timeout=10000).strip() == "":
                   raise SystemExit("Production page rendered empty")
               print("Mobile viewport UI loaded:", page.title())
-              print("Console errors:", severe[:10])
+              if severe:
+                  raise SystemExit(f"Browser console errors: {severe[:10]}")
               browser.close()
           PY
 
