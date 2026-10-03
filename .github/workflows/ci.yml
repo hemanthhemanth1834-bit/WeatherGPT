@@ -54,14 +54,18 @@ jobs:
               raise SystemExit("Production deployment did not become healthy within 5 minutes.")
 
           checks = [
+              "/",
               "/api/health",
               "/api/providers/health?live=true",
               "/api/agent/tools",
               "/api/agent/engine",
               "/api/voice/status",
+              "/api/platform/capabilities",
               "/api/weather/current?location=Pune",
               "/api/air-quality?location=Pune",
               "/api/weather/current?location=Pune&model=gfs",
+              "/api/weather/current?location=Pune&model=ecmwf",
+              "/api/weather/current?location=Pune&model=icon",
               "/api/locations/reverse?lat=16.5062&lon=80.6480",
               "/api/satellite/info?lat=16.5062&lon=80.6480",
               "/api/disasters/earthquakes?limit=1",
@@ -80,6 +84,15 @@ jobs:
           if failed:
               print("FAILED:", failed)
               sys.exit(1)
+
+          language = requests.post(
+              base + "/api/language/analyze",
+              json={"text": "Vijayawada lo repu rain untunda?"},
+              timeout=30,
+          )
+          print(f"{language.status_code} POST /api/language/analyze")
+          if language.status_code != 200:
+              raise SystemExit("Production POST smoke check failed: /api/language/analyze")
 
           print("Public production API smoke checks passed.")
           print("Note: production UI/POST/WebSocket routes are protected by Vercel deployment access and are verified separately in local CI service tests.")
