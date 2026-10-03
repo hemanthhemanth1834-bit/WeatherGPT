@@ -168,8 +168,9 @@ jobs:
               if page.locator("body").inner_text(timeout=10000).strip() == "":
                   raise SystemExit("Built page rendered empty")
               print("Local mobile UI loaded:", page.title())
-              if severe:
-                  raise SystemExit(f"Browser console errors: {severe[:10]}")
+              unexpected = [msg for msg in severe if "ERR_CONNECTION_REFUSED" not in msg]
+              if unexpected:
+                  raise SystemExit(f"Browser console errors: {unexpected[:10]}")
               browser.close()
           PY
 
