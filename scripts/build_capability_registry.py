@@ -22,7 +22,7 @@ PREFIX_TAB = {
     "N": "nwp", "S": "satellite", "R": "map", "G": "map", "E": "earth",
     "A": "alerts", "K": "risk", "D": "severe", "EV": "severe",
     "AG": "agri", "SO": "dashboard", "LC": "dashboard", "RD": "risk",
-    "CP": "compare", "AI": "chat", "VM": "chat", "SV": "saved",
+    "CP": "compare", "AI": "chat", "VM": "chat", "SV": "home",
     "NT": "alerts", "PS": "chat", "EX": "dashboard", "PH": "nwp",
     "SE": "about", "PQ": "about", "DC": "about",
 }
