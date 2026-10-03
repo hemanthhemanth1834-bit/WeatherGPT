@@ -43,10 +43,10 @@ function NavButton({ id, Icon, label, active, onTab }) {
 }
 
 export default function ReferenceChrome({ children, tab, onTab, weather, alertCount = 0, language = "en", onLanguageChange }) {
-  const temp = weather?.current_temp ?? 31;
-  const condition = weather?.condition || "Heavy Torrential Rain";
-  const location = weather?.location || "New Delhi";
-  const state = weather?.state || "Delhi NCR";
+  const temp = weather?.current_temp ?? null;
+  const condition = weather?.condition || "Loading live weather…";
+  const location = weather?.location || "Detecting location…";
+  const state = weather?.state || "—";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
 
@@ -80,7 +80,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
 
         <div className="wg-ref-header-actions">
           <button className="wg-ref-weather-pill" onClick={() => go("home")} title="Change Weather Animated Theme & Ambience">
-            <span className="wg-ref-mini-weather"><Live3DIcon kind="rain" size="xs" label="Live weather" /></span><span><b>{temp}°C <Sparkles size={11} /></b><small>Theme: Auto</small></span>
+            <span className="wg-ref-mini-weather"><Live3DIcon kind="rain" size="xs" label="Live weather" /></span><span><b>{temp == null ? "—" : `${temp}°C`} <Sparkles size={11} /></b><small>Theme: Auto</small></span>
           </button>
           <button title="Open Dual Station Weather Comparison Matrix" onClick={() => go("compare")}><ArrowRightLeft size={16}/></button>
           <button title="Font Scale: 112%" onClick={() => document.documentElement.classList.toggle("wg-font-large")}><Type size={14}/><span>A+</span></button>
@@ -92,7 +92,6 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
           <div className="wg-ref-language"><Globe size={15}/><select value={language === "auto" ? "en" : language} onChange={(e) => onLanguageChange?.(e.target.value)}>
             <option value="en">English (EN)</option><option value="hi">हिन्दी (Hindi)</option><option value="ta">தமிழ் (Tamil)</option><option value="te">తెలుగు (Telugu)</option><option value="ml">മലയാളം (Malayalam)</option><option value="kn">ಕನ್ನಡ (Kannada)</option><option value="bn">বাংলা (Bengali)</option><option value="mr">मराठी (Marathi)</option><option value="gu">ગુજરાતી (Gujarati)</option><option value="pa">ਪੰਜਾਬੀ (Punjabi)</option><option value="or">ଓଡ଼ିଆ (Odia)</option>
           </select></div>
-          <button className="wg-ref-user" onClick={() => go("capabilities")} title="Administrator account — full WeatherGPT access"><span>H</span><b>Admin</b></button>
         </div>
       </div>
     </header>
