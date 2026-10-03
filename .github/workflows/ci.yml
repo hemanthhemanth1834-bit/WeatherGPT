@@ -32,12 +32,23 @@ jobs:
         run: python -m pip install --disable-pip-version-check requests websocket-client
       - name: Smoke-test production API
         env:
-          WEATHERGPT_URL: https://weathergpt-kappa-pink.vercel.app
+          WEATHERGPT_URL: https://weathergpt-muchakarla.vercel.app
         run: |
           python - <<'PY'
-          import os, sys, requests, websocket
+          import os, sys, time, requests, websocket
 
           base = os.environ["WEATHERGPT_URL"].rstrip("/")
+          for attempt in range(30):
+              try:
+                  response = requests.get(base + "/api/health", timeout=10)
+                  if response.status_code == 200:
+                      print(f"Production alias healthy on attempt {attempt + 1}.")
+                      break
+              except requests.RequestException as exc:
+                  print(f"Waiting for production deployment: {exc}")
+              time.sleep(10)
+          else:
+              raise SystemExit("Production deployment did not become healthy within 5 minutes.")
           checks = [
               "/api/health",
               "/api/providers/health?live=true",
@@ -95,7 +106,7 @@ jobs:
           python -m playwright install --with-deps chromium
       - name: Verify production UI
         env:
-          WEATHERGPT_URL: https://weathergpt-kappa-pink.vercel.app
+          WEATHERGPT_URL: https://weathergpt-muchakarla.vercel.app
         run: |
           python - <<'PY'
           import os
