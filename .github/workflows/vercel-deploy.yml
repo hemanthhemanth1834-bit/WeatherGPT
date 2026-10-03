@@ -1,0 +1,71 @@
+name: WeatherGPT Vercel Production Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - "api/**"
+      - "vercel.json"
+      - "package.json"
+      - "package-lock.json"
+      - ".vercelignore"
+      - ".github/workflows/vercel-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: team_wAPjaH6opD1fIYH4zVYjLXIT
+      VERCEL_PROJECT_ID: prj_dCJzTNmOTBmFUXlr0v19lmqIAf8R
+    steps:
+      - name: Checkout latest main
+        uses: actions/checkout@v5
+
+      - name: Check Vercel token
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            echo "::error::VERCEL_TOKEN GitHub secret is not configured."
+            exit 1
+          fi
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Link existing Vercel project
+        run: vercel link --project="$VERCEL_PROJECT_ID" --scope="$VERCEL_ORG_ID" --yes --token="$VERCEL_TOKEN"
+
+      - name: Deploy current main to production
+        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN" --scope="$VERCEL_ORG_ID"
+
+      - name: Verify production
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.request
+
+          base = "https://weathergpt-kappa-pink.vercel.app"
+          paths = [
+              "/api/health",
+              "/api/platform/capabilities",
+              "/api/nwp/compare?location=Pune",
+              "/api/weather/current?location=Pune",
+          ]
+
+          for path in paths:
+              with urllib.request.urlopen(base + path, timeout=30) as r:
+                  body = r.read().decode("utf-8", errors="replace")
+                  print(r.status, path)
+                  if r.status != 200:
+                      raise SystemExit(f"Verification failed: {path}")
+                  if path == "/api/health":
+                      print(body[:500])
+
+          print("Production API verification passed.")
+          PY
