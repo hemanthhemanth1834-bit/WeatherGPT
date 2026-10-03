@@ -115,6 +115,39 @@ function LiveRadarPreview({ weather }) {
   );
 }
 
+function LiveIntelligenceStrip({ weather, onTab }) {
+  const location = weather?.location || "your location";
+  const cards = [
+    ["LIVE NWP", "GFS · ECMWF · ICON", "Compare live model signals and see temperature/rain spread.", "nwp"],
+    ["EARTH OBSERVATION", "NASA GIBS + MODIS", "Live satellite imagery for India with public-source provenance.", "satellite"],
+    ["RADAR", "RainViewer", "Recent precipitation radar centered on your selected location.", "map"],
+    ["FREE-FIRST", "NO PAID KEY", "Open weather, disaster, GIS and aviation sources are connected.", "capabilities"],
+  ];
+  return (
+    <section className="wg-card" style={{marginTop:"1rem",padding:"1rem",overflow:"hidden",position:"relative"}}>
+      <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"radial-gradient(circle at 10% 0%, rgba(34,211,238,.12), transparent 32%), radial-gradient(circle at 90% 20%, rgba(99,102,241,.10), transparent 35%)"}} />
+      <div style={{position:"relative",display:"flex",justifyContent:"space-between",gap:"1rem",alignItems:"end",flexWrap:"wrap",marginBottom:".75rem"}}>
+        <div>
+          <span className="wg-chip live">NEW · LIVE INTELLIGENCE</span>
+          <h2 style={{margin:".4rem 0 .2rem"}}>WeatherGPT Intelligence Layer</h2>
+          <p style={{margin:0,color:"var(--wg-muted)"}}>Connected live data for {location} — models, radar, satellite and free-source provenance.</p>
+        </div>
+        <button className="wg-btn-ghost" onClick={() => onTab("capabilities")}>Open live sources →</button>
+      </div>
+      <div style={{position:"relative",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:".6rem"}}>
+        {cards.map(([label,source,description,target]) => (
+          <button key={label} className="wg-card hoverable" onClick={() => onTab(target)} style={{textAlign:"left",padding:".85rem",border:"1px solid rgba(148,163,184,.14)"}}>
+            <small style={{display:"block",color:"var(--wg-muted)"}}>{label}</small>
+            <strong style={{display:"block",margin:".2rem 0"}}>{source}</strong>
+            <span style={{display:"block",color:"var(--wg-muted)",fontSize:".82rem",lineHeight:1.45}}>{description}</span>
+            <span className="wg-chip live" style={{marginTop:".55rem"}}>LIVE</span>
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function ExplanationGrid({ weather }) {
   const items = [
     ["LIVE WEATHER","Current conditions, rain chance, wind, humidity and AQI."],
@@ -277,6 +310,8 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
       </div>
 
       <ExplanationGrid weather={weather} />
+
+      <LiveIntelligenceStrip weather={weather} onTab={onTab} />
 
       {topAlert && <button className="wg-ref-alertbar" onClick={() => onTab("alerts")}><span>⚠ ACTIVE ALERT</span><strong>{topAlert.headline}</strong><em>{topAlert.severity}</em><b>View alerts →</b></button>}
 
