@@ -11,10 +11,16 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'three-vendor': ['three'],
-          'leaflet-vendor': ['leaflet', 'react-leaflet']
+        manualChunks(id) {
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
+            return 'react-vendor'
+          }
+          if (id.includes('node_modules/three/')) {
+            return 'three-vendor'
+          }
+          if (id.includes('node_modules/leaflet/') || id.includes('node_modules/react-leaflet/')) {
+            return 'leaflet-vendor'
+          }
         }
       }
     }
