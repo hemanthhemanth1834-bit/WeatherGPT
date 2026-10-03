@@ -24,6 +24,7 @@ from .services.chat import _compare as compare_places
 from .services.chat import answer
 from .services.gdacs import global_disasters
 from .services.history import climate_history
+from .services.imd_rss import get_imd_rss_warnings
 from .services.indian_sources_service import get_indian_sources_status
 from .services.nwp_service import get_nwp_status
 from .services.providers import health_snapshot
@@ -316,7 +317,7 @@ def reverse_geocode(lat: float = Query(...), lon: float = Query(...)) -> dict:
 def current(location: str = Query("Pune"),
             lat: Optional[float] = None,
             lon: Optional[float] = None,
-            model: str = Query("auto", description="'auto' blend or 'gfs'"),
+            model: str = Query("auto", description="'auto', 'gfs', 'ecmwf', or 'icon'"),
             state: Optional[str] = Query(None, description="State override for coords")) -> WeatherData:
     if lat is None or lon is None:
         lat, lon, proper, resolved = geo.geocode(location)
@@ -503,6 +504,12 @@ def risk(location: str = Query("Pune"), lat: Optional[float] = None,
 @app.get("/api/nwp/status")
 def nwp() -> dict:
     return get_nwp_status()
+
+
+@app.get("/api/imd/warnings")
+def imd_warnings(limit: int = Query(25, ge=1, le=100)) -> dict:
+    """Official IMD district-nowcast RSS feed; no API key required."""
+    return get_imd_rss_warnings(limit)
 
 
 @app.get("/api/satellite/info")
