@@ -504,6 +504,41 @@ def risk(location: str = Query("Pune"), lat: Optional[float] = None,
 
 
 
+
+
+@app.get("/api/nwp/compare")
+def nwp_compare(location: str = Query("Pune")) -> dict:
+    """Compare free NWP model outputs for one location."""
+    lat, lon, proper, state = geo.geocode(location)
+    models = ["auto", "gfs", "ecmwf", "icon"]
+    results = {}
+    for model in models:
+        wx = get_weather(lat, lon, proper, state, model=model)
+        results[model] = {
+            "model": model,
+            "temperature_c": wx.current_temp,
+            "rain_probability_pct": wx.hourly[0].rain_prob if wx.hourly else None,
+            "wind_kmh": wx.wind_speed,
+            "condition": wx.condition,
+            "source": wx.data_source,
+            "status": wx.status,
+            "updated_at_ist": wx.updated_at_ist,
+        }
+    temps = [v["temperature_c"] for v in results.values() if isinstance(v["temperature_c"], (int, float))]
+    rains = [v["rain_probability_pct"] for v in results.values() if isinstance(v["rain_probability_pct"], (int, float))]
+    return {
+        "location": proper,
+        "state": state,
+        "status": "LIVE",
+        "source": "Open-Meteo model-specific endpoints",
+        "models": results,
+        "spread": {
+            "temperature_c": round(max(temps) - min(temps), 1) if temps else None,
+            "rain_probability_pct": max(rains) - min(rains) if rains else None,
+        },
+        "interpretation": "Model disagreement is shown as spread; it is not hidden or converted into certainty.",
+    }
+
 @app.get("/api/platform/capabilities")
 def platform_capabilities() -> dict:
     """Free-first provider matrix and optional adapter readiness."""
