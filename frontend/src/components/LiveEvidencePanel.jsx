@@ -16,6 +16,7 @@ export default function LiveEvidencePanel({ weather }) {
   const [radar, setRadar] = useState(null);
   const [radarState, setRadarState] = useState("checking");
   const [satelliteUrl, setSatelliteUrl] = useState(gibsUrl());
+  const [nwp, setNwp] = useState(null);
   const lat = Number(weather?.lat ?? 16.5062);
   const lon = Number(weather?.lon ?? 80.6480);
 
@@ -77,6 +78,18 @@ export default function LiveEvidencePanel({ weather }) {
           </div>
         </article>
       </div>
+
+      {nwp?.models && <div style={{position:"relative", padding:"1rem"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"1rem",flexWrap:"wrap",marginBottom:".65rem"}}>
+          <div><span className="wg-chip live">FREE NWP</span><h3 style={{margin:".35rem 0"}}>Model agreement / disagreement</h3></div>
+          <small style={{color:"var(--wg-muted)"}}>Spread: {nwp.spread?.temperature_c ?? "—"}°C · rain {nwp.spread?.rain_probability_pct ?? "—"} pp</small>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:".55rem"}}>
+          {Object.entries(nwp.models).map(([key,x]) => <div key={key} style={{padding:".75rem",border:"1px solid rgba(148,163,184,.14)",borderRadius:12}}>
+            <strong style={{textTransform:"uppercase"}}>{key}</strong><div style={{fontSize:"1.25rem",fontWeight:800,margin:".25rem 0"}}>{x.temperature_c}°C</div><small>{x.rain_probability_pct ?? "—"}% rain · {x.wind_kmh} km/h</small>
+          </div>)}
+        </div>
+      </div>}
 
       <div style={{position:"relative", display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))", gap:".55rem", padding:".85rem 1rem 1rem"}}>
         {sourceCards.map(([a,b,c]) => <div key={a} style={{padding:".7rem .8rem", border:"1px solid rgba(148,163,184,.14)", borderRadius:12, background:"rgba(15,23,42,.35)"}}>
