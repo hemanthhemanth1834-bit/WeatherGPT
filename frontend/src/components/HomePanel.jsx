@@ -198,7 +198,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
 
   useEffect(() => {
     let cancelled = false;
-    const stations = ["New Delhi", "Mumbai", "Bengaluru", "Chennai"];
+    const stations = ["Rajahmundry", "Visakhapatnam", "Hyderabad"];
     Promise.allSettled(stations.map((name) => fetchCurrentWeather(name)))
       .then((results) => {
         if (cancelled) return;
@@ -235,10 +235,9 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
   const rainTotal = daily.reduce((sum, d) => sum + (Number(d.rain_sum) || 0), 0);
   const trendRange = Math.max(1, (weeklyMax ?? 35) - (weeklyMin ?? 23));
   const regional = useMemo(() => [
-    ["New Delhi", "Central Delhi, Delhi NCR"],
-    ["Mumbai", "Mumbai City, Maharashtra"],
-    ["Bengaluru", "Bengaluru Urban, Karnataka"],
-    ["Chennai", "Chennai, Tamil Nadu"],
+    ["Rajahmundry", "East Godavari, Andhra Pradesh"],
+    ["Visakhapatnam", "Visakhapatnam, Andhra Pradesh"],
+    ["Hyderabad", "Hyderabad, Telangana"],
   ], []);
 
   return (
@@ -291,14 +290,14 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
       </Section>
 
       <Section eyebrow="PRIORITY OBSERVATION NETWORK" title="Pinned Weather Dashboard">
-        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 4 STATIONS</b> · Live concurrent telemetry across your designated priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">57s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setManageStations(true)}>Select &amp; Manage</button></span></div>
+        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 3 STATIONS</b> · Live concurrent telemetry across your designated priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">57s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setManageStations(true)}>Select &amp; Manage</button></span></div>
         <div className="wg-ref-station-grid">
           {regional.slice(0, stationCount).map(([name, stationPlace], i) => {
             const stationWeather = i === 0 && weather ? weather : regionalWeather[name] || null;
             return <StationCard key={name} name={name} place={stationPlace} weather={stationWeather} active={i === 0 && !!stationWeather} onClick={() => onTab("dashboard")} />;
           })}
         </div>
-        {stationCount < 4 && <button className="wg-ref-pin-another wg-card" onClick={() => setStationCount(4)}>＋ <span><b>Pin Another Station</b><small>Monitor up to 4 stations ({stationCount} active)</small></span><em>＋ Browse Indian Observatories</em></button>}
+        {stationCount < 4 && <button className="wg-ref-pin-another wg-card" onClick={() => setStationCount(3)}>＋ <span><b>Pin Another Station</b><small>Monitor up to 3 Telugu-region stations ({stationCount} active)</small></span><em>＋ Browse Indian Observatories</em></button>}
       </Section>
 
       <Section eyebrow="SYNOPTIC ANALYSIS" title="7-Day Synoptic Weather Trajectory" action="Full Meteorology" onClick={() => onTab("dashboard")}>
@@ -372,7 +371,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
         <div className="wg-card" style={{width:"min(34rem,100%)",padding:"1rem",background:"#0b1328"}} onClick={e=>e.stopPropagation()}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:".5rem"}}><div><b>Station Management</b><small style={{display:"block",color:"var(--wg-muted)"}}>Choose up to 4 priority observation stations.</small></div><button className="wg-btn-ghost" onClick={()=>setManageStations(false)}>✕</button></div>
           <div style={{display:"grid",gap:".4rem",marginTop:".8rem"}}>
-            {regional.map(([name,stationPlace],i)=><label key={name} style={{display:"flex",alignItems:"center",gap:".6rem",padding:".55rem .65rem",border:"1px solid var(--wg-line)",borderRadius:".7rem"}}><input type="checkbox" checked={i < stationCount} onChange={()=>setStationCount(n=>i<n?Math.max(1,n-1):Math.min(4,n+1))}/><span><b>{name}</b><small style={{display:"block",color:"var(--wg-muted)"}}>{stationPlace}</small></span></label>)}
+            {regional.map(([name,stationPlace],i)=><label key={name} style={{display:"flex",alignItems:"center",gap:".6rem",padding:".55rem .65rem",border:"1px solid var(--wg-line)",borderRadius:".7rem"}}><input type="checkbox" checked={i < stationCount} onChange={()=>setStationCount(n=>i<n?Math.max(1,n-1):Math.min(3,n+1))}/><span><b>{name}</b><small style={{display:"block",color:"var(--wg-muted)"}}>{stationPlace}</small></span></label>)}
           </div>
           <div style={{display:"flex",justifyContent:"flex-end",gap:".4rem",marginTop:".8rem"}}><button className="wg-btn" onClick={()=>setManageStations(false)}>Done</button></div>
         </div>
