@@ -1,889 +1,891 @@
-# WeatherGPT — AI Weather Intelligence for India
+# WeatherGPT — AI Weather Intelligence
 
 <p align="center">
-  <strong>Conversational Weather • Forecast Intelligence • Disaster Decision Support</strong><br/>
-  Built for Smart India Hackathon (SIH) 2026
+  <img src="https://img.shields.io/github/actions/workflow/status/hemanthhemanth1834-bit/WeatherGPT/ci.yml?branch=main&label=CI&logo=github" alt="CI">
+  <img src="https://img.shields.io/github/license/hemanthhemanth1834-bit/WeatherGPT?label=MIT" alt="MIT License">
+  <img src="https://img.shields.io/github/last-commit/hemanthhemanth1834-bit/WeatherGPT?label=Last%20commit" alt="Last commit">
 </p>
 
 <p align="center">
-  <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT">GitHub</a> ·
-  <a href="https://weathergpt-kappa-pink.vercel.app/">Live Demo</a> ·
-  <a href="docs/SIH_DEMO.md">4-Minute Demo</a> ·
-  <a href="docs/ARCHITECTURE.md">Architecture</a> ·
-  <a href="docs/DATA_SOURCES.md">Data Sources</a>
+  <strong>Conversational Weather • Forecast Intelligence • Disaster Awareness • GIS • 3D Earth</strong><br>
+  Smart India Hackathon 2026
 </p>
 
-> **WeatherGPT turns weather data into understandable, location-aware intelligence.**
-> It combines live public weather services, deterministic AI tools, GIS, multilingual interaction, alerts, agricultural guidance, climate analytics, and disaster-oriented decision support in one interface.
+<p align="center">
+  <a href="https://weathergpt-kappa-pink.vercel.app/"><strong>LIVE DEMO</strong></a> ·
+  <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT">SOURCE</a> ·
+  <a href="docs/SIH_DEMO.md">4-MINUTE DEMO</a> ·
+  <a href="docs/ARCHITECTURE.md">ARCHITECTURE</a> ·
+  <a href="docs/DATA_SOURCES.md">DATA SOURCES</a>
+</p>
+
+> **WeatherGPT turns weather and hazard data into understandable, location-aware intelligence.**
+>
+> Ask naturally → retrieve verified data → compare models → explain clearly → show the evidence.
 
 ---
 
-## 1. What is WeatherGPT?
+## 01 — Product Overview
 
-WeatherGPT is an **AI-powered weather intelligence platform for India** designed around a simple idea:
+WeatherGPT is an AI-assisted weather intelligence platform built for India. It combines public weather models, Earth-observation sources, disaster feeds, GIS, multilingual conversation, agricultural guidance, aviation/marine information, deterministic risk logic, voice interaction and an animated 3D Earth.
 
-**Ask naturally → retrieve verified data → explain it clearly → show the evidence.**
+### Capability map
 
-Instead of forcing users to interpret multiple technical weather products, WeatherGPT brings together:
-
-- Current conditions
-- Hourly and 7-day forecasts
-- NWP model selection
-- Air quality
-- Marine conditions
-- Radar and satellite references
-- Disaster and hazard information
-- Weather alerts
-- Agricultural advisories
-- Aviation information
-- Climate analysis
-- GIS and 3D visualization
-- Multilingual chat and voice interaction
-
-The platform is designed for **citizens, farmers, students, emergency-awareness workflows, and technical demonstrations**.
-
----
-
-## 2. Smart India Hackathon 2026
-
-**Domain:** Disaster Management / Software  
-**Focus:** AI, weather intelligence, forecasting, alerts, GIS and decision support  
-**Problem theme:** Conversational AI for Weather Forecasting, Alerts and Climate Information
-
-### Problem
-
-Weather information is often distributed across different portals, technical products and specialist terminology. A user may know the location and question they care about, but not the correct meteorological product or technical terminology needed to find the answer.
-
-### WeatherGPT approach
-
-WeatherGPT provides a single conversational layer over multiple public data services:
-
-```
-User Question
-     ↓
-Language / Intent Detection
-     ↓
-Location Extraction
-     ↓
-Deterministic Weather Tool
-     ↓
-Live / Computed / Estimated Data
-     ↓
-Plain-Language Explanation
-     ↓
-Source + Timestamp + Confidence
-```
-
-The system is intentionally designed so that **numbers come from data tools rather than being invented by a generative model**.
-
----
-
-## 3. Live Product
-
-**Live demo:** https://weathergpt-kappa-pink.vercel.app/
-
-### Example: Pune weather
-
-A user can ask:
-
-> **"What is the weather in Pune today?"**
-
-WeatherGPT can resolve the location, retrieve live Open-Meteo forecast data and return:
-
-- Current temperature
-- Feels-like temperature
-- Humidity
-- Wind speed and direction
-- Precipitation
-- Cloud cover
-- Pressure
-- UV index
-- Hourly forecast
-- 7-day forecast
-- Data source
-- Update timestamp
-- Confidence / provenance label
-
-### Example: model comparison
-
-A technical user can request:
-
-> **"Show Pune weather using GFS."**
-
-or select:
-
-- **Auto** — Open-Meteo multi-model blend
-- **GFS** — Global Forecast System
-- **ECMWF IFS** — ECMWF model
-- **ICON** — DWD ICON model
-
-These model routes use free Open-Meteo endpoints; no paid weather API key is required for the public integration.
-
----
-
-## 4. Key Capabilities
-
-### 🌦️ Weather Intelligence
-
-- Live current weather
-- 24-hour hourly forecast
-- 7-day forecast
-- Sunrise / sunset
-- UV index
-- Wind and precipitation
-- Humidity and pressure
-- Location-aware forecasts
-- GPS-based location workflow
-- City search and saved places
-- City-to-city comparison
-
-**Example**
-
-> "Compare Vijayawada and Chennai for tomorrow."
-
-The comparison tool retrieves weather values for both locations and presents the difference rather than generating unsupported numbers.
-
----
-
-### 🤖 Deterministic AI Weather Agent
-
-The conversational layer is tool-driven.
-
-```
-POST /api/chat/query
-        ↓
-Language detection
-        ↓
-Intent detection
-        ↓
-Place extraction
-        ↓
-Tool selection
-        ↓
-Live / computed data
-        ↓
-Structured response
-```
-
-Supported intent families include:
-
-- Weather
-- Forecast
-- Comparison
-- Alerts
-- Agriculture
-- Aviation
-- Marine
-- Climate
-- Risk
-- Location
-
-The complete tool registry is exposed through:
-
-```
-GET /api/agent/tools
-GET /api/agent/engine
-```
-
-### Design principle
-
-**The agent explains data; it does not manufacture weather observations.**
-
----
-
-### 🌍 Multilingual Weather Assistant
-
-WeatherGPT supports an 11-language conversational layer:
-
-- English
-- Hindi
-- Marathi
-- Tamil
-- Telugu
-- Bengali
-- Gujarati
-- Punjabi
-- Kannada
-- Malayalam
-- Odia
-
-It also supports practical Romanized-language patterns such as Hinglish-style queries.
-
-**Example**
-
-> "Vijayawada lo repu rain untunda?"
-
-The system can identify the language/query intent, resolve the location, retrieve the forecast and produce a structured answer.
-
-Language analysis:
-
-```
-POST /api/language/analyze
-```
-
----
-
-### 🚨 Weather Alerts & Disaster Awareness
-
-WeatherGPT combines:
-
-1. **Official-source information where available**
-2. **Live third-party disaster feeds**
-3. **Computed weather thresholds**
-4. **Clearly labelled demonstration layers**
-
-Current alert/data integrations include:
-
-- IMD district-nowcast RSS source
-- GDACS
-- USGS earthquake data
-- Live Open-Meteo telemetry
-- Application-generated CAP-style alerts
-
-Computed alerts evaluate conditions such as:
-
-- Heavy rainfall
-- Thunderstorms
-- Heat
-- Cold
-- Coastal winds
-
-> **Important:** WeatherGPT-generated alerts are application estimates and are **not replacements for official emergency bulletins**.
-
----
-
-### 🗺️ GIS & 3D Earth
-
-The platform combines 2D and 3D geospatial visualization.
-
-**2D GIS**
-
-- Leaflet
-- OpenStreetMap
-- RainViewer radar
-- USGS earthquake markers
-- NASA EONET wildfire information
-- Alert zones
-- Demonstration cyclone geometry
-
-**3D Earth**
-
-- Three.js
-- Procedural globe
-- Natural Earth coastline data
-- Day/night terminator
-- Weather/location markers
-- Disaster markers
-- Adaptive rendering
-- Reduced-motion support
-- Lazy loading
-
-The 3D Earth experience is intentionally isolated so the core weather interface remains lightweight.
-
----
-
-### 🛰️ Satellite & Earth Observation
-
-WeatherGPT provides satellite/earth-observation references using free public resources.
-
-**NASA GIBS**
-
-- Live viewer/tile references
-- Earth observation layers
-- No static image presented as live observation
-
-**RainViewer**
-
-- Live radar layer when upstream data is available
-
-**MOSDAC / ISRO**
-
-- Public catalog/metadata references are documented
-- Protected datasets are not falsely represented as directly integrated
-
-This distinction is important:
-
-> **A satellite viewer link is not the same as proxying satellite pixels through the application.**
-
----
-
-### 🌾 Agriculture Intelligence
-
-WeatherGPT includes rule-based advisory logic for:
-
-- Paddy
-- Cotton
-- Wheat
-- Sugarcane
-- Soybean
-- Mustard
-
-Advisories combine weather conditions with crop-oriented rules.
-
-**Example**
-
-> "Will tomorrow's rain affect paddy operations?"
-
-The system can combine rainfall probability, temperature and humidity with the crop rule set and return an informational advisory.
-
-> Agricultural guidance is informational and should not replace agronomist or government advisory services.
-
----
-
-### ✈️ Aviation Weather
-
-The aviation module supports live NOAA ADDS information when available.
-
-Typical information includes:
-
-- METAR
-- TAF
-- Airport weather conditions
-
-If the upstream feed is unavailable, the application uses **clearly labelled static demonstration data**.
-
-> Static demonstration data must never be treated as flight-planning information.
-
----
-
-### 🌊 Marine Intelligence
-
-WeatherGPT provides coastal intelligence using available public weather/marine data.
-
-Includes:
-
-- Coastal wind
-- Wave-related estimates
-- Sea-state interpretation
-- Fisherman-oriented information
-- Indicative tide information
-
-Marine outputs are **model-dependent / estimated** where they are not sourced directly from an official bulletin.
-
----
-
-### 📈 Climate Analytics
-
-The climate module provides a dedicated analytical view for historical/reference information.
-
-It includes:
-
-- Decadal reference values
-- Temperature-anomaly visualizations
-- Monsoon reference information
-- Event-count visualizations
-- Plain-language interpretation
-
-The current climate reference dataset is explicitly labelled **STATIC** rather than being presented as a live climate-monitoring feed.
-
----
-
-### 🧠 Risk Engine
-
-WeatherGPT contains a deterministic risk engine for:
-
-- Heat
-- Heavy rainfall
-- Flood-related conditions
-- Strong winds
-- Thunderstorms
-- Cyclone-related conditions
-
-The engine uses published application thresholds rather than opaque model-generated scores.
-
-```
-Weather observations
-       +
-Forecast indicators
-       +
-Documented thresholds
-       ↓
-Risk level
-       ↓
-Explanation + evidence
-```
-
-Risk output is **ESTIMATED and unofficial** unless an upstream official source is explicitly identified.
-
----
-
-## 5. Free Data & Provider Architecture
-
-WeatherGPT prioritizes **free public sources and no-key integrations**.
-
-| Capability | Provider | Status |
+| Domain | Capability | Source / method |
 |---|---|---|
-| Forecast | Open-Meteo | LIVE |
-| Geocoding | Open-Meteo | LIVE |
-| Air Quality | Open-Meteo | LIVE |
-| Marine | Open-Meteo | LIVE |
-| Historical weather | Open-Meteo Archive / ERA5 | LIVE |
-| GFS | Open-Meteo | LIVE |
-| ECMWF IFS | Open-Meteo | LIVE |
-| DWD ICON | Open-Meteo | LIVE |
-| Radar | RainViewer | LIVE |
-| Satellite viewer | NASA GIBS | LIVE / viewer reference |
-| Earthquakes | USGS | LIVE |
-| Wildfires/events | NASA EONET | LIVE |
-| Global disasters | GDACS | LIVE |
-| Aviation | NOAA ADDS | LIVE + fallback |
-| Maps | OpenStreetMap | LIVE |
-| Official weather warnings | IMD RSS | LIVE when upstream responds |
+| Weather | Current, hourly and daily forecasts | Open-Meteo |
+| NWP | Auto, GFS, ECMWF IFS, DWD ICON | Open-Meteo |
+| Air quality | AQI + pollutants | Open-Meteo |
+| Marine | Coastal/marine variables | Open-Meteo |
+| Radar | Recent precipitation radar | RainViewer |
+| Satellite | Earth observation | NASA GIBS |
+| Earthquakes | Recent seismic events | USGS |
+| Natural events | Fire/hazard events | NASA EONET |
+| Disasters | Global event feed | GDACS |
+| Aviation | METAR / TAF | NOAA Aviation Weather |
+| India warnings | District nowcast | IMD RSS |
+| GIS | Maps + event layers | Leaflet + OpenStreetMap |
+| 3D | Interactive Earth | Three.js |
+| Agriculture | Crop/weather rules | Deterministic logic |
+| Climate | Historical/reference analytics | Archive/reference data |
+| Voice | Browser STT/TTS | Web Speech APIs |
+| Local AI | Optional local model | Ollama |
+| Realtime | Optional MQTT/WIS2 | Mosquitto |
 
-### Provider philosophy
-
-Every important panel communicates its provenance using labels such as:
-
-**LIVE · OFFICIAL · COMPUTED · ESTIMATED · STATIC · DEMO · SIMULATED · NOT CONFIGURED**
-
-This prevents a demonstration value from being mistaken for live government data.
+Open-Meteo currently documents a free weather API and 30+ models, including ECMWF, NOAA and DWD model families. citeturn0search7turn0search6
 
 ---
 
-## 6. NWP Model Layer
+## 02 — Live Product
 
-WeatherGPT now exposes a free model-selection layer:
+### Live application
 
-| Model | Route | Purpose |
+**https://weathergpt-kappa-pink.vercel.app/**
+
+The existing deployment is provided for demonstration access. **This README rewrite does not trigger a new Vercel deployment.**
+
+### Example: natural-language weather
+
+> “What is the weather in Vijayawada tomorrow?”
+
+WeatherGPT can resolve the location and return:
+
+- temperature
+- feels-like temperature
+- precipitation probability
+- rainfall
+- humidity
+- wind
+- pressure
+- cloud cover
+- UV
+- forecast timeline
+- source
+- timestamp
+- provenance state
+
+### Example: NWP comparison
+
+> “Compare GFS, ECMWF and ICON for Pune.”
+
+The system retrieves model-specific values and exposes the spread/disagreement instead of hiding it.
+
+---
+
+## 03 — Live Visual Evidence
+
+Where a provider exposes a direct image endpoint, this README uses provider-rendered imagery. Data-only providers are represented by live application panels and source links rather than fabricated screenshots.
+
+### NASA GIBS — Earth observation
+
+<img src="https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2026-10-03/250m/3/3/4.jpg" alt="NASA GIBS MODIS Terra Earth observation" width="100%">
+
+NASA GIBS provides global satellite imagery through public WMTS/WMS services. citeturn0search1turn1search4
+
+**Source:** https://gibs.earthdata.nasa.gov/
+
+### RainViewer — radar
+
+<img src="https://tilecache.rainviewer.com/v2/radar/838abf7afc16/512/4/20.59/78.96/2/1_0.png" alt="RainViewer radar over India" width="100%">
+
+RainViewer documents recent radar imagery through its public Weather Maps API, including recent frames at approximately 10-minute intervals. Its 2026 free offering retains past radar imagery for personal/educational use. citeturn1search1turn0search10
+
+**Live metadata:** https://api.rainviewer.com/public/weather-maps.json
+
+> Provider image URLs can rotate as upstream data changes. WeatherGPT requests current metadata at runtime instead of treating a permanent screenshot as live.
+
+### Live source badges
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Open--Meteo-LIVE-0B7A75" alt="Open-Meteo LIVE">
+  <img src="https://img.shields.io/badge/NASA%20GIBS-LIVE%20EO-0B5FFF" alt="NASA GIBS LIVE">
+  <img src="https://img.shields.io/badge/RainViewer-LIVE%20RADAR-3A7BD5" alt="RainViewer LIVE">
+  <img src="https://img.shields.io/badge/USGS-LIVE%20EVENTS-333333" alt="USGS LIVE">
+  <img src="https://img.shields.io/badge/NOAA-LIVE%20AVIATION-005B96" alt="NOAA LIVE">
+  <img src="https://img.shields.io/badge/IMD-OFFICIAL-8B0000" alt="IMD OFFICIAL">
+</p>
+
+---
+
+## 04 — High-Level Architecture
+
+<pre>
+User
+  ↓
+Language + Intent + Location
+  ↓
+Deterministic Weather / Disaster Tools
+  ↓
+Public providers
+  ├─ Open-Meteo
+  ├─ RainViewer
+  ├─ NASA GIBS
+  ├─ USGS
+  ├─ NASA EONET
+  ├─ GDACS
+  ├─ NOAA Aviation Weather
+  ├─ OpenStreetMap
+  └─ IMD RSS
+  ↓
+Validation + timestamp + provenance
+  ↓
+WeatherGPT explanation
+  ↓
+2D GIS + 3D Earth + Live Evidence
+</pre>
+
+### Technology
+
+**Frontend:** React 19, Vite, Tailwind CSS, Leaflet, Three.js, React Markdown, Lucide.
+
+**Backend:** Python, FastAPI, Uvicorn, Pydantic, HTTP clients, Pytest.
+
+**Optional infrastructure:** PostgreSQL/PostGIS, Valkey, Mosquitto/MQTT, Ollama, WRF/GRIB2/NetCDF.
+
+---
+
+## 05 — Weather & Forecast Intelligence
+
+### Current conditions
+
+- temperature
+- apparent temperature
+- humidity
+- precipitation
+- pressure
+- cloud cover
+- wind speed/direction
+- visibility
+- UV
+- sunrise/sunset
+
+### Forecast
+
+- hourly forecast
+- daily forecast
+- precipitation probability
+- rain/showers/snow
+- wind/gusts
+- cloud layers
+- temperature trends
+
+### Location intelligence
+
+- city search
+- geocoding
+- GPS location
+- reverse geocoding
+- saved places
+- city comparison
+
+Open-Meteo supports free forecast/historical workflows and direct model selection. citeturn0search7turn0search4
+
+---
+
+## 06 — NWP Model Intelligence
+
+| Model | Backend route | Role |
 |---|---|---|
-| Auto | `model=auto` | Multi-model Open-Meteo blend |
-| GFS | `model=gfs` | Global Forecast System |
-| ECMWF | `model=ecmwf` | ECMWF IFS |
-| ICON | `model=icon` | DWD ICON |
+| Auto | <code>model=auto</code> | Best-match workflow |
+| GFS | <code>model=gfs</code> | NOAA/NCEP global forecast |
+| ECMWF | <code>model=ecmwf</code> | ECMWF IFS |
+| ICON | <code>model=icon</code> | DWD ICON |
 
-NWP status:
+Open-Meteo documents GFS, ECMWF IFS and DWD ICON access and model-specific variables. citeturn0search4turn0search8turn0search11
 
-```
-GET /api/nwp/status
-```
+### Model comparison
+
+<pre>
+Location
+ ├── Auto
+ ├── GFS
+ ├── ECMWF IFS
+ └── DWD ICON
+       ↓
+Temperature / Rain / Wind
+       ↓
+Spread + disagreement
+       ↓
+Explanation
+</pre>
+
+API: <code>GET /api/nwp/compare?location=Pune</code>
 
 ### WRF
 
-WRF is **not falsely presented as live**.
+A local WRF GRIB2/NetCDF adapter exists.
 
-A local WRF adapter exists for future/local GRIB2 or NetCDF workflows, but it remains disabled unless a real WRF dataset and configuration are supplied.
-
----
-
-## 7. Voice Interface
-
-WeatherGPT supports a browser-friendly voice pipeline:
-
-```
-Speech
- ↓
-Web Speech STT
- ↓
-WeatherGPT intent engine
- ↓
-Weather tool
- ↓
-Response
- ↓
-TTS / SpeechSynthesis
-```
-
-The browser-native path requires no paid API.
-
-The architecture also supports optional local/free voice bridges such as VibeVoice when separately hosted.
-
-The main system remains usable without a GPU-dependent voice service.
+**WRF is not labelled LIVE until a real WRF output dataset is configured and readable.**
 
 ---
 
-## 8. High-Level Architecture
+## 07 — Conversational AI Agent
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│                       WeatherGPT UI                          │
-│ React 19 • Vite • Tailwind • Leaflet • Three.js              │
-└─────────────────────────────┬────────────────────────────────┘
-                              │
-                       REST / WebSocket
-                              │
-┌─────────────────────────────▼────────────────────────────────┐
-│                     FastAPI Backend                          │
-│                                                              │
-│  Chat / Agent │ Weather │ Alerts │ Risk │ GIS │ Voice       │
-│  Agriculture  │ Marine  │ Climate│ NWP  │ Disasters        │
-└───────────────┬──────────────────────────────────────────────┘
-                │
-        Deterministic Tool Layer
-                │
- ┌──────────────┼─────────────────────────────────────────────┐
- │              │                                             │
- ▼              ▼                                             ▼
-Open-Meteo   Disaster / GIS                              Official feeds
-Forecast     USGS / GDACS / EONET                       IMD RSS
-AQI          RainViewer / NASA GIBS                      NOAA ADDS
-Marine       OpenStreetMap
-ERA5
-NWP
- └───────────────────────────────────────────────────────────┘
-```
-
----
-
-## 9. Technology Stack
-
-### Frontend
-
-- React 19
-- Vite
-- Tailwind CSS
-- Leaflet / React Leaflet
-- Three.js
-- Lucide React
-- React Markdown
-
-### Backend
-
-- Python
-- FastAPI
-- Uvicorn
-- Pydantic
-- Requests / HTTP clients
-- Pytest
-
-### Data / Geospatial
-
-- Open-Meteo
-- RainViewer
-- NASA GIBS
-- USGS
-- NASA EONET
-- GDACS
-- NOAA ADDS
-- OpenStreetMap
-
-### Reliability
-
-- Provider timeouts
-- Retry + exponential backoff
-- TTL caching
-- Explicit fallback states
-- Best-effort rate limiting
-- Source timestamps
-- Confidence labels
-- Per-provider health checks
-
----
-
-## 10. API Surface
+<pre>
+User question
+     ↓
+Language detection
+     ↓
+Intent detection
+     ↓
+Location extraction
+     ↓
+Tool selection
+     ↓
+Live / computed data
+     ↓
+Provenance + timestamp
+     ↓
+Plain-language answer
+</pre>
 
 Representative endpoints:
 
-```text
-GET  /api/health
-GET  /api/providers/health
-GET  /api/providers/health?live=true
+- <code>POST /api/chat/query</code>
+- <code>POST /api/language/analyze</code>
+- <code>GET /api/agent/tools</code>
+- <code>GET /api/agent/engine</code>
 
-GET  /api/weather/current
-GET  /api/air-quality
-GET  /api/nwp/status
+Supported intent families:
 
-GET  /api/imd/warnings
-GET  /api/disasters/earthquakes
-GET  /api/disasters/wildfires
+**Weather · Forecast · Comparison · Alerts · Risk · Agriculture · Aviation · Marine · Climate · Location · Disaster**
 
-GET  /api/satellite/info
-GET  /api/climate/history
-
-POST /api/chat/query
-POST /api/language/analyze
-
-GET  /api/agent/tools
-GET  /api/agent/engine
-GET  /api/voice/status
-```
-
-The API is designed so the frontend can consume structured data while preserving provider provenance.
+> **Design rule:** the agent explains retrieved/computed information; it does not invent weather observations.
 
 ---
 
-## 11. Data Provenance & Safety
+## 08 — Multilingual Assistant
 
-WeatherGPT follows a strict provenance model.
+WeatherGPT supports:
 
-### LIVE
+**English · Hindi · Telugu · Tamil · Marathi · Bengali · Gujarati · Punjabi · Kannada · Malayalam · Odia**
 
-Data successfully retrieved from an upstream provider.
+Example:
 
-### OFFICIAL
+> “Vijayawada lo repu rain untunda?”
 
-Information directly attributed to an official source such as IMD, USGS or NOAA.
-
-### COMPUTED
-
-Generated by WeatherGPT from live upstream values and documented rules.
-
-### ESTIMATED
-
-Application/model-derived information that is not an official observation or bulletin.
-
-### STATIC
-
-Reference/demo dataset that does not represent current conditions.
-
-### DEMO
-
-Illustrative geometry or scenario created for product demonstration.
-
-### SIMULATED
-
-Fallback value used when an upstream provider is unavailable.
-
-### NOT CONFIGURED
-
-A provider or integration that has not been connected and therefore must not be represented as live.
-
-This is a core design requirement, not merely UI wording.
+The language layer resolves language, intent and location before calling weather tools.
 
 ---
 
-## 12. What Is Not Falsely Claimed as Live
+## 09 — Radar, Satellite & Earth Observation
 
-The following remain explicitly constrained:
+### Radar
 
-- WRF — not configured as a live service
-- Direct authenticated IMD APIs — not assumed without access authorization
-- Protected MOSDAC datasets — not represented as directly integrated
-- INCOIS official bulletins — not fabricated
-- External paid LLM APIs — not required for the deterministic core
-- Static climate references — labelled static
-- Computed risk — labelled estimated
-- Computed alerts — not official IMD bulletins
-- Marine estimates — labelled model-dependent
+RainViewer supplies recent precipitation radar imagery through its public Weather Maps API. The documented API provides recent radar frames at 10-minute intervals over the recent two-hour window. citeturn0search0turn0search10
 
-This keeps the project technically demonstrable while maintaining honest data provenance.
+### Satellite
+
+NASA GIBS provides global Earth-observation imagery through WMTS/WMS and related services. citeturn0search1turn1search0
+
+### Provenance rule
+
+A viewer URL, image tile, static asset and application-proxied dataset are **not equivalent**. WeatherGPT keeps these states separate.
 
 ---
 
-## 13. Example User Journeys
+## 10 — Disaster & Hazard Intelligence
 
-### Citizen
+### USGS earthquakes
 
-**Question:**  
-> "Will it rain in Vijayawada tomorrow?"
+USGS provides FDSN event queries and real-time GeoJSON feeds for earthquake applications. citeturn4search1turn4search6
 
-**Flow:**
+### Natural events
 
-```
-Vijayawada
- → location resolution
- → Open-Meteo forecast
- → precipitation probability
- → hourly/daily analysis
- → plain-language answer
-```
+NASA EONET is used for public natural-event information.
 
-### Farmer
+### Global disasters
 
-**Question:**  
-> "Is tomorrow suitable for paddy field work?"
+GDACS is used as a disaster-event source.
 
-```
-Location
- → forecast
- → rain / temperature / humidity
- → paddy rules
- → advisory
-```
+### Weather hazard logic
 
-### Disaster awareness
+WeatherGPT can compute application-level indicators for:
 
-**Question:**  
-> "Are there any active hazards around India?"
+- heavy rainfall
+- heat
+- strong wind
+- thunderstorms
+- flood-related conditions
+- cyclone-related conditions
 
-```
-IMD RSS + GDACS + USGS + computed alerts
- → provenance-aware fusion
- → severity / area / timestamp
- → GIS visualization
-```
-
-### Technical user
-
-**Question:**  
-> "Compare GFS and ECMWF for Pune."
-
-```
-Pune
- ├── GFS
- └── ECMWF IFS
-       ↓
-model-specific forecast data
-       ↓
-structured comparison
-```
+**Computed risk and application alerts are not official emergency bulletins.**
 
 ---
 
-## 14. Visuals
+## 11 — IMD Official Warning Layer
 
-### Technical Architecture
+WeatherGPT includes a keyless IMD district-nowcast RSS integration.
 
-![WeatherGPT Technical Architecture](frontend/public/technical_approach_slide.jpg)
+The UI can expose:
 
-### Impact & Benefits
+- warning text
+- affected area
+- source
+- timestamp
+- official-source state
 
-![WeatherGPT Impact and Benefits](frontend/public/impact_and_benefits_slide.png)
+The official IMD API portal provides authorized access to observations, forecasts, warnings and bulletins. citeturn0search4
 
-These visuals correspond to the project's **technical approach** and **impact/benefits** rather than presenting generic stock imagery.
+**Protected/authenticated IMD data is never claimed as available without authorization.**
 
 ---
 
-## 15. Local Installation
+## 12 — Agriculture Intelligence
+
+Crop-oriented rule logic covers:
+
+**Paddy · Cotton · Wheat · Sugarcane · Soybean · Mustard**
+
+Example:
+
+> “Can I plan paddy field work tomorrow?”
+
+<pre>
+Forecast
+  ↓
+Rain + wind + humidity + temperature
+  ↓
+Crop rules
+  ↓
+Advisory
+  ↓
+Evidence + uncertainty
+</pre>
+
+Agriculture output is informational and does not replace government or professional agronomic advice.
+
+---
+
+## 13 — Aviation Weather
+
+WeatherGPT uses NOAA Aviation Weather information when the upstream service responds.
+
+Typical products:
+
+- METAR
+- TAF
+- aviation observations
+- airport/station context
+
+The current NOAA API documents worldwide METAR/TAF coverage and machine-readable formats such as JSON and GeoJSON. citeturn4search0
+
+> Not a certified flight-planning system.
+
+---
+
+## 14 — Marine Intelligence
+
+The marine layer provides model-based coastal information such as:
+
+- wind
+- wave-related variables
+- sea-state interpretation
+- coastal weather context
+- fisherman-oriented guidance
+
+Non-official/model-derived values are labelled **ESTIMATED** or **MODEL-DEPENDENT**.
+
+---
+
+## 15 — Climate Analytics
+
+The climate module provides reference/analytical views for:
+
+- historical temperature context
+- anomalies
+- monsoon analysis
+- event trends
+- reference periods
+- explanatory charts
+
+Reference datasets are explicitly labelled **STATIC** when they are not live monitoring feeds.
+
+---
+
+## 16 — GIS + 3D Earth
+
+### 2D GIS
+
+- Leaflet
+- OpenStreetMap
+- radar overlays
+- earthquake markers
+- natural-event markers
+- warning zones
+- location layers
+
+### 3D Earth
+
+- Three.js globe
+- coastline data
+- day/night terminator
+- weather markers
+- disaster markers
+- animated transitions
+- adaptive rendering
+- lazy loading
+- reduced-motion fallback
+
+The 3D layer enhances the experience without becoming a requirement for the core weather workflow.
+
+---
+
+## 17 — High-Level UI/UX
+
+WeatherGPT uses a **weather command-center** visual language.
+
+### Visual design
+
+- glass/telemetry cards
+- source-first status chips
+- compact metric panels
+- animated weather states
+- live evidence panels
+- GIS overlays
+- 3D Earth
+- responsive navigation
+- accessible contrast
+- reduced-motion mode
+- graceful loading/error states
+
+### Motion design
+
+Animation communicates:
+
+- data refresh
+- forecast transitions
+- map events
+- source freshness
+- model comparison
+- Earth interaction
+
+The interface remains understandable when motion is reduced.
+
+---
+
+## 18 — Free-First Provider Matrix
+
+| Capability | Free / alternative source | Status |
+|---|---|---|
+| Forecast | Open-Meteo | LIVE |
+| GFS | Open-Meteo | LIVE |
+| ECMWF IFS | Open-Meteo | LIVE |
+| DWD ICON | Open-Meteo | LIVE |
+| Air Quality | Open-Meteo | LIVE |
+| Marine | Open-Meteo | LIVE |
+| Historical / ERA5 | Open-Meteo | LIVE |
+| Radar | RainViewer | LIVE |
+| Satellite | NASA GIBS | LIVE/reference |
+| Earthquakes | USGS | LIVE |
+| Natural events | NASA EONET | LIVE |
+| Global disasters | GDACS | LIVE |
+| Aviation | NOAA Aviation Weather | LIVE when upstream responds |
+| Maps | OpenStreetMap | LIVE |
+| Reverse geocode | BigDataCloud | FREE/FAIR-USE |
+| India warnings | IMD RSS | LIVE when upstream responds |
+| Local AI | Ollama | OPTIONAL |
+| MQTT/WIS2 | Mosquitto | OPTIONAL |
+| Spatial DB | PostgreSQL/PostGIS | OPTIONAL |
+| Cache | Valkey | OPTIONAL |
+| Regional NWP | WRF | OPTIONAL |
+
+**No paid API key is required for the core WeatherGPT workflow.**
+
+---
+
+## 19 — Optional Advanced Adapters
+
+### WRF
+Local GRIB2/NetCDF workflow.
+
+### NOAA NOMADS
+Free NOAA GRIB2 path for advanced model workflows.
+
+### MQTT / WIS2
+Optional self-hosted realtime architecture using Mosquitto.
+
+### PostgreSQL / PostGIS
+Optional spatial persistence and geospatial queries.
+
+### Valkey
+Optional Redis-compatible cache.
+
+### Ollama
+Optional local NLU/LLM.
+
+These integrations remain **OPTIONAL / NOT CONFIGURED** until real runtime data is connected.
+
+---
+
+## 20 — Voice + Low Connectivity
+
+### Voice
+
+<pre>
+Microphone
+   ↓
+Web Speech STT
+   ↓
+WeatherGPT agent
+   ↓
+Weather tools
+   ↓
+Response
+   ↓
+SpeechSynthesis / TTS
+</pre>
+
+Status: <code>GET /api/voice/status</code>
+
+### Low connectivity
+
+The architecture supports:
+
+- fast initial rendering
+- cached interface assets
+- responsive/mobile layout
+- reduced-motion fallback
+- graceful provider failures
+- PWA/service-worker architecture
+
+Live weather still requires network access when upstream data is needed.
+
+---
+
+## 21 — Provenance & Trust
+
+| Label | Meaning |
+|---|---|
+| **LIVE** | Retrieved from an upstream service |
+| **OFFICIAL** | Directly attributed to an official source |
+| **COMPUTED** | Derived from retrieved data + documented rules |
+| **ESTIMATED** | Model/application-derived |
+| **STATIC** | Reference/demo dataset |
+| **DEMO** | Illustrative scenario/geometry |
+| **SIMULATED** | Fallback simulation |
+| **NOT CONFIGURED** | Adapter exists but real feed/runtime is absent |
+
+> **An adapter existing in the repository does not make its output LIVE.**
+
+This rule applies especially to WRF, MQTT/WIS2, PostGIS, Valkey and Ollama.
+
+---
+
+## 22 — Live Evidence + Capability APIs
+
+- <code>GET /api/platform/capabilities</code>
+- <code>GET /api/nwp/compare?location=Pune</code>
+- <code>GET /api/providers/health?live=true</code>
+- <code>GET /api/satellite/info</code>
+
+The frontend exposes source/status information beside the visual evidence.
+
+---
+
+## 23 — API Surface
+
+### Health
+- <code>GET /api/health</code>
+- <code>GET /api/providers/health</code>
+- <code>GET /api/providers/health?live=true</code>
+
+### Weather
+- <code>GET /api/weather/current</code>
+- <code>GET /api/air-quality</code>
+- <code>GET /api/nwp/status</code>
+- <code>GET /api/nwp/compare?location=Pune</code>
+
+### Alerts / disasters
+- <code>GET /api/imd/warnings</code>
+- <code>GET /api/disasters/earthquakes</code>
+- <code>GET /api/disasters/wildfires</code>
+
+### Earth observation / climate
+- <code>GET /api/satellite/info</code>
+- <code>GET /api/climate/history</code>
+
+### Agent / language
+- <code>POST /api/chat/query</code>
+- <code>POST /api/language/analyze</code>
+- <code>GET /api/agent/tools</code>
+- <code>GET /api/agent/engine</code>
+
+### Platform / voice
+- <code>GET /api/platform/capabilities</code>
+- <code>GET /api/voice/status</code>
+
+---
+
+## 24 — Reliability
+
+WeatherGPT is designed around imperfect upstream services.
+
+- provider timeouts
+- retries
+- exponential backoff
+- TTL caching
+- health checks
+- structured errors
+- timestamps
+- rate limiting
+- explicit unavailable states
+- labelled fallback behavior
+
+<pre>
+Provider available
+      ↓
+    LIVE
+
+Provider unavailable
+      ↓
+Unavailable / labelled fallback
+
+Never
+      ↓
+Silent fabricated "live" data
+</pre>
+
+---
+
+## 25 — Security
+
+- secrets excluded from Git
+- environment variables for optional credentials
+- explicit CORS
+- request timeouts
+- provider failure handling
+- rate limiting
+- structured API responses
+- provenance metadata
+- controlled fallback behavior
+
+Never commit real API keys to source files, README, <code>.env.example</code>, screenshots or Git history.
+
+---
+
+## 26 — Repository Structure
+
+<pre>
+WeatherGPT/
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   └── services/
+│   └── tests/
+├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── components/
+│       ├── services/
+│       └── styles/
+├── docs/
+├── infra/
+│   ├── docker-compose.free.yml
+│   └── mosquitto.conf
+├── voice/
+├── .env.example
+└── README.md
+</pre>
+
+---
+
+## 27 — Project Visuals
+
+### SIH Technical Approach
+
+![WeatherGPT technical approach](frontend/public/technical_approach_slide.jpg)
+
+### SIH Impact & Benefits
+
+![WeatherGPT impact and benefits](frontend/public/impact_and_benefits_slide.png)
+
+Project-specific presentation visuals are separated from live provider imagery.
+
+---
+
+## 28 — Local Development
 
 ### Backend
 
-```bash
+<pre>
 cd backend
 pip install -r requirements.txt
 python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-```
+</pre>
 
-Backend documentation:
+API docs:
 
-```text
-http://127.0.0.1:8000/docs
-```
+<code>http://127.0.0.1:8000/docs</code>
 
 ### Frontend
 
-```bash
+<pre>
 cd frontend
 npm install
 npm run dev
-```
+</pre>
 
-Default Vite development URL:
+Frontend:
 
-```text
-http://localhost:5173
-```
+<code>http://localhost:5173</code>
 
----
+### Optional free infrastructure
 
-## 16. Environment Configuration
+<pre>
+docker compose -f infra/docker-compose.free.yml --profile data up
+</pre>
 
-See:
+Profiles:
 
-```text
-.env.example
-```
-
-The core free-provider workflow does **not require paid API keys**.
-
-Optional provider integrations may require their own credentials. Secrets must never be committed to GitHub.
+**data · cache · realtime**
 
 ---
 
-## 17. Testing & Quality
+## 29 — Environment
 
-The repository includes automated verification for:
+Configuration template:
 
-- Backend API behavior
-- Provider/service smoke tests
-- Frontend linting
-- Frontend production builds
-- Browser smoke testing
-- Production API smoke checks
+<code>.env.example</code>
+
+Core weather functionality does not require paid credentials.
+
+Optional settings cover WRF, MQTT, PostgreSQL, Valkey/Redis, Ollama and provider-specific credentials.
+
+**Never commit <code>.env</code> or real secrets.**
+
+---
+
+## 30 — Testing & CI
+
+The repository includes verification for:
+
+- backend API behavior
+- provider health
+- frontend linting
+- frontend builds
+- browser smoke tests
 - WebSocket behavior
-- Voice status
-- Provider health
-- Weather endpoints
-- Disaster endpoints
-- Satellite metadata
-- Climate endpoints
+- voice status
+- weather routes
+- disaster routes
+- satellite metadata
+- climate routes
+- live provider smoke checks
 
-Run locally:
+Local:
 
-```bash
+<pre>
 cd backend
 python -m pytest -q
 
 cd ../frontend
 npm run build
 npx oxlint src
-```
+</pre>
+
+The live CI badge at the top reflects GitHub Actions workflow state.
 
 ---
 
-## 18. Security & Reliability
-
-WeatherGPT applies several defensive measures:
-
-- No secrets committed
-- Explicit CORS configuration
-- Provider timeout limits
-- Retry/backoff
-- TTL caching
-- Rate limiting
-- Structured API responses
-- Graceful upstream failure
-- Source attribution
-- Confidence metadata
-- Fallback states instead of silent fabrication
-
-The application is designed so a provider outage does not automatically become a misleading user-facing claim.
-
----
-
-## 19. Documentation
-
-Detailed project documentation is available in `docs/`:
+## 31 — SIH Documentation
 
 | Document | Purpose |
 |---|---|
-| `ARCHITECTURE.md` | System architecture |
-| `DATA_SOURCES.md` | Provider inventory and provenance |
-| `AI_AGENT.md` | Agent/tool design |
-| `SECURITY.md` | Security model |
-| `SIH_DEMO.md` | Verified demo flow |
-| `SIH_PPT.md` | SIH presentation material |
-| `SIH_MAPPING.md` | Requirement mapping |
-| `PROVENANCE.md` | Source and licensing provenance |
-| `SIH_PRESENTATION.md` | Presentation package |
+| <code>docs/ARCHITECTURE.md</code> | System architecture |
+| <code>docs/DATA_SOURCES.md</code> | Provider inventory |
+| <code>docs/AI_AGENT.md</code> | Agent/tool architecture |
+| <code>docs/SECURITY.md</code> | Security model |
+| <code>docs/PROVENANCE.md</code> | Source/licensing provenance |
+| <code>docs/SIH_DEMO.md</code> | Judge/demo flow |
+| <code>docs/SIH_MAPPING.md</code> | SIH requirement mapping |
+| <code>docs/SIH_PRESENTATION.md</code> | Presentation package |
+| <code>docs/SIH_PPT.md</code> | Presentation content |
+| <code>docs/SIH_COMPLETE_IMPLEMENTATION.md</code> | Complete implementation map |
+| <code>docs/SIH_QA.md</code> | Judge Q&A |
 
 ---
 
-## 20. Project Status
+## 32 — Example User Journeys
 
-**Development status:** SIH 2026 demonstration-ready baseline
+### Citizen
+> “Will it rain near Vijayawada tomorrow?”
 
-The repository prioritizes:
+Location → forecast → rain probability → time-window analysis → answer + source.
 
-- Free public data sources
-- Transparent provenance
-- Deterministic tool execution
-- Multilingual accessibility
-- Disaster-awareness workflows
-- High-quality visualization
-- Graceful provider failure
-- Honest limitations
+### Farmer
+> “Can I plan paddy work tomorrow?”
 
-No paid provider is required for the core WeatherGPT workflow.
+Forecast → rain/wind/humidity → crop rules → advisory + uncertainty.
+
+### Responder
+> “Are there active hazards around India?”
+
+IMD + GDACS + USGS + weather indicators → provenance-aware fusion → GIS.
+
+### Technical user
+> “Compare GFS, ECMWF and ICON for Pune.”
+
+Model retrieval → spread → disagreement → explanation.
 
 ---
 
-## 21. Attribution & License
+## 33 — What Is Intentionally Not Claimed
 
-WeatherGPT SIH 2026 application code is independently implemented by **Muchakarla Hemanth Kumar**.
+WeatherGPT does **not** claim:
 
-**License:** MIT — see [LICENSE](LICENSE).
+- WRF is live without a real WRF dataset
+- protected IMD APIs are available without authorization
+- protected MOSDAC/ISRO datasets are directly integrated when they are not
+- INCOIS official bulletins are integrated when they are not
+- static climate references are live
+- computed risk is an official warning
+- application alerts are IMD bulletins
+- marine estimates are official observations
+- an adapter is LIVE merely because its code exists
+- a paid LLM is required for the deterministic core
 
-Third-party packages, datasets, APIs, map tiles, fonts and external services remain subject to their respective licenses and terms.
+This keeps the SIH demonstration technically strong while preserving honest provenance.
+
+---
+
+## 34 — Attribution & License
+
+WeatherGPT application code is independently implemented by **Muchakarla Hemanth Kumar**.
+
+**License:** MIT — see <code>LICENSE</code>.
+
+Third-party APIs, datasets, maps, packages and imagery remain subject to their respective licenses and usage policies.
 
 See:
 
-- [ATTRIBUTION.md](ATTRIBUTION.md)
-- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)
-- [docs/PROVENANCE.md](docs/PROVENANCE.md)
+- <code>ATTRIBUTION.md</code>
+- <code>THIRD_PARTY_NOTICES.md</code>
+- <code>docs/PROVENANCE.md</code>
 
 ---
 
-## 22. Developer
+## 35 — Developer
 
 **Muchakarla Hemanth Kumar**  
 B.Tech CSE — AI/ML  
@@ -896,75 +898,10 @@ SRK Institute of Technology
 ---
 
 <p align="center">
-  <strong>WeatherGPT — Understand the weather. Understand the risk. Act with better information.</strong>
+  <strong>WeatherGPT</strong><br>
+  Understand the weather • Understand the risk • See the evidence
 </p>
 
-
----
-
-## Free-First SIH Coverage
-
-The implementation follows the uploaded SIH technical approach while separating **LIVE**, **OPTIONAL**, and **DEMO/STATIC** capabilities. The core weather path does not require a paid LLM or paid weather API.
-
-### Live/free sources
-
-| Topic | Integration | Cost model |
-|---|---|---|
-| Forecast + history | Open-Meteo | Free/no key for non-commercial use |
-| GFS / ECMWF / ICON | Open-Meteo model endpoints | Free/no key |
-| Radar | RainViewer Weather Maps | Public/free personal & educational access |
-| Satellite | NASA GIBS | Public/open Earth-observation access |
-| Earthquakes | USGS FDSN | Public |
-| Natural events | NASA EONET | Public |
-| Global disasters | GDACS | Public feed |
-| Aviation | NOAA Aviation Weather Data API | Public/rate-limited |
-| Maps | OpenStreetMap | Public tiles/data subject to attribution/usage policy |
-| GPS reverse geocoding | BigDataCloud client-side endpoint | Free/no key under fair-use rules |
-| Official India warnings | IMD RSS/API | RSS public; API account where required |
-
-### Advanced free/open-source adapters
-
-- **WRF:** file-based GRIB2/NetCDF adapter is present; it becomes LIVE only when a real WRF-ARW output file is supplied.
-- **NOMADS:** free NOAA GRIB2 is the fallback/open-data route for model workflows where direct GFS files are required.
-- **MQTT/WIS2.0:** optional MQTT bridge using self-hosted Mosquitto.
-- **PostgreSQL/PostGIS:** optional spatial database.
-- **Valkey:** optional Redis-compatible cache.
-- **Ollama:** optional local NLU/LLM layer.
-- **PWA/offline:** browser-native service-worker architecture.
-- **Three.js:** existing 3D Earth and motion-safe visual layer.
-
-### Live visual evidence
-
-The application now includes a **Live Evidence** panel showing public-source radar and NASA Earth-observation imagery beside provenance/status labels. This prevents a static screenshot from being presented as live telemetry.
-
-![Technical approach](frontend/public/technical_approach_slide.jpg)
-
-![Impact and benefits](frontend/public/impact_and_benefits_slide.png)
-
-### UI/UX direction
-
-WeatherGPT uses a high-level command-center design:
-
-- glass/telemetry cards
-- source-first status chips
-- animated weather states
-- 3D Earth visualization
-- live radar/satellite evidence
-- responsive navigation
-- reduced-motion fallback
-- PWA installation support
-- clear LIVE / OFFICIAL / COMPUTED / ESTIMATED / STATIC labels
-
-### Example user journeys
-
-**Citizen:** “Will it rain near Vijayawada tomorrow?” → location → forecast → rain probability → warning correlation → plain-language answer.
-
-**Farmer:** “Can I spray my paddy tomorrow?” → crop + forecast → rain/wind/humidity rules → advisory with uncertainty.
-
-**Responder:** “Which areas have active warnings?” → official/third-party alerts → map → severity/proximity → source and timestamp.
-
-**Technical user:** “Compare GFS, ECMWF and ICON for Pune.” → model-specific retrieval → differences → uncertainty explanation.
-
-### Important accuracy rule
-
-A provider is never labelled LIVE merely because an adapter exists. A source becomes LIVE only when the upstream response is actually available and the application can show its source and freshness. WRF, MQTT/WIS2.0, PostGIS, Valkey and Ollama therefore remain optional until their real runtime/feed is configured.
+<p align="center">
+  Built for Smart India Hackathon 2026
+</p>
