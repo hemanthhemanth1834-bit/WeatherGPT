@@ -14,7 +14,7 @@ vendored into this repository.
 | vite, @vitejs/plugin-react | 8.2.2 / 6.1.0 | MIT | Build tooling |
 | tailwindcss, @tailwindcss/vite | 4.3.3 | MIT | Styling |
 | leaflet | 1.9.4 | BSD-2-Clause | Interactive maps |
-| react-leaflet | 5.0.0 | Hippocratic-2.1 | React bindings for Leaflet — ethical-source terms; review if your policy requires pure OSI licensing (map use is isolated in `GISMap.jsx`) |
+| leaflet | 1.9.4 | BSD-2-Clause | Interactive maps; used directly from React without a wrapper |
 | lucide-react | 1.38.0 | ISC | Icons (About/Risk/NWP panels) |
 | react-markdown, remark-gfm | 10.1.0 / 4.0.1 | MIT | Chat markdown rendering |
 | three | 0.x (npm) | MIT | Lazy 3D globe (Earth tab only) |
