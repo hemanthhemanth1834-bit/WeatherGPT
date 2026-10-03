@@ -25,7 +25,7 @@ original source is ever identified, this file will be updated.
 ## Third-party components (summary)
 
 - **Libraries**: React, React-DOM, Vite, Tailwind CSS, Leaflet,
-  react-leaflet, lucide-react, react-markdown, remark-gfm, FastAPI,
+  lucide-react, react-markdown, remark-gfm, FastAPI,
   uvicorn, pydantic, httpx, requests, python-dotenv, pytest.
   (Exact versions and licenses in `THIRD_PARTY_NOTICES.md`.)
 - **Data/services**: Open-Meteo (forecast + geocoding), RainViewer
