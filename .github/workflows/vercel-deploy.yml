@@ -26,7 +26,7 @@ jobs:
       VERCEL_PROJECT_ID: prj_dCJzTNmOTBmFUXlr0v19lmqIAf8R
     steps:
       - name: Checkout latest main
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Validate Vercel token
         shell: bash
