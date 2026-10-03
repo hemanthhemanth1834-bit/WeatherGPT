@@ -5,6 +5,7 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -23,6 +24,67 @@ jobs:
         run: python -m pip install --upgrade pip && pip install -r requirements.txt
       - name: Run backend tests
         run: pytest -q
+
+  production-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install smoke-test dependencies
+        run: python -m pip install --disable-pip-version-check requests websocket-client
+      - name: Smoke-test production API
+        env:
+          WEATHERGPT_URL: https://weathergpt-kappa-pink.vercel.app
+        run: |
+          python - <<'PY'
+          import os, sys, requests, websocket
+
+          base = os.environ["WEATHERGPT_URL"].rstrip("/")
+          checks = [
+              "/api/health",
+              "/api/providers/health?live=true",
+              "/api/agent/tools",
+              "/api/agent/engine",
+              "/api/voice/status",
+              "/api/weather/current?location=Pune",
+              "/api/air-quality?location=Pune",
+              "/api/weather/current?location=Pune&model=gfs",
+              "/api/locations/reverse?lat=16.5062&lon=80.6480",
+              "/api/satellite/info?lat=16.5062&lon=80.6480",
+              "/api/disasters/earthquakes?limit=1",
+              "/api/disasters/wildfires?limit=1",
+              "/api/climate/history?location=Pune&years=2",
+              "/api/nwp/status",
+          ]
+
+          failed = []
+          for path in checks:
+              response = requests.get(base + path, timeout=20)
+              print(f"{response.status_code} {path}")
+              if response.status_code != 200:
+                  failed.append(path)
+
+          tts = requests.post(
+              base + "/api/voice/tts",
+              json={"text": "WeatherGPT test", "language": "en"},
+              timeout=30,
+          )
+          print(f"{tts.status_code} POST /api/voice/tts")
+          if tts.status_code != 200 or not tts.content:
+              failed.append("POST /api/voice/tts")
+
+          ws_url = base.replace("https://", "wss://").replace("http://", "ws://") + "/ws/alerts"
+          ws = websocket.create_connection(ws_url, timeout=15)
+          ws.send("health-check")
+          message = ws.recv()
+          print(f"WS /ws/alerts -> {message[:160]}")
+          ws.close()
+          if "heartbeat_ack" not in message:
+              failed.append("WS /ws/alerts")
+
+          if failed:
+              print("FAILED:", failed)
+              sys.exit(1)
+          print("Production smoke checks passed.")
+          PY
 
   frontend:
     runs-on: ubuntu-latest
