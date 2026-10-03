@@ -723,11 +723,11 @@ structured comparison
 
 ### Technical Architecture
 
-![WeatherGPT Technical Architecture](https://raw.githubusercontent.com/hemanthhemanth1834-bit/WeatherGPT/main/technical_approach_slide.jpg)
+![WeatherGPT Technical Architecture](frontend/public/technical_approach_slide.jpg)
 
 ### Impact & Benefits
 
-![WeatherGPT Impact and Benefits](https://raw.githubusercontent.com/hemanthhemanth1834-bit/WeatherGPT/main/impact_and_benefits_slide.png)
+![WeatherGPT Impact and Benefits](frontend/public/impact_and_benefits_slide.png)
 
 These visuals correspond to the project's **technical approach** and **impact/benefits** rather than presenting generic stock imagery.
 
@@ -898,3 +898,73 @@ SRK Institute of Technology
 <p align="center">
   <strong>WeatherGPT — Understand the weather. Understand the risk. Act with better information.</strong>
 </p>
+
+
+---
+
+## Free-First SIH Coverage
+
+The implementation follows the uploaded SIH technical approach while separating **LIVE**, **OPTIONAL**, and **DEMO/STATIC** capabilities. The core weather path does not require a paid LLM or paid weather API.
+
+### Live/free sources
+
+| Topic | Integration | Cost model |
+|---|---|---|
+| Forecast + history | Open-Meteo | Free/no key for non-commercial use |
+| GFS / ECMWF / ICON | Open-Meteo model endpoints | Free/no key |
+| Radar | RainViewer Weather Maps | Public/free personal & educational access |
+| Satellite | NASA GIBS | Public/open Earth-observation access |
+| Earthquakes | USGS FDSN | Public |
+| Natural events | NASA EONET | Public |
+| Global disasters | GDACS | Public feed |
+| Aviation | NOAA Aviation Weather Data API | Public/rate-limited |
+| Maps | OpenStreetMap | Public tiles/data subject to attribution/usage policy |
+| GPS reverse geocoding | BigDataCloud client-side endpoint | Free/no key under fair-use rules |
+| Official India warnings | IMD RSS/API | RSS public; API account where required |
+
+### Advanced free/open-source adapters
+
+- **WRF:** file-based GRIB2/NetCDF adapter is present; it becomes LIVE only when a real WRF-ARW output file is supplied.
+- **NOMADS:** free NOAA GRIB2 is the fallback/open-data route for model workflows where direct GFS files are required.
+- **MQTT/WIS2.0:** optional MQTT bridge using self-hosted Mosquitto.
+- **PostgreSQL/PostGIS:** optional spatial database.
+- **Valkey:** optional Redis-compatible cache.
+- **Ollama:** optional local NLU/LLM layer.
+- **PWA/offline:** browser-native service-worker architecture.
+- **Three.js:** existing 3D Earth and motion-safe visual layer.
+
+### Live visual evidence
+
+The application now includes a **Live Evidence** panel showing public-source radar and NASA Earth-observation imagery beside provenance/status labels. This prevents a static screenshot from being presented as live telemetry.
+
+![Technical approach](frontend/public/technical_approach_slide.jpg)
+
+![Impact and benefits](frontend/public/impact_and_benefits_slide.png)
+
+### UI/UX direction
+
+WeatherGPT uses a high-level command-center design:
+
+- glass/telemetry cards
+- source-first status chips
+- animated weather states
+- 3D Earth visualization
+- live radar/satellite evidence
+- responsive navigation
+- reduced-motion fallback
+- PWA installation support
+- clear LIVE / OFFICIAL / COMPUTED / ESTIMATED / STATIC labels
+
+### Example user journeys
+
+**Citizen:** “Will it rain near Vijayawada tomorrow?” → location → forecast → rain probability → warning correlation → plain-language answer.
+
+**Farmer:** “Can I spray my paddy tomorrow?” → crop + forecast → rain/wind/humidity rules → advisory with uncertainty.
+
+**Responder:** “Which areas have active warnings?” → official/third-party alerts → map → severity/proximity → source and timestamp.
+
+**Technical user:** “Compare GFS, ECMWF and ICON for Pune.” → model-specific retrieval → differences → uncertainty explanation.
+
+### Important accuracy rule
+
+A provider is never labelled LIVE merely because an adapter exists. A source becomes LIVE only when the upstream response is actually available and the application can show its source and freshness. WRF, MQTT/WIS2.0, PostGIS, Valkey and Ollama therefore remain optional until their real runtime/feed is configured.
