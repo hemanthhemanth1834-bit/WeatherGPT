@@ -25,7 +25,7 @@ Detect language → extract place → classify intent → call tool → template
 19 tools. Hallucination tests. Optional LLM adapters, deterministic default.
 
 ## 7. Live Data Sources
-Open-Meteo core services, NOAA ADDS, RainViewer, NASA GIBS, BigDataCloud, GDACS, USGS/EONET, OSM — with each source labelled according to its actual runtime status. WRF/MOSDAC/IMD/INCOIS honestly NOT CONFIGURED.
+Open-Meteo core services, NOAA ADDS, RainViewer, NASA GIBS, BigDataCloud, GDACS, USGS/EONET, OSM and keyless IMD district-nowcast RSS — with each source labelled according to its actual runtime status. WRF/MOSDAC/INCOIS remain NOT CONFIGURED; protected IMD APIs are not claimed.
 
 ## 8. Key Features
 Live weather + 24h/7d, GPS, chat+voice, AQI+UV, risk+travel, alerts, GIS radar,
@@ -51,7 +51,7 @@ Citizens, farmers, pilots, fishermen, disaster cells, researchers —
  vernacular voice access where bulletins can't reach.
 
 ## 14. Future Scope
-Official feeds when accessible, CPCB stations, WRF pipeline, push alerts,
+Additional official feeds when accessible, CPCB stations, WRF pipeline, push alerts,
 offline PWA, validated risk thresholds.
 
 ## 15. Demo / Conclusion
