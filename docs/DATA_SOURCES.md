@@ -20,9 +20,9 @@ Provider statuses are runtime-dependent; use `/api/providers/health` for the cur
 | OpenStreetMap | basemap tiles | LIVE | Free (ODbL) | Tile fair-use policy |
 | Web Speech API | STT/TTS 11 languages | LIVE | Browser-native | Chrome/Edge best; mic permission |
 | WRF feed | — | NOT CONFIGURED | would need feed | Optional local-file adapter (`wrf_adapter.py`, OFF); GFS is the production alternative |
-| IMD / MOSDAC / INCOIS / NDMA / Bhuvan | portals reachable; no open machine API found (probed 404/login-gated) | PORTAL_ONLY / REQUIRES_CREDENTIALS | portals free; data auth-gated | Computed alerts + GDACS + wave model used instead; see `/api/alerts/india` fused layer |
+| IMD district-nowcast RSS | official district warning feed | LIVE when upstream responds | Public RSS, no key | Official warning text; do not imply protected IMD API access |
 | MOSDAC / ISRO | — | NOT CONFIGURED | auth required | Portal reachable, no open data API |
-| IMD feed | — | NOT CONFIGURED | no open API found | Probed paths 404; portal only |
+| IMD protected API | — | NOT CONFIGURED | account required | RSS is the live keyless path; protected API is not claimed |
 | INCOIS feed | — | NOT CONFIGURED | no open API found | Portal reachable only |
 | LLM providers | — | NOT CONFIGURED | keys absent | Adapters ready; deterministic default |
 
