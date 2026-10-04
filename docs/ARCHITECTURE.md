@@ -1,6 +1,6 @@
 # ARCHITECTURE — WeatherGPT SIH 2026
 
-All components below are implemented and live in production.
+Core production components below are implemented and live; optional adapters are explicitly labelled NOT CONFIGURED until real feeds/runtimes are connected.
 
 ```
 USER (browser: chat / dashboard / map / panels)
@@ -25,7 +25,7 @@ TOOLS (deterministic, numbers always originate here)
  ├─ gdacs.py — UN JRC global events feed (TTL 30 min)
  ├─ risk_engine.py + travel.py — deterministic LOW→EXTREME / trip read
  └─ geo.reverse — BigDataCloud GPS→city (TTL 24 h)
-FREE DATA PROVIDERS — Open-Meteo ×5, RainViewer, NASA GIBS, NOAA ADDS,
+FREE DATA PROVIDERS — Open-Meteo ×5, RainViewer, NASA GIBS, NOAA ADDS, IMD district-nowcast RSS,
 BigDataCloud, GDACS, OSM tiles, Web Speech (browser)
  ↓
 PROVENANCE + VALIDATION — every payload: source, status
