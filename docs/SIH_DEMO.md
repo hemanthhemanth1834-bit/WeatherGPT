@@ -14,8 +14,8 @@ Total: ~4 minutes. Every step uses production data with explicit LIVE / COMPUTED
 | 8 | 2:45 | Air·Sea tab | LIVE ADDS METAR chip + marine direction/period/SST |
 | 9 | 3:05 | Agri tab (Cotton/Nagpur) + Risk Assess | Advisory + LOW–EXTREME drivers + travel line |
 | 10 | 3:25 | Language → Telugu, ask; mic button | Telugu reply; mic fallback message if blocked |
-| 11 | 3:45 | NWP tab → Providers health | Provider health counts shown live; WRF/MOSDAC/LLM are NOT CONFIGURED unless explicitly connected, GFS temperature source shown with provenance |
+| 11 | 3:45 | NWP tab → Providers health | Provider health counts shown live; IMD district-nowcast RSS is LIVE when upstream responds; WRF/MOSDAC/LLM remain NOT CONFIGURED unless explicitly connected, GFS temperature source shown with provenance |
 | 12 | 4:00 | Close: problem→solution→impact line | "Every number on screen came from a labelled source; LIVE values are timestamped and computed/demo values are identified." |
 
 Fallback lines if anything stalls: "This panel shows its source and status —
-FALLBACK/ESTIMATED rather than guesses." Never claim official IMD status.
+FALLBACK/ESTIMATED rather than guesses." Use the live IMD district-nowcast RSS only for the warning text it actually returns; never imply access to protected IMD APIs or other official feeds.
