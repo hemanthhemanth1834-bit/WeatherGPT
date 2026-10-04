@@ -7,7 +7,7 @@ Only working features claimed; statuses verified in production.
 | Conversational AI | intent router + 19 tools + templates | LIVE |
 | Weather forecasting | Open-Meteo current/hourly/daily + GFS select | LIVE |
 | Real-time weather | live values + IST timestamps | LIVE |
-| Extreme weather alerts | 10-station computed scan + GDACS official feed | COMPUTED + OFFICIAL* |
+| Extreme weather alerts | 10-station computed scan + GDACS + IMD district-nowcast RSS | COMPUTED + OFFICIAL* |
 | Disaster intelligence | risk engine + travel + readiness + 112/1078 | ESTIMATED + STATIC |
 | GIS | Leaflet + OSM + alert zones + DEMO track | LIVE + DEMO |
 | Satellite | GIBS viewer links + verified tile pattern | API-DEPENDENT |
