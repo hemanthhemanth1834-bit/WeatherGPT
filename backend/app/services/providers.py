@@ -63,6 +63,11 @@ def probe_rainviewer() -> Dict[str, Any]:
     return _get("https://api.rainviewer.com/public/weather-maps.json")
 
 
+def probe_imd_rss() -> Dict[str, Any]:
+    """Probe the public official IMD district-nowcast RSS feed."""
+    return _get("https://mausam.imd.gov.in/imd_latest/contents/dist_nowcast_rss.php", timeout=8.0)
+
+
 def probe_gibs() -> Dict[str, Any]:
     """Probe a recent NASA GIBS tile so the health check does not expire."""
     probe_date = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2)).strftime("%Y-%m-%d")
@@ -93,7 +98,9 @@ PROVIDERS: List[Dict[str, Any]] = [
      "needs_key": False, "probe": probe_rainviewer},
     {"name": "NASA GIBS Tiles", "role": "satellite", "kind": "LIVE tiles",
      "needs_key": False, "probe": probe_gibs},
-    {"name": "IMD Portal", "role": "india", "kind": "portal reachable; no open data API",
+    {"name": "IMD District Nowcast RSS", "role": "india", "kind": "official warning text",
+     "needs_key": False, "probe": probe_imd_rss},
+    {"name": "IMD Portal", "role": "india", "kind": "portal reachable; protected APIs not claimed",
      "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
     {"name": "MOSDAC / ISRO", "role": "india", "kind": "auth required",
      "needs_key": True, "probe": None, "fixed": "REQUIRES_CREDENTIALS"},
