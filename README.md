@@ -108,7 +108,7 @@ NASA GIBS provides global satellite imagery through public WMTS/WMS services. �
 
 <img src="https://tilecache.rainviewer.com/v2/radar/838abf7afc16/512/4/20.59/78.96/2/1_0.png" alt="RainViewer radar over India" width="100%">
 
-RainViewer documents recent radar imagery through its public Weather Maps API, including recent frames at approximately 10-minute intervals. Its 2026 free offering retains past radar imagery for personal/educational use. citeturn1search1turn0search10
+RainViewer documents recent radar imagery through its public Weather Maps API, including recent past frames at approximately 10-minute intervals. The current free API does not provide future nowcast frames; WeatherGPT therefore labels radar as recent historical imagery only. citeturn1search1turn0search10
 
 **Live metadata:** https://api.rainviewer.com/public/weather-maps.json
 
