@@ -64,3 +64,18 @@ def test_service_functions_direct():
     assert len(list_tools()["tools"]) >= 11
     assert "sources" in get_satellite_info()
     assert "sources" in get_indian_sources_status()
+
+
+def test_provider_failure_is_explicit(monkeypatch):
+    import app.main as main_module
+
+    def fail(*args, **kwargs):
+        raise RuntimeError("upstream unavailable")
+
+    monkeypatch.setattr(main_module, "get_air_quality", fail)
+    res = client.get("/api/air-quality?location=Pune")
+    assert res.status_code == 200
+    body = res.json()
+    assert body["status"] == "UNAVAILABLE"
+    assert body["us_aqi"] is None
+    assert "fabricated" in body["message"]
