@@ -117,7 +117,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
           {GROUPS.map(([group, items]) => <div className="wg-ref-nav-group" key={group}><div className="wg-ref-nav-heading">{group}</div>{items.map(([id, Icon, label]) => <NavButton key={label} id={id} Icon={Icon} label={label} active={tab === id || (tab === "home" && id === "home")} onTab={onTab}/>)}</div>)}
         </div>
       </aside>
-      <main className="wg-ref-content">{children}</main>
+      <div className="wg-ref-content">{children}</div>
     </div>
 
     <div className="wg-ref-theme-float" onClick={() => go("home")}><span className="wg-ref-pulse" /><Sparkles size={14}/><span>Theme: <b>Auto ({condition})</b></span><span>⌃</span></div>
