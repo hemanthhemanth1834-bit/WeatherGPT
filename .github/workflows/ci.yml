@@ -71,7 +71,7 @@ jobs:
               "/api/disasters/earthquakes?limit=1",
               "/api/disasters/wildfires?limit=1",
               "/api/climate/history?location=Pune&years=2",
-              "/api/nwp/status",
+              "/api/nwp/status",\n              "/robots.txt",\n              "/sitemap.xml",
           ]
 
           failed = []
@@ -181,6 +181,12 @@ jobs:
               if page.locator("body").inner_text(timeout=10000).strip() == "":
                   raise SystemExit("Built page rendered empty")
               print("Local mobile UI loaded:", page.title())
+              desktop = context.new_page()
+              desktop.set_viewport_size({"width": 1440, "height": 900})
+              desktop.goto(url, wait_until="networkidle", timeout=60000)
+              if desktop.locator("main").count() != 1:
+                  raise SystemExit("Desktop page must expose exactly one main landmark")
+              desktop.close()
               unexpected = [msg for msg in severe if "ERR_CONNECTION_REFUSED" not in msg]
               if unexpected:
                   raise SystemExit(f"Browser console errors: {unexpected[:10]}")
