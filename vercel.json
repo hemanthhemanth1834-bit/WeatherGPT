@@ -3,5 +3,16 @@
   "framework": "vite",
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "rewrites": [{ "source": "/api/:path*", "destination": "/api/index.py" }]
+  "rewrites": [{ "source": "/api/:path*", "destination": "/api/index.py" }],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), geolocation=(self), microphone=(self)" }
+      ]
+    }
+  ]
 }
