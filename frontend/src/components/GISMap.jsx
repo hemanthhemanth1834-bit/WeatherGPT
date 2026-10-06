@@ -197,8 +197,8 @@ export default function GISMap({ weather, onAsk }) {
     <section aria-label="GIS weather console" style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
       <div className="wg-card" style={{ padding: "0.8rem 1rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center" }}>
-          <span className="wg-chip live">LIVE RADAR{frame ? ` · ${stampLabel(frame.time)}` : ""}</span>
-          <span className="wg-chip demo">DEMO: zones + cyclone line</span>
+          <span className="wg-chip live">LIVE RADAR HISTORY{frame ? ` · ${stampLabel(frame.time)}` : ""}</span>
+          <span className="wg-chip demo">DEMO: zones + illustrative track</span>
           {["radar", "alerts", "track", "quakes", "fires"].map((key) => (
             <label key={key} style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
               <input type="checkbox" className="wg-check" checked={layers[key]} onChange={(e) => setLayers({ ...layers, [key]: e.target.checked })} />
@@ -239,7 +239,7 @@ export default function GISMap({ weather, onAsk }) {
         <div ref={mapNode} style={{ height: "100%", width: "100%" }} aria-label="Interactive weather map" />
       </div>
       <p style={{ fontSize: "0.72rem", color: "var(--wg-muted)", margin: 0 }}>
-        Basemap © OpenStreetMap contributors · Radar © RainViewer (live frames) · Zones and track are application illustrations, not official warnings.
+        Basemap © OpenStreetMap contributors · Radar © RainViewer (past 2-hour frames) · Zones and track are application illustrations, not official warnings.
       </p>
     </section>
   );
