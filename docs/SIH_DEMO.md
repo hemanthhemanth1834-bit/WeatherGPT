@@ -4,7 +4,7 @@ Total: ~4 minutes. Every step uses production data with explicit LIVE / COMPUTED
 
 | # | Time | Action | Expected |
 |---|---|---|---|
-| 1 | 0:00 | Open https://weathergpt-kappa-pink.vercel.app/ | Hero + live Pune snapshot, ticker |
+| 1 | 0:00 | Open https://weathergpt-muchakarla.vercel.app/ | Hero + live Pune snapshot, ticker |
 | 2 | 0:20 | Click ◎ GPS (allow location) | "📍 Current Location — City, State" + refresh |
 | 3 | 0:50 | Chat: "Will it rain tomorrow in Vijayawada?" | Grounded reply + source + timestamp |
 | 4 | 1:20 | Forecast tab | 24h strip + sparkline + 7-day + cloud |
