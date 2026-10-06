@@ -655,3 +655,6 @@
 .wg-profile-actions .wg-btn:disabled{opacity:.45;cursor:not-allowed}
 .wg-admin-actions-top{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 .wg-admin-save-message{display:block;margin-top:.55rem;font-size:.7rem;color:#67e8c7;font-weight:700}
+
+
+.wg-skip-link{position:fixed;left:1rem;top:-5rem;z-index:9999;padding:.7rem 1rem;border-radius:.7rem;background:#eaf1fb;color:#07101f;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:top .15s ease}.wg-skip-link:focus{top:1rem;outline:3px solid var(--wg-accent);outline-offset:3px}
