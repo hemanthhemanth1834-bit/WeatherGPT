@@ -12,11 +12,12 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: {
-          react: ["react", "react-dom"],
-          maps: ["leaflet"],
-          three: ["three", "topojson-client"],
-          markdown: ["react-markdown", "remark-gfm"]
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("/react/") || id.includes("/react-dom/")) return "react";
+          if (id.includes("/leaflet/")) return "maps";
+          if (id.includes("/three/") || id.includes("/topojson-client/")) return "three";
+          if (id.includes("/react-markdown/") || id.includes("/remark-gfm/")) return "markdown";
         }
       }
     }
