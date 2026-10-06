@@ -152,7 +152,7 @@ jobs:
       - name: Install free browser test stack
         run: |
           python -m pip install --disable-pip-version-check playwright
-          python -m playwright install --with-deps chromium
+          python -m playwright install --with-deps chromium firefox webkit
       - name: Verify built UI in local browser
         run: |
           python -m http.server 4173 --directory dist > /tmp/weathergpt-ui.log 2>&1 &
