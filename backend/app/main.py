@@ -203,13 +203,13 @@ def air_quality(location: str = Query("Pune"), lat: Optional[float] = None,
     try:
         return get_air_quality(lat, lon)
     except RuntimeError:
-        estimated = 78
-        return {"us_aqi": estimated, "band": "Moderate", "standard": "US AQI (EPA)",
-                "dominant_pollutant": "—", "pm2_5": None, "pm10": None,
+        return {"us_aqi": None, "band": "Unavailable", "standard": "US AQI (EPA)",
+                "dominant_pollutant": None, "pm2_5": None, "pm10": None,
                 "nitrogen_dioxide": None, "ozone": None, "sulphur_dioxide": None,
                 "carbon_monoxide": None, "observed_at": "",
-                "data_source": "Local estimate (AQI upstream unavailable)",
-                "data_type": "Estimated", "status": "FALLBACK"}
+                "data_source": "Open-Meteo Air Quality",
+                "data_type": "Unavailable", "status": "UNAVAILABLE",
+                "message": "AQI upstream is temporarily unavailable; no value is fabricated."}
 
 
 @app.get("/api/travel/safety")
