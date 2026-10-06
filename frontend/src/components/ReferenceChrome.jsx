@@ -70,6 +70,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
   };
 
   return <div className="wg-ref-app">
+    <a className="wg-skip-link" href="#main-content">Skip to main content</a>
     <div className="wg-ref-atmosphere" aria-hidden="true"><div className="wg-ref-cloud" /><div className="wg-ref-rain" /><div className="wg-ref-rain wg-ref-rain-2" /></div>
 
     <header className="wg-ref-header">
