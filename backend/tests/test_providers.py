@@ -131,10 +131,11 @@ def test_engine_status():
 def test_climate_history_live():
     needs_network()
     response = client.get("/api/climate/history", params={"location": "Pune", "years": 2})
-    if response.status_code == 502:
-        # The upstream archive can transiently fail; the API must expose an
-        # honest unavailable state rather than fabricate historical values.
-        assert "Archive unavailable" in response.json().get("detail", "")
+    if response.status_code in (429, 502):
+        # CI can hit transient provider throttling or upstream archive outages.
+        # The API must expose an honest non-200 state rather than fabricate data.
+        detail = response.json().get("detail", "")
+        assert response.status_code == 429 or "Archive unavailable" in detail
         return
 
     assert response.status_code == 200
