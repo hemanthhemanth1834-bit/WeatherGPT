@@ -21,7 +21,8 @@ FREE_SOURCES = [
     {"name":"NOAA Aviation Weather","kind":"aviation","status":"LIVE","auth":"PUBLIC","url":"https://aviationweather.gov/data/api/"},
     {"name":"OpenStreetMap","kind":"gis","status":"LIVE","auth":"PUBLIC","url":"https://www.openstreetmap.org/"},
     {"name":"BigDataCloud GPS reverse geocode","kind":"location","status":"LIVE","auth":"NO KEY CLIENT","url":"https://www.bigdatacloud.com/free-api"},
-    {"name":"IMD official API/RSS","kind":"official","status":"LIVE/OPTIONAL","auth":"RSS PUBLIC / API ACCOUNT","url":"https://api.imd.gov.in/public/"},
+    {"name":"IMD District Nowcast RSS","kind":"official_warning","status":"AVAILABLE WHEN UPSTREAM RESPONDS","auth":"RSS PUBLIC","url":"https://mausam.imd.gov.in/imd_latest/contents/dist_nowcast_rss.php"},
+    {"name":"IMD protected API","kind":"official","status":"NOT CONFIGURED","auth":"API ACCOUNT REQUIRED","url":"https://api.imd.gov.in/public/"},
 ]
 
 OPTIONAL_ADAPTERS = [
