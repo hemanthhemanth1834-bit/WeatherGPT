@@ -12,7 +12,7 @@
 </p>
 
 <p align="center">
-  <a href="https://weathergpt-muchakarla.vercel.app/"><strong>LIVE DEMO</strong></a> ·
+  <a href="https://weathergpt-kappa-pink.vercel.app/"><strong>LIVE DEMO</strong></a> ·
   <a href="https://github.com/hemanthhemanth1834-bit/WeatherGPT">SOURCE</a> ·
   <a href="docs/SIH_DEMO.md">4-MINUTE DEMO</a> ·
   <a href="docs/ARCHITECTURE.md">ARCHITECTURE</a> ·
@@ -60,7 +60,7 @@ Open-Meteo currently documents a free weather API and 30+ models, including ECMW
 
 ### Live application
 
-**https://weathergpt-muchakarla.vercel.app/**
+**https://weathergpt-kappa-pink.vercel.app/**
 
 The existing deployment is provided for demonstration access. **This README rewrite does not trigger a new Vercel deployment.**
 
