@@ -21,6 +21,7 @@ const NwpSatellitePanel = lazy(() => import("./components/NwpSatellitePanel"));
 const ProvidersPanel = lazy(() => import("./components/ProvidersPanel"));
 const AboutDeveloper = lazy(() => import("./components/AboutDeveloper"));
 const CapabilitiesHub = lazy(() => import("./components/CapabilitiesHub"));
+const PrivacyPage = lazy(() => import("./components/PrivacyPage"));
 const ReferenceModulePanel = lazy(() => import("./components/ReferenceModulePanel"));
 
 
@@ -285,6 +286,7 @@ export default function App() {
           {tab === "satellite" && <NwpSatellitePanel location={place} lat={weather?.lat ?? 20} lon={weather?.lon ?? 78} focus="satellite" />}
           {tab === "about" && <AboutDeveloper />}
           {tab === "capabilities" && <CapabilitiesHub onOpen={(t) => setTab(t)} />}
+          {tab === "privacy" && <PrivacyPage />}
           {["life_cast","roadwatch","treeguard","trip_planner","utilitywatch","solar","deep_cast","evacuation"].includes(tab) && <ReferenceModulePanel module={tab} weather={weather} onTab={setTab} onAsk={askFromTab} />}
         </Suspense>
       </main>
