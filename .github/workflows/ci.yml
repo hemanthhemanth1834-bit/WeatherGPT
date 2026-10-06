@@ -32,7 +32,7 @@ jobs:
         run: python -m pip install --disable-pip-version-check requests
       - name: Smoke-test public production API
         env:
-          WEATHERGPT_URL: https://weathergpt-muchakarla.vercel.app
+          WEATHERGPT_URL: https://weathergpt-kappa-pink.vercel.app
         run: |
           python - <<'PY'
           import os
