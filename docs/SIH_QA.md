@@ -58,5 +58,6 @@ DEMO cyclone geometry + 112/1078 actions + readiness builder.
 (live METAR briefs), marine (wave/SST), disaster cells (alerts+risk+GIS),
 researchers (ERA5 history, Telugu-first access).
 
-**Future scope?** IMD/MOSDAC/INCOIS feeds when accessible; CPCB AQI stations;
-WRF pipeline; alert push subscriptions; offline PWA pack; validated risk study.
+**Future scope?** Protected IMD API access, MOSDAC/ISRO and INCOIS feeds when
+authorized/available; CPCB AQI stations; WRF pipeline; alert push
+subscriptions; offline PWA pack; validated risk study.
