@@ -11,9 +11,11 @@ farmers, pilots, and disaster cells.
 **Why not normal weather apps?** Apps show tables; WeatherGPT answers
 questions ("is it safe to travel?", "spray today?") with evidence attached.
 
-**Where does data come from?** Open-Meteo services, NOAA ADDS, RainViewer, NASA GIBS, BigDataCloud,
-GDACS, USGS, NASA EONET and OSM — free/public sources where permitted;
-current availability is shown by `/api/providers/health`.
+**Where does data come from?** Open-Meteo services, NOAA ADDS, RainViewer, NASA GIBS,
+BigDataCloud, GDACS, USGS, NASA EONET, OSM and the public IMD district-nowcast
+RSS feed — free/public sources where permitted. IMD RSS is used only for the
+warning text it actually returns; protected IMD APIs are not claimed. Current
+availability is shown by `/api/providers/health`.
 
 **How do you prevent hallucinations?** Numbers originate only in tools;
 templates fill them in; tests assert every °C figure exists in the payload;
@@ -38,9 +40,11 @@ same-origin static frontend on CDN. No database to scale.
 **How secure is it?** See `docs/SECURITY.md`: no secrets, CORS allowlist,
 rate limits, validation, no raw HTML.
 
-**Why are some providers NOT CONFIGURED?** WRF/MOSDAC/IMD/INCOIS need feeds
-or credentials that don't exist publicly; we probed and documented instead of
-faking. Architecture is ready the day access arrives.
+**Why are some providers NOT CONFIGURED?** WRF, MOSDAC/ISRO, protected IMD APIs
+and INCOIS need feeds or credentials that are not available to this deployment.
+The public IMD district-nowcast RSS path is configured separately and is marked
+LIVE only when the upstream responds. We probed and documented the limits
+instead of faking integrations.
 
 **What is the ML/AI contribution?** Rule-based NLU + deterministic risk/travel
 models with published thresholds; LLM adapters exist but are key-gated —
