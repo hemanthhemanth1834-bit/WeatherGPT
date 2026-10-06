@@ -8,4 +8,17 @@ export default defineConfig({
     tailwindcss(),
     react()
   ],
+  build: {
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom"],
+          maps: ["leaflet"],
+          three: ["three", "topojson-client"],
+          markdown: ["react-markdown", "remark-gfm"]
+        }
+      }
+    }
+  },
 })
