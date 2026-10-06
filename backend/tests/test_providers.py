@@ -130,7 +130,15 @@ def test_engine_status():
 
 def test_climate_history_live():
     needs_network()
-    body = client.get("/api/climate/history", params={"location": "Pune", "years": 2}).json()
+    response = client.get("/api/climate/history", params={"location": "Pune", "years": 2})
+    if response.status_code == 502:
+        # The upstream archive can transiently fail; the API must expose an
+        # honest unavailable state rather than fabricate historical values.
+        assert "Archive unavailable" in response.json().get("detail", "")
+        return
+
+    assert response.status_code == 200
+    body = response.json()
     assert body["status"] == "LIVE"
     assert "OBSERVED" in body["data_type"]
     assert len(body["years"]) >= 1
