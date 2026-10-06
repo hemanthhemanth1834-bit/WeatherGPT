@@ -163,34 +163,34 @@ jobs:
           time.sleep(2)
           url = "http://127.0.0.1:4173"
           with sync_playwright() as p:
-              browser = p.chromium.launch()
-              context = browser.new_context(
-                  geolocation={"latitude": 16.5062, "longitude": 80.6480},
-                  permissions=["geolocation"],
-                  viewport={"width": 390, "height": 844},
-              )
-              page = context.new_page()
-              severe = []
-              page.on(
-                  "console",
-                  lambda msg: severe.append(msg.text) if msg.type == "error" else None,
-              )
-              page.goto(url, wait_until="networkidle", timeout=60000)
-              if "WeatherGPT" not in page.title():
-                  raise SystemExit(f"Unexpected page title: {page.title()!r}")
-              if page.locator("body").inner_text(timeout=10000).strip() == "":
-                  raise SystemExit("Built page rendered empty")
-              print("Local mobile UI loaded:", page.title())
-              desktop = context.new_page()
-              desktop.set_viewport_size({"width": 1440, "height": 900})
-              desktop.goto(url, wait_until="networkidle", timeout=60000)
-              if desktop.locator("main").count() != 1:
-                  raise SystemExit("Desktop page must expose exactly one main landmark")
-              desktop.close()
-              unexpected = [msg for msg in severe if "ERR_CONNECTION_REFUSED" not in msg]
-              if unexpected:
-                  raise SystemExit(f"Browser console errors: {unexpected[:10]}")
-              browser.close()
+              for browser_type in (p.chromium, p.firefox, p.webkit):
+                  browser = browser_type.launch()
+                  context = browser.new_context(
+                      geolocation={"latitude": 16.5062, "longitude": 80.6480},
+                      permissions=["geolocation"],
+                      viewport={"width": 390, "height": 844},
+                  )
+                  page = context.new_page()
+                  severe = []
+                  page.on("console", lambda msg: severe.append(msg.text) if msg.type == "error" else None)
+                  page.goto(url, wait_until="networkidle", timeout=60000)
+                  if "WeatherGPT" not in page.title():
+                      raise SystemExit(f"Unexpected title in {browser_type.name}: {page.title()!r}")
+                  if page.locator("body").inner_text(timeout=10000).strip() == "":
+                      raise SystemExit(f"Empty mobile render in {browser_type.name}")
+                  if page.locator("main").count() != 1:
+                      raise SystemExit(f"Missing main landmark in {browser_type.name}")
+                  desktop = context.new_page()
+                  desktop.set_viewport_size({"width": 1440, "height": 900})
+                  desktop.goto(url, wait_until="networkidle", timeout=60000)
+                  if desktop.locator("main").count() != 1:
+                      raise SystemExit(f"Desktop landmark failure in {browser_type.name}")
+                  desktop.close()
+                  unexpected = [msg for msg in severe if "ERR_CONNECTION_REFUSED" not in msg]
+                  if unexpected:
+                      raise SystemExit(f"Browser console errors in {browser_type.name}: {unexpected[:10]}")
+                  print("Browser pass:", browser_type.name)
+                  browser.close()
           PY
 
   frontend:
