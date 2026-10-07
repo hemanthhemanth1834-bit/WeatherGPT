@@ -71,7 +71,9 @@ jobs:
               "/api/disasters/earthquakes?limit=1",
               "/api/disasters/wildfires?limit=1",
               "/api/climate/history?location=Pune&years=2",
-              "/api/nwp/status",\n              "/robots.txt",\n              "/sitemap.xml",
+              "/api/nwp/status",
+              "/robots.txt",
+              "/sitemap.xml",
           ]
 
           failed = []
