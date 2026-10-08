@@ -1,78 +1,80 @@
-name: WeatherGPT Vercel Production Deploy
+name: WeatherGPT Production Verification
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "frontend/**"
-      - "backend/**"
-      - "api/**"
-      - "vercel.json"
-      - "package.json"
-      - "package-lock.json"
-      - ".vercelignore"
-      - ".github/workflows/vercel-deploy.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  deploy:
+  verify:
     runs-on: ubuntu-latest
-    env:
-      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-      VERCEL_ORG_ID: team_wAPjaH6opD1fIYH4zVYjLXIT
-      VERCEL_PROJECT_ID: prj_dCJzTNmOTBmFUXlr0v19lmqIAf8R
     steps:
-      - name: Checkout latest main
-        uses: actions/checkout@v5
-
-      - name: Validate Vercel token
-        shell: bash
-        run: |
-          token="$(printf '%s' "$VERCEL_TOKEN" | tr -d '[:space:]')"
-          if [ -z "$token" ]; then
-            echo "::error::VERCEL_TOKEN GitHub secret is empty."
-            exit 1
-          fi
-          if [[ "$token" == *"<"* || "$token" == *">"* || "$token" == "yourVercelpersonalaccesstoken" ]]; then
-            echo "::error::VERCEL_TOKEN still contains a placeholder. Replace the GitHub Actions secret VERCEL_TOKEN with the real Vercel Personal Access Token."
-            exit 1
-          fi
-          echo "::add-mask::$token"
-          echo "VERCEL_TOKEN_CLEAN=$token" >> "$GITHUB_ENV"
-
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-
-      - name: Link existing Vercel project
-        run: vercel link --project="$VERCEL_PROJECT_ID" --team="$VERCEL_ORG_ID" --yes --token="$VERCEL_TOKEN_CLEAN"
-
-      - name: Deploy current main to production
-        run: vercel deploy --prod --yes --token="$VERCEL_TOKEN_CLEAN" --team="$VERCEL_ORG_ID"
-
-      - name: Verify production
+      - name: Verify public production API
+        env:
+          WEATHERGPT_URL: https://weathergpt-kappa-pink.vercel.app
         run: |
           python - <<'PY'
-          import urllib.request
+          import os, sys, time, requests
 
-          base = "https://weathergpt-kappa-pink.vercel.app"
-          paths = [
+          base = os.environ["WEATHERGPT_URL"].rstrip("/")
+          checks = [
+              "/",
               "/api/health",
               "/api/platform/capabilities",
-              "/api/nwp/compare?location=Pune",
+              "/api/providers/health?live=true",
+              "/api/agent/tools",
+              "/api/agent/engine",
+              "/api/voice/status",
               "/api/weather/current?location=Pune",
+              "/api/air-quality?location=Pune",
+              "/api/weather/current?location=Pune&model=gfs",
+              "/api/weather/current?location=Pune&model=ecmwf",
+              "/api/weather/current?location=Pune&model=icon",
+              "/api/locations/reverse?lat=16.5062&lon=80.6480",
+              "/api/satellite/info?lat=16.5062&lon=80.6480",
+              "/api/disasters/earthquakes?limit=1",
+              "/api/disasters/wildfires?limit=1",
+              "/api/climate/history?location=Pune&years=2",
+              "/api/nwp/status",
+              "/robots.txt",
+              "/sitemap.xml",
           ]
 
-          for path in paths:
-              with urllib.request.urlopen(base + path, timeout=30) as r:
-                  body = r.read().decode("utf-8", errors="replace")
-                  print(r.status, path)
-                  if r.status != 200:
-                      raise SystemExit(f"Verification failed: {path}")
-                  if path == "/api/health":
-                      print(body[:500])
+          for attempt in range(12):
+              try:
+                  response = requests.get(base + "/api/health", timeout=10)
+                  if response.status_code == 200:
+                      break
+              except requests.RequestException as exc:
+                  print(f"Waiting for production: {exc}")
+              time.sleep(10)
+          else:
+              raise SystemExit("Production health endpoint did not become ready.")
 
-          print("Production API verification passed.")
+          failed = []
+          for path in checks:
+              try:
+                  response = requests.get(base + path, timeout=30)
+                  print(f"{response.status_code} {path}")
+                  if response.status_code != 200:
+                      failed.append(f"{path} -> {response.status_code}")
+              except requests.RequestException as exc:
+                  failed.append(f"{path} -> {exc}")
+
+          language = requests.post(
+              base + "/api/language/analyze",
+              json={"text": "Vijayawada lo repu rain untunda?"},
+              timeout=30,
+          )
+          print(f"{language.status_code} POST /api/language/analyze")
+          if language.status_code != 200:
+              failed.append(f"/api/language/analyze -> {language.status_code}")
+
+          if failed:
+              print("FAILED:")
+              print("\n".join(failed))
+              sys.exit(1)
+
+          print("WeatherGPT production verification passed.")
           PY
