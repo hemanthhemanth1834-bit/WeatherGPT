@@ -78,7 +78,8 @@ def get_weather(lat: float, lon: float, place: str, state: str,
 
     model: 'auto' (Open-Meteo blend), 'gfs', 'ecmwf', or 'icon'.
     """
-    selection = "gfs" if (model or "").lower() == "gfs" else "auto"
+    requested = (model or "auto").strip().lower()
+    selection = requested if requested in {"auto", "gfs", "ecmwf", "icon"} else "auto"
     key = f"wx:{round(lat, 3)}:{round(lon, 3)}:{place}:{state}:{selection}"
     return cached(WEATHER_CACHE_TTL_SECONDS, key,
                   lambda: _download(lat, lon, place, state, selection))
@@ -165,7 +166,22 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
             wind_max=round(float(wmax[i]), 1) if i < len(wmax) else 15.0,
         ))
 
-    aqi = estimate_aqi(state)
+    # Keep weather and air-quality provenance separate: prefer live AQI, and
+    # explicitly label the estimate if the dedicated provider is unavailable.
+    try:
+        from .air_quality import get_air_quality
+        aq = get_air_quality(lat, lon)
+        aqi = int(aq["us_aqi"])
+        aqi_status = str(aq.get("band") or aqi_band(aqi))
+        aqi_source = str(aq.get("data_source") or "Open-Meteo Air Quality")
+        aqi_data_type = str(aq.get("data_type") or "Observation")
+        aqi_observed_at = str(aq.get("observed_at") or "")
+    except Exception:
+        aqi = estimate_aqi(state)
+        aqi_status = aqi_band(aqi)
+        aqi_source = "Location-based estimate (AQI provider unavailable)"
+        aqi_data_type = "ESTIMATED"
+        aqi_observed_at = ""
     rise = (daily_raw.get("sunrise", ["06:05"]) or ["06:05"])[0]
     fall = (daily_raw.get("sunset", ["18:35"]) or ["18:35"])[0]
     uv_list = daily_raw.get("uv_index_max", [6.0]) or [6.0]
@@ -181,7 +197,9 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         cloud_cover=float(current.get("cloud_cover", 0.0) or 0.0),
         pressure=round(float(current.get("surface_pressure", 1012.0)), 1),
         uv_index=round(float(uv_list[0]), 1),
-        visibility=9.0, aqi=aqi, aqi_status=aqi_band(aqi),
+        visibility=9.0, aqi=aqi, aqi_status=aqi_status,
+        aqi_source=aqi_source, aqi_data_type=aqi_data_type,
+        aqi_observed_at=aqi_observed_at,
         sunrise=rise.split("T")[1] if "T" in rise else rise,
         sunset=fall.split("T")[1] if "T" in fall else fall,
         hourly=hourly, daily=daily,
@@ -213,7 +231,9 @@ def _fallback(lat: float, lon: float, place: str, state: str) -> WeatherData:
         current_temp=27.0, feels_like=29.0, condition="Partly Cloudy",
         condition_code=2, humidity=65, wind_speed=12.0, wind_direction="W",
         precipitation=0.0, cloud_cover=25.0, pressure=1011.0, uv_index=6.0, visibility=8.0,
-        aqi=80, aqi_status="Satisfactory", sunrise="06:05", sunset="18:35",
+        aqi=80, aqi_status="Satisfactory",
+        aqi_source="Local fallback estimate", aqi_data_type="SIMULATED", aqi_observed_at="",
+        sunrise="06:05", sunset="18:35",
         hourly=hourly, daily=daily,
         nwp_model="Unavailable — local estimate",
         data_source="Local estimate (upstream unreachable)",

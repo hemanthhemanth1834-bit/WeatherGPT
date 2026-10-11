@@ -13,7 +13,9 @@ permissions:
 jobs:
   dependency-review:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
+    # GitHub's dependency-review API requires the repository dependency graph to be enabled.
+    # Set the repository Actions variable DEPENDENCY_GRAPH_ENABLED=true after enabling it.
+    if: github.event_name == 'pull_request' && vars.DEPENDENCY_GRAPH_ENABLED == 'true'
     steps:
       - uses: actions/checkout@v6
       - name: Review dependency changes
