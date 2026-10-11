@@ -166,7 +166,7 @@ jobs:
       - name: Start local backend
         working-directory: backend
         run: |
-          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/weathergpt-api.log 2>&1 &
+          CORS_ALLOW_ORIGINS="http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173" python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/weathergpt-api.log 2>&1 &
           python - <<'PY'
           import time
           import requests
