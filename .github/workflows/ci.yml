@@ -116,16 +116,26 @@ jobs:
         run: |
           python - <<'PY'
           from fastapi.testclient import TestClient
+          from fastapi.responses import Response
           from app.main import app
+          from app.services import vibevoice
+
+          # CI must not depend on Edge-TTS internet availability. Exercise the
+          # HTTP route deterministically while testing the provider separately
+          # through its explicit error handling and status reporting.
+          async def fake_edge_tts(text: str, language: str = "en"):
+              return Response(content=b"test-audio", media_type="audio/mpeg")
+
+          vibevoice._edge_tts = fake_edge_tts
 
           with TestClient(app) as client:
               tts = client.post(
                   "/api/voice/tts",
                   json={"text": "WeatherGPT test", "language": "en"},
               )
-              print("TTS:", tts.status_code, len(tts.content))
+              print("TTS route:", tts.status_code, len(tts.content))
               if tts.status_code != 200 or not tts.content:
-                  raise SystemExit("Local TTS smoke test failed.")
+                  raise SystemExit("Local TTS route smoke test failed.")
 
               with client.websocket_connect("/ws/alerts") as ws:
                   ws.send_text("health-check")
