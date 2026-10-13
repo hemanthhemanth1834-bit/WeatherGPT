@@ -184,7 +184,7 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
 
           <form onSubmit={send} style={{ display: "flex", gap: "0.5rem" }}>
             <input className="wg-input" aria-label="Type your weather question" placeholder={recording ? "Listening… speak now" : "Ask anything about weather, risks, crops, flights, seas…"}
-              value={draft} onChange={(e) => setDraft(e.target.value)} style={recording ? { borderColor: "var(--wg-bad)" } : undefined} />
+              value={draft} onChange={(e) => setDraft(e.target.value)} style={{ color: "var(--wg-text-primary, #eaf1fb)", backgroundColor: "rgba(7, 11, 22, 0.92)", caretColor: "#38bdf8", borderColor: recording ? "var(--wg-bad)" : "rgba(148, 163, 184, 0.42)", ...(recording ? { boxShadow: "0 0 0 2px rgba(248, 113, 113, 0.18)" } : {}) }} />
             <button
               type="button"
               className={`wg-btn-ghost${recording ? " wg-mic-live" : ""}`}

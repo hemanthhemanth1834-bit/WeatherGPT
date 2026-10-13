@@ -50,6 +50,9 @@ class WeatherData(BaseModel):
     visibility: float = 9.0
     aqi: int = 80
     aqi_status: str = "Satisfactory"
+    aqi_source: str = "Location-based estimate"
+    aqi_data_type: str = "ESTIMATED"
+    aqi_observed_at: str = ""
     sunrise: str = "06:05"
     sunset: str = "18:35"
     hourly: List[HourlyPoint] = Field(default_factory=list)

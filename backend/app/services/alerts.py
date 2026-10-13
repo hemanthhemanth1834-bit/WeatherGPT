@@ -3,8 +3,8 @@
 Method: sample live Open-Meteo telemetry at a set of reference stations
 and raise CAP-styled alerts when documented thresholds are crossed.
 These are application-generated estimates and are NEVER official
-government bulletins. A clearly illustrative synoptic note is included
-when no station crosses a threshold, so the feed is never empty.
+government bulletins. No synthetic alert is created when no threshold
+is crossed; illustrative scenarios belong in a separate demo feed.
 """
 import datetime
 from typing import List, Optional
@@ -169,20 +169,6 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
                              "Small craft should stay near harbour; follow official marine bulletins."),
                 color=SEVERITY_COLORS["Yellow"],
             ))
-
-    if not alerts:
-        alerts.append(CAPAlert(
-            id=f"WG-SYN-{datetime.datetime.now().strftime('%d%H')}",
-            headline="ORANGE WATCH: Low-pressure activity over the north Bay of Bengal (illustrative)",
-            event="Synoptic Watch", severity="Orange",
-            urgency="Expected", certainty="Likely",
-            area_desc="Odisha and West Bengal coasts and adjoining sea areas",
-            district="Puri", state="Odisha", lat=19.8135, lon=85.8312,
-            effective=now, expires=_stamp(36),
-            instruction=("Illustrative synoptic note generated when no station crosses a "
-                         "threshold. Fishermen should check official bulletins before sailing."),
-            color=SEVERITY_COLORS["Orange"],
-        ))
 
     if severity and severity.lower() != "all":
         alerts = [a for a in alerts if a.severity.lower() == severity.lower()]

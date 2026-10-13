@@ -116,16 +116,26 @@ jobs:
         run: |
           python - <<'PY'
           from fastapi.testclient import TestClient
+          from fastapi.responses import Response
           from app.main import app
+          from app.services import vibevoice
+
+          # CI must not depend on Edge-TTS internet availability. Exercise the
+          # HTTP route deterministically while testing the provider separately
+          # through its explicit error handling and status reporting.
+          async def fake_edge_tts(text: str, language: str = "en"):
+              return Response(content=b"test-audio", media_type="audio/mpeg")
+
+          vibevoice._edge_tts = fake_edge_tts
 
           with TestClient(app) as client:
               tts = client.post(
                   "/api/voice/tts",
                   json={"text": "WeatherGPT test", "language": "en"},
               )
-              print("TTS:", tts.status_code, len(tts.content))
+              print("TTS route:", tts.status_code, len(tts.content))
               if tts.status_code != 200 or not tts.content:
-                  raise SystemExit("Local TTS smoke test failed.")
+                  raise SystemExit("Local TTS route smoke test failed.")
 
               with client.websocket_connect("/ws/alerts") as ws:
                   ws.send_text("health-check")
@@ -166,7 +176,7 @@ jobs:
       - name: Start local backend
         working-directory: backend
         run: |
-          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/weathergpt-api.log 2>&1 &
+          CORS_ALLOW_ORIGINS="http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173" python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > /tmp/weathergpt-api.log 2>&1 &
           python - <<'PY'
           import time
           import requests
@@ -200,7 +210,10 @@ jobs:
                   page = context.new_page()
                   severe = []
                   page.on("console", lambda msg: severe.append(msg.text) if msg.type == "error" else None)
-                  page.goto(url, wait_until="networkidle", timeout=60000)
+                  # Do not wait for networkidle: live weather/polling requests can
+                  # keep the network active indefinitely in Firefox/WebKit.
+                  page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                  page.locator("main").wait_for(state="visible", timeout=15000)
                   if "WeatherGPT" not in page.title():
                       raise SystemExit(f"Unexpected title in {browser_type.name}: {page.title()!r}")
                   if page.locator("body").inner_text(timeout=10000).strip() == "":
@@ -209,7 +222,8 @@ jobs:
                       raise SystemExit(f"Missing main landmark in {browser_type.name}")
                   desktop = context.new_page()
                   desktop.set_viewport_size({"width": 1440, "height": 900})
-                  desktop.goto(url, wait_until="networkidle", timeout=60000)
+                  desktop.goto(url, wait_until="domcontentloaded", timeout=30000)
+                  desktop.locator("main").wait_for(state="visible", timeout=15000)
                   if desktop.locator("main").count() != 1:
                       raise SystemExit(f"Desktop landmark failure in {browser_type.name}")
                   desktop.close()
