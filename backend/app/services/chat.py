@@ -489,11 +489,11 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
                   f"high {tomorrow.temp_max} degrees Celsius, low {tomorrow.temp_min} degrees, "
                   f"{tomorrow.rain_sum} millimetres of expected rainfall. {rain_text}.")
         markdown = (
-            f"### Tomorrow's forecast — {proper}, {state} ({tomorrow.date})\\n\\n"
-            f"- **Condition:** {tomorrow.condition}\\n"
-            f"- **High / low:** {tomorrow.temp_max}°C / {tomorrow.temp_min}°C\\n"
-            f"- **Expected rainfall:** {tomorrow.rain_sum} mm — {rain_text}\\n"
-            f"- **Maximum wind:** {tomorrow.wind_max} km/h\\n\\n"
+            f"### Tomorrow's forecast — {proper}, {state} ({tomorrow.date})\n\n"
+            f"- **Condition:** {tomorrow.condition}\n"
+            f"- **High / low:** {tomorrow.temp_max}°C / {tomorrow.temp_min}°C\n"
+            f"- **Expected rainfall:** {tomorrow.rain_sum} mm — {rain_text}\n"
+            f"- **Maximum wind:** {tomorrow.wind_max} km/h\n\n"
             f"_Source: {data.data_source} · {data.status} · forecast date {tomorrow.date}. "
             "Rainfall is a model forecast, not a guarantee or a measured observation._"
         )
