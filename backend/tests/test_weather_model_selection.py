@@ -38,3 +38,35 @@ def test_live_weather_summary_marks_heuristic_aqi_as_estimated():
     )
     _, markdown = _render_weather("Vijayawada", "Andhra Pradesh", data, "en")
     assert "78 (estimated)" in markdown
+
+
+
+def test_live_model_with_missing_optional_fields_stays_live_and_labels_estimates():
+    current = {
+        "time": "2026-10-14T20:00", "temperature_2m": 28.3,
+        "relative_humidity_2m": 79, "apparent_temperature": 32.9,
+        "precipitation": 0.0, "weather_code": 3, "cloud_cover": 90,
+        "surface_pressure": 1007.0, "wind_speed_10m": 11.9, "wind_direction_10m": 88,
+    }
+    hourly = {
+        "time": ["2026-10-14T20:00"], "temperature_2m": [28.3],
+        "precipitation_probability": [18], "precipitation": [0.0],
+        "weather_code": [3], "wind_speed_10m": [11.9],
+        "relative_humidity_2m": [79], "visibility": [None],
+    }
+    daily = {
+        "time": ["2026-10-14"], "weather_code": [3],
+        "temperature_2m_max": [30.0], "temperature_2m_min": [24.0],
+        "precipitation_sum": [0.0], "wind_speed_10m_max": [12.0],
+        "sunrise": ["2026-10-14T06:00"], "sunset": ["2026-10-14T17:45"],
+        "uv_index_max": [None],
+    }
+    result = weather._from_api(
+        {"current": current, "hourly": hourly, "daily": daily},
+        16.5, 80.6, "Vijayawada", "Andhra Pradesh", "2026-10-14T20:00",
+        "ECMWF IFS (via Open-Meteo)",
+    )
+    assert result.status == "LIVE"
+    assert result.nwp_model == "ECMWF IFS (via Open-Meteo)"
+    assert result.uv_index_source.startswith("Estimated")
+    assert result.visibility_source.startswith("Estimated")
