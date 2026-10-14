@@ -230,7 +230,8 @@ def _render_weather(place: str, state: str, data: WeatherData,
         "rain": rain, "precip": data.precipitation,
         "wind": data.wind_speed, "wdir": data.wind_direction,
         "hum": data.humidity, "pres": data.pressure,
-        "aqi": data.aqi, "aqi_status": data.aqi_status, "uv": data.uv_index,
+        "aqi": f"{data.aqi} (estimated)" if data.status == "LIVE" else f"{data.aqi} (not live)",
+        "aqi_status": data.aqi_status, "uv": data.uv_index,
         "rise": data.sunrise, "set": data.sunset,
     }
     speech = template["speech"].format(**values)
