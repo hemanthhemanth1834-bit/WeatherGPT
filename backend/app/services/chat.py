@@ -409,9 +409,11 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
                   f"Baseline {ref['baseline_period']}; monsoon LPA {ref['lpa_monsoon_rainfall_mm']} mm.")
     if wants_travel:
         risk = assess_risk(data)
+        visibility_label = (f"{data.visibility} km" if data.visibility_source.startswith("Open-Meteo")
+                            else f"{data.visibility} km (estimated)")
         top = risk["advisories"][0] if risk["advisories"] else ""
         extra += (f"\n\n**Travel read (ESTIMATED risk {risk['overall']}):** {top} "
-                  f"Wind {data.wind_speed} km/h, visibility {data.visibility} km, "
+                  f"Wind {data.wind_speed} km/h, visibility {visibility_label}, "
                   f"rain chance {(data.hourly[0].rain_prob if data.hourly else 0)}%.")
     if wants_aqi:
         try:
