@@ -198,7 +198,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
     rise = (daily_raw.get("sunrise", ["06:05"]) or ["06:05"])[0]
     fall = (daily_raw.get("sunset", ["18:35"]) or ["18:35"])[0]
     uv_list = daily_raw.get("uv_index_max", [])
-    uv_value = next((value for value in uv_list if isinstance(value, (int, float))), None)
+    uv_value = uv_list[0] if uv_list and isinstance(uv_list[0], (int, float)) else None
     uv_index = round(float(uv_value), 1) if uv_value is not None else 6.0
     uv_source = "Open-Meteo daily forecast" if uv_value is not None else "Estimated fallback (UV omitted by selected model)"
     visibility_value = hourly_raw["visibility"][start]
