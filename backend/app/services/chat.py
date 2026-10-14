@@ -238,6 +238,8 @@ def _render_weather(place: str, state: str, data: WeatherData,
     markdown = f"### {template['title'].format(**values)}\n\n" + template["body"].format(**values)
     markdown += (f"\n\n_Source: {data.data_source} · {data.status} · "
                  f"Updated {data.updated_at_ist or 'just now'}_")
+    if data.status == "LIVE" and data.data_type.lower() == "forecast":
+        markdown += "\n\n_These are live-retrieved model forecast values, not direct station observations. AQI shown above is an estimate; use the Air Quality view for the live AQI feed._"
     return speech, markdown
 
 
@@ -474,6 +476,27 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
             extra += "\n\n**Solar estimate:** unavailable right now."
 
     speech, markdown = _render_weather(proper, state, data, lang)
+    tomorrow_terms = ("tomorrow", "tomorrow's", "repu", "कल", "उद्या", "நாளை",
+                      "రేపు", "আগামীকাল", "ನಾಳೆ", "നാളെ", "કાલે", "କାଲି")
+    special_intent = (wants_agri or wants_air or wants_sea or wants_alert or wants_climate
+                      or wants_travel or wants_aqi or wants_quake or wants_fire or wants_flood
+                      or wants_shelter or wants_solar)
+    if not special_intent and len(data.daily) > 1 and any(term in lowered for term in tomorrow_terms):
+        tomorrow = data.daily[1]
+        rain_text = ("rainfall is forecast" if tomorrow.rain_sum >= 0.1
+                     else "no measurable rainfall is forecast")
+        speech = (f"Tomorrow's forecast for {proper}: {tomorrow.condition}, "
+                  f"high {tomorrow.temp_max} degrees Celsius, low {tomorrow.temp_min} degrees, "
+                  f"{tomorrow.rain_sum} millimetres of expected rainfall. {rain_text}.")
+        markdown = (
+            f"### Tomorrow's forecast — {proper}, {state} ({tomorrow.date})\\n\\n"
+            f"- **Condition:** {tomorrow.condition}\\n"
+            f"- **High / low:** {tomorrow.temp_max}°C / {tomorrow.temp_min}°C\\n"
+            f"- **Expected rainfall:** {tomorrow.rain_sum} mm — {rain_text}\\n"
+            f"- **Maximum wind:** {tomorrow.wind_max} km/h\\n\\n"
+            f"_Source: {data.data_source} · {data.status} · forecast date {tomorrow.date}. "
+            "Rainfall is a model forecast, not a guarantee or a measured observation._"
+        )
     markdown += extra
     template = TEMPLATES.get(lang, TEMPLATES["en"])
     suggestions = [s.format(place=proper, state=state) for s in template["suggest"]]
