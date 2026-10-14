@@ -213,7 +213,16 @@ jobs:
                   if desktop.locator("main").count() != 1:
                       raise SystemExit(f"Desktop landmark failure in {browser_type.name}")
                   desktop.close()
-                  unexpected = [msg for msg in severe if "ERR_CONNECTION_REFUSED" not in msg]
+                  # Browser smoke validates our built UI, not third-party provider uptime.
+          # Firefox can report a CORS/network error when Open-Meteo is unreachable in CI.
+          unexpected = [
+              msg for msg in severe
+              if "ERR_CONNECTION_REFUSED" not in msg
+              and not ("api.open-meteo.com" in msg and (
+                  "Cross-Origin Request Blocked" in msg
+                  or "CORS request did not succeed" in msg
+              ))
+          ]
                   if unexpected:
                       raise SystemExit(f"Browser console errors in {browser_type.name}: {unexpected[:10]}")
                   print("Browser pass:", browser_type.name)

@@ -496,7 +496,7 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         markdown = (
             f"### Tomorrow's forecast — {proper}, {state} ({tomorrow.date})\n\n"
             f"- **Condition:** {tomorrow.condition}\n"
-            f"- **High / low:** {tomorrow.temp_max}°C / {tomorrow.temp_min}°C\n"
+            f"- **High / low:** {tomorrow.temp_max:g}°C / {tomorrow.temp_min:g}°C\n"
             f"- **Expected rainfall:** {tomorrow.rain_sum} mm — {rain_text}\n"
             f"- **Maximum wind:** {tomorrow.wind_max} km/h\n\n"
             f"_Source: {data.data_source} · {data.status} · forecast date {tomorrow.date}. "

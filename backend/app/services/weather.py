@@ -123,13 +123,13 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         raise ValueError("Open-Meteo response is missing current/hourly/daily objects")
 
     required_current = (
-        "time", "temperature_2m", "relative_humidity_2m", "apparent_temperature",
+        "temperature_2m", "relative_humidity_2m", "apparent_temperature",
         "precipitation", "weather_code", "cloud_cover", "surface_pressure",
         "wind_speed_10m", "wind_direction_10m",
     )
     missing_current = [key for key in required_current if current.get(key) is None]
     if missing_current:
-        raise ValueError("Open-Meteo current data missing: " + ", ".join(missing_current))
+        raise ValueError("Open-Meteo missing current data: " + ", ".join(missing_current))
 
     required_arrays = {
         "hourly": (hourly_raw, ("time", "temperature_2m", "precipitation_probability",
