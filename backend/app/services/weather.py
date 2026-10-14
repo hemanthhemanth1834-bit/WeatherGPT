@@ -197,7 +197,13 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
     aqi = estimate_aqi(state)
     rise = (daily_raw.get("sunrise", ["06:05"]) or ["06:05"])[0]
     fall = (daily_raw.get("sunset", ["18:35"]) or ["18:35"])[0]
-    uv_list = daily_raw.get("uv_index_max", [6.0]) or [6.0]
+    uv_list = daily_raw.get("uv_index_max", [])
+    uv_value = next((value for value in uv_list if isinstance(value, (int, float))), None)
+    uv_index = round(float(uv_value), 1) if uv_value is not None else 6.0
+    uv_source = "Open-Meteo daily forecast" if uv_value is not None else "Estimated fallback (UV omitted by selected model)"
+    visibility_value = hourly_raw["visibility"][start]
+    visibility = round(float(visibility_value) / 1000, 1) if isinstance(visibility_value, (int, float)) else 8.0
+    visibility_source = "Open-Meteo hourly forecast" if isinstance(visibility_value, (int, float)) else "Estimated fallback (visibility omitted by selected model)"
     return WeatherData(
         location=place, state=state, country="India", lat=lat, lon=lon,
         current_temp=round(float(current.get("temperature_2m", 28.0)), 1),
@@ -209,8 +215,8 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         precipitation=rain_now,
         cloud_cover=float(current.get("cloud_cover", 0.0) or 0.0),
         pressure=round(float(current.get("surface_pressure", 1012.0)), 1),
-        uv_index=round(float(uv_list[0]), 1),
-        visibility=round(float(hourly_raw["visibility"][start]) / 1000, 1), aqi=aqi, aqi_status=aqi_band(aqi),
+        uv_index=uv_index, uv_index_source=uv_source,
+        visibility=visibility, visibility_source=visibility_source, aqi=aqi, aqi_status=aqi_band(aqi),
         sunrise=rise.split("T")[1] if "T" in rise else rise,
         sunset=fall.split("T")[1] if "T" in fall else fall,
         hourly=hourly, daily=daily,
@@ -241,7 +247,9 @@ def _fallback(lat: float, lon: float, place: str, state: str) -> WeatherData:
         location=place, state=state, country="India", lat=lat, lon=lon,
         current_temp=27.0, feels_like=29.0, condition="Partly Cloudy",
         condition_code=2, humidity=65, wind_speed=12.0, wind_direction="W",
-        precipitation=0.0, cloud_cover=25.0, pressure=1011.0, uv_index=6.0, visibility=8.0,
+        precipitation=0.0, cloud_cover=25.0, pressure=1011.0, uv_index=6.0,
+        uv_index_source="Local estimate (upstream unreachable)", visibility=8.0,
+        visibility_source="Local estimate (upstream unreachable)",
         aqi=80, aqi_status="Satisfactory", sunrise="06:05", sunset="18:35",
         hourly=hourly, daily=daily,
         nwp_model="Unavailable — local estimate",
