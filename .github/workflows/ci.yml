@@ -223,10 +223,10 @@ jobs:
                   or "CORS request did not succeed" in msg
               ))
           ]
-        if unexpected:
-            raise SystemExit(f"Browser console errors in {browser_type.name}: {unexpected[:10]}")
-        print("Browser pass:", browser_type.name)
-        browser.close()
+                  if unexpected:
+                      raise SystemExit(f"Browser console errors in {browser_type.name}: {unexpected[:10]}")
+                  print("Browser pass:", browser_type.name)
+                  browser.close()
           PY
 
   frontend:
