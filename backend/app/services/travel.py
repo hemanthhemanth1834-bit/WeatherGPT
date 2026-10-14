@@ -24,12 +24,13 @@ def travel_safety(data: WeatherData) -> Dict[str, Any]:
         score -= 12
         drivers.append(f"passing showers ({rain_prob}% chance)")
 
-    if data.visibility < 2:
-        score -= 30
-        drivers.append(f"poor visibility ({data.visibility} km)")
-    elif data.visibility < 5:
-        score -= 10
-        drivers.append(f"hazy visibility ({data.visibility} km)")
+    if data.visibility_source.startswith("Open-Meteo"):
+        if data.visibility < 2:
+            score -= 30
+            drivers.append(f"poor visibility ({data.visibility} km)")
+        elif data.visibility < 5:
+            score -= 10
+            drivers.append(f"hazy visibility ({data.visibility} km)")
 
     if data.wind_speed >= 40:
         score -= 25
