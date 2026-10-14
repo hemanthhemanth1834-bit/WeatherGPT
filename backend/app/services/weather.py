@@ -97,7 +97,7 @@ def _download(lat: float, lon: float, place: str, state: str, model: str = "auto
             "https://api.open-meteo.com/v1/forecast"
             f"?latitude={lat}&longitude={lon}"
             "&current=temperature_2m,relative_humidity_2m,apparent_temperature,"
-            "precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m"
+            "precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m,visibility"
             "&hourly=temperature_2m,precipitation_probability,precipitation,"
             "weather_code,wind_speed_10m,relative_humidity_2m"
             "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
@@ -125,7 +125,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
     required_current = (
         "time", "temperature_2m", "relative_humidity_2m", "apparent_temperature",
         "precipitation", "weather_code", "cloud_cover", "surface_pressure",
-        "wind_speed_10m", "wind_direction_10m",
+        "wind_speed_10m", "wind_direction_10m", "visibility",
     )
     missing_current = [key for key in required_current if current.get(key) is None]
     if missing_current:
@@ -210,7 +210,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         cloud_cover=float(current.get("cloud_cover", 0.0) or 0.0),
         pressure=round(float(current.get("surface_pressure", 1012.0)), 1),
         uv_index=round(float(uv_list[0]), 1),
-        visibility=9.0, aqi=aqi, aqi_status=aqi_band(aqi),
+        visibility=round(float(current["visibility"]) / 1000, 1), aqi=aqi, aqi_status=aqi_band(aqi),
         sunrise=rise.split("T")[1] if "T" in rise else rise,
         sunset=fall.split("T")[1] if "T" in fall else fall,
         hourly=hourly, daily=daily,
