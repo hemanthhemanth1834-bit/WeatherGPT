@@ -272,10 +272,13 @@ def uv(location: str = Query("Pune")) -> dict:
     lat, lon, proper, state = geo.geocode(location)
     data = get_weather(lat, lon, proper, state)
     guide = uv_guidance(data.uv_index)
+    uv_is_live = data.uv_index_source.startswith("Open-Meteo")
     return {"location": proper, "state": state, "uv_index": data.uv_index,
             "level": guide["level"], "advice": guide["advice"],
             "sunrise": data.sunrise, "sunset": data.sunset,
-            "data_source": data.data_source, "status": data.status,
+            "data_source": data.uv_index_source,
+            "data_type": "Forecast" if uv_is_live else "Estimated",
+            "status": "LIVE" if uv_is_live else "ESTIMATED",
             "updated_at_ist": data.updated_at_ist}
 
 
