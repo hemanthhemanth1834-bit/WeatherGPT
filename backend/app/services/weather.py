@@ -132,12 +132,9 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         raise ValueError("Open-Meteo missing current data: " + ", ".join(missing_current))
 
     required_arrays = {
-        "hourly": (hourly_raw, ("time", "temperature_2m", "precipitation_probability",
-                                  "precipitation", "weather_code", "wind_speed_10m",
-                                  "relative_humidity_2m", "visibility")),
+        "hourly": (hourly_raw, ("time", "temperature_2m", "weather_code")),
         "daily": (daily_raw, ("time", "weather_code", "temperature_2m_max",
-                                "temperature_2m_min", "precipitation_sum",
-                                "wind_speed_10m_max", "sunrise", "sunset", "uv_index_max")),
+                                "temperature_2m_min")),
     }
     for group_name, (group, fields) in required_arrays.items():
         times = group.get("time")
@@ -201,7 +198,8 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
     uv_value = uv_list[0] if uv_list and isinstance(uv_list[0], (int, float)) else None
     uv_index = round(float(uv_value), 1) if uv_value is not None else 6.0
     uv_source = "Open-Meteo daily forecast" if uv_value is not None else "Estimated fallback (UV omitted by selected model)"
-    visibility_value = hourly_raw["visibility"][start]
+    visibility_values = hourly_raw.get("visibility", [])
+    visibility_value = visibility_values[start] if isinstance(visibility_values, list) and start < len(visibility_values) else None
     visibility = round(float(visibility_value) / 1000, 1) if isinstance(visibility_value, (int, float)) else 8.0
     visibility_source = "Open-Meteo hourly forecast" if isinstance(visibility_value, (int, float)) else "Estimated fallback (visibility omitted by selected model)"
     return WeatherData(
