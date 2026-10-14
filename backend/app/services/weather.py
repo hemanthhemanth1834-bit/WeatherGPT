@@ -78,7 +78,8 @@ def get_weather(lat: float, lon: float, place: str, state: str,
 
     model: 'auto' (Open-Meteo blend), 'gfs', 'ecmwf', or 'icon'.
     """
-    selection = "gfs" if (model or "").lower() == "gfs" else "auto"
+    requested = (model or "auto").strip().lower()
+    selection = requested if requested in {"auto", "gfs", "ecmwf", "icon"} else "auto"
     key = f"wx:{round(lat, 3)}:{round(lon, 3)}:{place}:{state}:{selection}"
     return cached(WEATHER_CACHE_TTL_SECONDS, key,
                   lambda: _download(lat, lon, place, state, selection))
@@ -115,9 +116,37 @@ def _download(lat: float, lon: float, place: str, state: str, model: str = "auto
 def _from_api(payload: dict, lat: float, lon: float, place: str,
               state: str, current_hour: str,
               model_label: str = "Open-Meteo NWP blend (GFS + ICON + ECMWF HRES)") -> WeatherData:
-    current = payload.get("current", {})
-    hourly_raw = payload.get("hourly", {})
-    daily_raw = payload.get("daily", {})
+    current = payload.get("current")
+    hourly_raw = payload.get("hourly")
+    daily_raw = payload.get("daily")
+    if not isinstance(current, dict) or not isinstance(hourly_raw, dict) or not isinstance(daily_raw, dict):
+        raise ValueError("Open-Meteo response is missing current/hourly/daily objects")
+
+    required_current = (
+        "time", "temperature_2m", "relative_humidity_2m", "apparent_temperature",
+        "precipitation", "weather_code", "cloud_cover", "surface_pressure",
+        "wind_speed_10m", "wind_direction_10m",
+    )
+    missing_current = [key for key in required_current if current.get(key) is None]
+    if missing_current:
+        raise ValueError("Open-Meteo current data missing: " + ", ".join(missing_current))
+
+    required_arrays = {
+        "hourly": (hourly_raw, ("time", "temperature_2m", "precipitation_probability",
+                                  "precipitation", "weather_code", "wind_speed_10m",
+                                  "relative_humidity_2m")),
+        "daily": (daily_raw, ("time", "weather_code", "temperature_2m_max",
+                                "temperature_2m_min", "precipitation_sum",
+                                "wind_speed_10m_max", "sunrise", "sunset", "uv_index_max")),
+    }
+    for group_name, (group, fields) in required_arrays.items():
+        times = group.get("time")
+        if not isinstance(times, list) or not times:
+            raise ValueError(f"Open-Meteo {group_name} data has no timestamps")
+        for field in fields:
+            values = group.get(field)
+            if not isinstance(values, list) or len(values) < len(times):
+                raise ValueError(f"Open-Meteo {group_name}.{field} is incomplete")
 
     code = int(current.get("weather_code", 1))
     label, icon = WMO_LABELS.get(code, ("Clear Sky", "Sun"))
