@@ -176,22 +176,15 @@ def run_browser(pw, name, viewport):
             route.fulfill(status=200, content_type="application/json",
                           body=json.dumps(FIXTURE), headers={"access-control-allow-origin": "*"})
 
-        import threading as _threading
         import time as _time
 
         def delayed(route):
-            # Delay off-handler-thread: calling page APIs from inside a
-            # route handler is unreliable across engines (WebKit never
-            # resolves the request). A real thread keeps the busy/loading
-            # state observable before the mocked reply lands.
-            def go():
-                _time.sleep(0.7)
-                try:
-                    fulfill(route)
-                except Exception:
-                    pass
-
-            _threading.Thread(target=go, daemon=True).start()
+            # Plain blocking sleep: no page-API calls and no extra threads
+            # inside the handler (both proved unreliable across engines).
+            # The pause keeps the busy/loading state observable before the
+            # mocked reply lands.
+            _time.sleep(0.8)
+            fulfill(route)
 
         page.route("**/api/chat/query", delayed)
         before = page.get_by_test_id("user-message").count()
