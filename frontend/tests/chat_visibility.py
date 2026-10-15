@@ -187,13 +187,16 @@ def run_browser(pw, name, viewport):
             fulfill(route)
 
         page.route("**/api/chat/query", delayed)
+        def send_now():
+            try:
+                page.click('button[aria-label="Send question"]', timeout=15000)
+            except Exception:
+                send_btn.evaluate("(el) => el.click()")
+
         before = page.get_by_test_id("user-message").count()
+        send_now()
         try:
-            page.click('button[aria-label="Send question"]', timeout=15000)
-        except Exception:
-            send_btn.evaluate("(el) => el.click()")
-        try:
-            page.get_by_role("status").first.wait_for(timeout=8000)
+            page.get_by_label("Working").first.wait_for(timeout=8000)
             loading_seen = True
         except PwTimeout:
             loading_seen = False
@@ -243,7 +246,7 @@ def run_browser(pw, name, viewport):
         page.route("**/api/chat/query", lambda r: r.fulfill(
             status=500, content_type="application/json", body='{"detail":"mocked outage"}'))
         box.fill(f"{PROBE_TAG} error path probe")
-        page.click('button[aria-label="Send question"]')
+        send_now()
         page.wait_for_function(
             """() => [...document.querySelectorAll('[data-testid="assistant-message"]')]
                  .some(a => /could not reach|without readable text/i.test(a.innerText||''))""",
@@ -255,7 +258,7 @@ def run_browser(pw, name, viewport):
         page.unroute("**/api/chat/query")
         page.route("**/api/chat/query", lambda r: r.abort())
         box.fill(f"{PROBE_TAG} abort path probe")
-        page.click('button[aria-label="Send question"]')
+        send_now()
         page.wait_for_function(
             """() => [...document.querySelectorAll('[data-testid="assistant-message"]')]
                  .some(a => /could not reach|without readable text/i.test(a.innerText||''))""",
