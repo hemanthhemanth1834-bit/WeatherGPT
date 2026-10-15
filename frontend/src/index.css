@@ -688,8 +688,25 @@ button, input, select, a { min-height: 0; }
   outline-offset:3px;
   box-shadow:0 0 0 4px rgba(56,189,248,.16);
 }
+
+/* Shared live-imagery states (LiveImagery component). */
+.wg-skel{
+  border-radius:0.6rem;min-height:2.6rem;
+  background:linear-gradient(100deg, rgba(148,163,184,.08) 40%, rgba(148,163,184,.2) 50%, rgba(148,163,184,.08) 60%);
+  background-size:200% 100%;
+  animation:wg-skel-slide 1.4s linear infinite;
+}
+@keyframes wg-skel-slide{to{background-position:-200% 0}}
+.wg-empty{
+  border:1px dashed rgba(148,163,184,.35);border-radius:var(--wg-radius,1.1rem);
+  padding:1.1rem 1.2rem;color:var(--wg-muted);font-size:0.84rem;line-height:1.6;
+  background:rgba(148,163,184,.05);
+}
+.wg-responsive-2{display:grid;gap:0.7rem;grid-template-columns:minmax(0,1fr)}
+@media(min-width:720px){.wg-responsive-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{
     scroll-behavior:auto!important;
   }
+  .wg-skel{animation:none}
 }

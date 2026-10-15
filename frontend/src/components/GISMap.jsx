@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { fetchActiveAlerts, fetchCycloneTrack, fetchEarthquakes, fetchWildfires } from "../services/api";
+import { getRadarFrames, radarTileUrl } from "../services/radar";
 
 function dot(color, glyph) {
   return L.divIcon({
@@ -90,14 +91,11 @@ export default function GISMap({ weather, onAsk }) {
         setProblem("Alert/track overlays failed to load — the base map still works.");
       }
       try {
-        const res = await fetch("https://api.rainviewer.com/public/weather-maps.json");
-        if (res.ok) {
-          const data = await res.json();
-          const past = data.radar?.past || [];
-          const built = past.map((f) => ({ url: `${data.host}${f.path}/256/{z}/{x}/{y}/2/1_1.png`, time: f.time }));
-          setFrames(built);
-          setFrameIdx(Math.max(0, built.length - 1));
-        }
+        // Shared cached client: one metadata request per session window.
+        const data = await getRadarFrames();
+        const built = data.past.map((f) => ({ url: radarTileUrl(data.host, f), time: f.time }));
+        setFrames(built);
+        setFrameIdx(Math.max(0, built.length - 1));
       } catch {
         /* radar optional */
       }
@@ -197,7 +195,7 @@ export default function GISMap({ weather, onAsk }) {
     <section aria-label="GIS weather console" style={{ display: "flex", flexDirection: "column", gap: "0.6rem" }}>
       <div className="wg-card" style={{ padding: "0.8rem 1rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center" }}>
-          <span className="wg-chip live">LIVE RADAR HISTORY{frame ? ` · ${stampLabel(frame.time)}` : ""}</span>
+          <span className="wg-chip estimated" title="Recent-past composite frames, typically ~10 minutes delayed — not a live feed">RADAR · RECENT HISTORY{frame ? ` · ${stampLabel(frame.time)}` : ""}</span>
           <span className="wg-chip demo">DEMO: zones + illustrative track</span>
           {["radar", "alerts", "track", "quakes", "fires"].map((key) => (
             <label key={key} style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center", fontSize: "0.75rem", color: "var(--wg-muted)" }}>

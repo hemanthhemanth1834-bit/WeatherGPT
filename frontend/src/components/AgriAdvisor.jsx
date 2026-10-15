@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Sprout } from "lucide-react";
 import { fetchCropAdvisory, fetchCurrentWeather } from "../services/api";
 import { speechEngine } from "../services/voice";
+import { LocationRadarImagery } from "./LocationImagery";
 
 const CROPS = [
   ["paddy", "Paddy / Rice"],
@@ -108,6 +109,16 @@ export default function AgriAdvisor({ place, onAsk }) {
           </p>
         )}
       </div>
+
+      {wx && (
+        <LocationRadarImagery
+          lat={wx.lat}
+          lon={wx.lon}
+          place={wx.location}
+          title={`Rainfall near ${wx.location || district || "your district"}`}
+          description="Recent-past radar composite for spray and irrigation timing. Blank areas mean no radar coverage, not dry fields — the advisory text above stays authoritative."
+        />
+      )}
 
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
       {busy && <div role="status" style={{ color: "var(--wg-muted)" }}>Loading advisory…</div>}

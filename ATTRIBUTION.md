@@ -29,8 +29,16 @@ original source is ever identified, this file will be updated.
   uvicorn, pydantic, httpx, requests, python-dotenv, pytest.
   (Exact versions and licenses in `THIRD_PARTY_NOTICES.md`.)
 - **Data/services**: Open-Meteo (forecast + geocoding), RainViewer
-  (radar), NASA GIBS/Worldview (satellite viewer links), OpenStreetMap
-  contributors and CARTO/Esri basemap providers (attribution retained
-  in the map), Web Speech browser APIs.
+  (recent-past radar composites for personal/educational use with
+  attribution; coverage varies and unavailable areas render the basemap —
+  never labeled LIVE), NASA GIBS/Worldview (daily true-color satellite
+  tiles, U.S. public domain, shown as DELAYED previous-day observations
+  with acquisition dates; viewer links for exact timestamps),
+  OpenStreetMap contributors and CARTO/Esri basemap providers
+  (attribution retained in the map), Web Speech browser APIs.
+- **Imagery honesty rules**: radar frames carry their observation
+  timestamps; GIBS layers carry their product date; cached or historical
+  imagery is never labeled LIVE; decorative SVG/CSS diagrams are never
+  presented as observations.
 - No affiliation with IMD, MoES, INCOIS, or ISRO is claimed; official
   sources are referenced as data authorities only.

@@ -3,6 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { speechEngine, voiceSupported } from "../services/voice";
 import ModernWeatherCard from "./ModernWeatherCard";
+import { LocationRadarImagery } from "./LocationImagery";
 
 const PROMPTS = {
   general: [
@@ -233,6 +234,15 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
             </p>
             {!support.stt && <p style={{ fontSize: "0.75rem", color: "var(--wg-warn)" }}>🎙 Voice input unavailable in this browser — typing works everywhere.</p>}
           </div>
+          {lastWeather && (
+            <LocationRadarImagery
+              lat={lastWeather.lat}
+              lon={lastWeather.lon}
+              place={lastWeather.location}
+              title={`Radar near ${lastWeather.location}`}
+              description="Recent-past precipitation around the conversation focus. Blank means no radar coverage, not clear skies."
+            />
+          )}
           <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
             <div className="wg-section-title">Jump to</div>
             <div className="wg-ai-jump-buttons">

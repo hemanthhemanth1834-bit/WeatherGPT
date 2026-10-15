@@ -5,6 +5,7 @@ import { speechEngine } from "../services/voice";
 import { glyphFor } from "../services/weatherGlyph";
 import WeatherBrief from "./WeatherBrief";
 import WxIcon from "./WxIcon";
+import { IndiaSatelliteImagery, LocationRadarImagery } from "./LocationImagery";
 
 function Metric({ label, value, sub }) {
   return (
@@ -354,6 +355,20 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
         <Metric label="Sunset" value={`${weather.sunset} IST`} />
       </div>
       <SourceLine source={`${weather.data_source} · current conditions`} status={weather.status} hint={`Updated ${weather.updated_at_ist || "—"}`} />
+
+      <div className="wg-responsive-2">
+        <LocationRadarImagery
+          lat={weather.lat}
+          lon={weather.lon}
+          place={weather.location}
+          title={`Sky check: radar near ${weather.location}`}
+          description="Recent-past precipitation around this place, beside the live NWP values above. Blank means no radar coverage, not clear skies."
+        />
+        <IndiaSatelliteImagery
+          title="Cloud context · India true-color"
+          description="Daily true-color satellite for cloud context over India. Observation is from the previous day — current cloud cover comes from the live metrics above."
+        />
+      </div>
 
       <div className="wg-grid-panels">
         <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>

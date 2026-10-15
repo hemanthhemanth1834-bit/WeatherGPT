@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { fetchCurrentWeather, fetchReverseGeocode } from "../services/api";
+import { getRadarFrames, latestFrame, radarTileUrl } from "../services/radar";
+import { GIBS_LAYERS, gibsDate, gibsWmtsTile } from "../services/gibs";
 
 const HUBS = [
   ["New Delhi", 28.6139, 77.2090], ["Mumbai", 19.0760, 72.8777],
@@ -86,12 +88,13 @@ export default function RealIndiaMap({ weather, onAsk }) {
       radarRef.current = null;
       return;
     }
-    fetch("https://api.rainviewer.com/public/weather-maps.json").then(r => r.json()).then(data => {
-      if (cancelled || !mapRef.current || !data?.radar?.past?.length) return;
-      const frame = data.radar.past[data.radar.past.length - 1];
+    getRadarFrames().then(data => {
+      if (cancelled || !mapRef.current) return;
+      const frame = latestFrame(data);
+      if (!frame) return;
       setRadarTime(frame.time);
       if (radarRef.current) mapRef.current.removeLayer(radarRef.current);
-      radarRef.current = L.tileLayer(`${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`, {
+      radarRef.current = L.tileLayer(radarTileUrl(data.host, frame, 2, 1, 1), {
         opacity: .62, maxNativeZoom: 7, maxZoom: 10, attribution: "RainViewer"
       }).addTo(mapRef.current);
     }).catch(() => {});
@@ -104,8 +107,9 @@ export default function RealIndiaMap({ weather, onAsk }) {
     if (satelliteRef.current) map.removeLayer(satelliteRef.current);
     satelliteRef.current = null;
     if (mode !== "satellite") return;
+    // Daily true-color product: latest safe date is yesterday (UTC).
     satelliteRef.current = L.tileLayer(
-      "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/2026-10-02/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg",
+      gibsWmtsTile(GIBS_LAYERS.viirs.layer, gibsDate(1)),
       { opacity: .78, maxNativeZoom: 9, maxZoom: 10, attribution: "NASA GIBS" }
     ).addTo(map);
   }, [mode]);
@@ -114,7 +118,7 @@ export default function RealIndiaMap({ weather, onAsk }) {
     <div ref={host} className="wg-real-map-canvas" />
     <div className="wg-real-map-controls">{["gps","radar","satellite"].map(x => <button key={x} className={mode === x ? "active" : ""} onClick={() => { if (x === "gps" && weather?.lat && weather?.lon) mapRef.current?.setView([weather.lat, weather.lon], 8, {animate:true}); else setMode(x); }}>{x === "gps" ? "GPS" : x === "radar" ? "Radar" : "Satellite"}</button>)}</div>
     <div className="wg-real-map-status">
-      <span className="wg-real-live-dot" /> REAL-TIME MAP
+      <span className="wg-real-live-dot" /> {mode === "satellite" ? `SATELLITE · ${gibsDate(1)} (DAILY)` : mode === "radar" ? "RADAR · RECENT HISTORY" : "BASE MAP"}
       {radarTime && mode === "radar" && <small>{new Date(radarTime*1000).toLocaleTimeString()}</small>}
     </div>
     <div className="wg-real-map-credit">OpenStreetMap · {mode === "radar" ? "RainViewer radar" : mode === "satellite" ? "NASA GIBS" : "Base map"}</div>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Satellite, Layers, Database, Loader2 } from "lucide-react";
 import { fetchCurrentWeather, fetchNwpStatus, fetchSatelliteInfo, fetchIndianSources } from "../services/api";
 import SourceBadge from "./SourceBadge";
+import { IndiaSatelliteImagery } from "./LocationImagery";
 
 export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" }) {
   const [nwp, setNwp] = useState(null);
@@ -106,6 +107,13 @@ export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" })
       </div>
 
       {error && <p className="text-xs text-red-300">{error}</p>}
+
+      {focus === "satellite" && (
+        <IndiaSatelliteImagery
+          title={`True-color satellite · ${location || "India"}`}
+          description="Daily true-color view (VIIRS SNPP / MODIS Terra) for cloud and land context. Switch layers — both are real NASA GIBS products from the previous day, not live observations."
+        />
+      )}
 
       {focus === "satellite" ? (
         <>
