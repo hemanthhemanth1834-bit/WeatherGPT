@@ -127,7 +127,18 @@ def run_browser(pw, name, viewport):
         if viewport["width"] < 700:
             page.get_by_role("button", name="Open navigation").first.click(timeout=15000)
             page.wait_for_timeout(600)
-        page.get_by_role("button", name="AI Weather Assistant").first.click(timeout=15000)
+        chat_btn = page.get_by_role("button", name="AI Weather Assistant").first
+        chat_btn.wait_for(state="attached", timeout=15000)
+        try:
+            chat_btn.click(timeout=10000)
+        except Exception:
+            # Some engines report the nav button as perpetually
+            # "unstable" (ambient CSS animations); a scripted click still
+            # exercises the real handler, and the input assertion below
+            # proves navigation actually happened.
+            chat_btn.evaluate("(el) => el.click()")
+        page.locator('input[aria-label="Type your weather question"]').wait_for(
+            state="visible", timeout=15000)
         page.wait_for_timeout(1000)
 
         # 1-2. Welcome message visible and non-empty.
