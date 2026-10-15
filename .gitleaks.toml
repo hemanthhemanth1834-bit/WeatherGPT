@@ -4,7 +4,7 @@
 [extend]
 useDefault = true
 
-[[allowlist]]
+[allowlist]
 description = "Deterministic Playwright chat-visibility test marker, not a credential"
 paths = ["frontend/tests/chat_visibility\\.py"]
 regexes = ["vis-probe-9f27"]
