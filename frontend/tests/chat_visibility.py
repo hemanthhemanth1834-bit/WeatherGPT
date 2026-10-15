@@ -191,6 +191,15 @@ def run_browser(pw, name, viewport):
 
         page.route("**/api/chat/query", delayed)
         def send_now():
+            # Wait for React state to enable the button after fill; under
+            # load the state propagation can lag behind the DOM value.
+            try:
+                page.wait_for_function("""() => {
+                  const b = document.querySelector('button[aria-label="Send question"]');
+                  return b && !b.disabled;
+                }""", timeout=15000)
+            except Exception:
+                pass
             try:
                 page.click('button[aria-label="Send question"]', timeout=15000)
             except Exception:
@@ -317,8 +326,12 @@ def run_browser(pw, name, viewport):
               f"{[(e['text'] if isinstance(e, dict) else e)[:120] for e in noise[:3]]}", failures)
     except Exception as exc:
         # A timeout in one suite must not abort the remaining suites; the
-        # failure is recorded and the run continues.
+        # failure is recorded (with a screenshot) and the run continues.
         failures.append(f"{tag} exception: {type(exc).__name__}: {str(exc)[:200]}")
+        try:
+            page.screenshot(path=f"/tmp/chatvis-{name}-{viewport['width']}-fail.png")
+        except Exception:
+            pass
     finally:
         browser.close()
     return failures
@@ -337,6 +350,8 @@ def main():
                 ran += 1
                 all_failures.extend(res)
     print(f"\nSuites run: {ran}, failures: {len(all_failures)}")
+    for f in all_failures:
+        print("FAILURE:", f[:300])
     if not ran:
         print("BLOCKED: no browsers available")
         sys.exit(2)
