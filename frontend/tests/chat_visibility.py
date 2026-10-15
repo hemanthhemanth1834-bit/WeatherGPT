@@ -99,8 +99,25 @@ def run_browser(pw, name, viewport):
         return None
     page = browser.new_page(viewport=viewport)
     errors = []
-    page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
-    page.on("pageerror", lambda e: errors.append(str(e)))
+    error_routes = {"count": 0}
+
+    def note_error(text):
+        # Our deliberate 500-fulfill / route.abort() for the mocked chat
+        # endpoint surfaces as a resource-load or CORS console error for that
+        # exact URL (wording varies by engine). Tag such entries so only the
+        # expected artifacts are excused (mirrors the browser-smoke precedent
+        # for Firefox CORS noise).
+        errors.append({"text": text, "after_error_route": error_routes["count"] > 0})
+
+    page.on("console", lambda m: note_error(m.text) if m.type == "error" else None)
+    page.on("pageerror", lambda e: note_error(str(e)))
+    # Correlate console resource errors with the responses/requests that
+    # caused them: console text alone often omits the URL.
+    seen = {"chat500": False, "chatabort": False}
+    page.on("response", lambda r: seen.update(chat500=True)
+            if r.status >= 500 and "api/chat/query" in r.url else None)
+    page.on("requestfailed", lambda r: seen.update(chatabort=True)
+            if "api/chat/query" in r.url and "abort" in (r.failure or "").lower() else None)
     try:
         page.goto(UI_URL, wait_until="load", timeout=60000)
         page.wait_for_timeout(2000)
@@ -186,9 +203,11 @@ def run_browser(pw, name, viewport):
         check(btn is not None and btn["ratio"] >= 4.5,
               f"{tag} suggested-prompt button contrast >= 4.5 {btn}", failures)
 
-        # 8. Error state: abort the API, expect a visible error bubble.
+        # 8a. Server-error state: HTTP 500 must show a visible error bubble.
+        error_routes["count"] += 1
         page.unroute("**/api/chat/query")
-        page.route("**/api/chat/query", lambda r: r.abort())
+        page.route("**/api/chat/query", lambda r: r.fulfill(
+            status=500, content_type="application/json", body='{"detail":"mocked outage"}'))
         box.fill(f"{PROBE_TAG} error path probe")
         page.click('button[aria-label="Send question"]')
         page.wait_for_function(
@@ -196,6 +215,18 @@ def run_browser(pw, name, viewport):
                  .some(a => /could not reach|without readable text/i.test(a.innerText||''))""",
             timeout=30000)
         check(True, f"{tag} API-error bubble visible", failures)
+
+        # 8b. Network-failure state: an aborted request must also degrade
+        # gracefully instead of leaving an empty bubble.
+        page.unroute("**/api/chat/query")
+        page.route("**/api/chat/query", lambda r: r.abort())
+        box.fill(f"{PROBE_TAG} abort path probe")
+        page.click('button[aria-label="Send question"]')
+        page.wait_for_function(
+            """() => [...document.querySelectorAll('[data-testid="assistant-message"]')]
+                 .some(a => /could not reach|without readable text/i.test(a.innerText||''))""",
+            timeout=30000)
+        check(True, f"{tag} network-abort bubble visible", failures)
 
         # 9. No clipping + newest reply reachable by scrolling.
         clip = page.evaluate("""() => [...document.querySelectorAll('article')].map(a => {
@@ -219,10 +250,25 @@ def run_browser(pw, name, viewport):
             reach_ok, reach = False, {"scrollable": "timeout"}
         check(reach_ok, f"{tag} newest reply reachable by scrolling {reach}", failures)
 
-        # 10. Console errors fail the test (ignoring known offline-provider noise).
-        noise = [e for e in errors if "ERR_CONNECTION_REFUSED" not in e
-                 and "api.open-meteo.com" not in e and "net::" not in e]
-        check(not noise, f"{tag} no relevant console/page errors {noise[:3]}", failures)
+        # 10. Console errors fail the test (ignoring known offline-provider noise
+        # and the single expected artifact of our deliberate abort above).
+        def relevant(e):
+            t = e["text"] if isinstance(e, dict) else e
+            if "ERR_CONNECTION_REFUSED" in t or "api.open-meteo.com" in t or "net::" in t:
+                return False
+            if "status of 500" in t or "Failed to load resource" in t:
+                # Only our deliberate mocked 500 produces such responses here.
+                return not seen["chat500"]
+            if "api/chat/query" in t and (
+                    "CORS request did not succeed" in t or "Failed to fetch" in t
+                    or "abort" in t.lower()):
+                # Only our deliberate route.abort() produces these here.
+                return not seen["chatabort"]
+            return True
+
+        noise = [e for e in errors if relevant(e)]
+        check(not noise, f"{tag} no relevant console/page errors "
+              f"{[(e['text'] if isinstance(e, dict) else e)[:120] for e in noise[:3]]}", failures)
     except AssertionError as exc:
         failures.append(f"{tag} exception: {exc}")
     finally:
