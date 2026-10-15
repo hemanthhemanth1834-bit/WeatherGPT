@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters, fetchEarthquakes, fetchEmergencyPlaces, fetchFloodRisk, fetchRiskAssessment, fetchWildfires } from "../services/api";
 import BlueprintBuilder from "./BlueprintBuilder";
 import EmergencyContacts from "./EmergencyContacts";
+import { LocationRadarImagery } from "./LocationImagery";
 
 const CATS = ["Cyclone", "Heavy Rain", "Flood", "Thunderstorm", "Lightning", "Heatwave", "Cold Wave", "Strong Wind"];
 
@@ -100,6 +101,14 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
         </div>
       </div>
       {showContacts && <EmergencyContacts onClose={() => setShowContacts(false)} />}
+
+      <LocationRadarImagery
+        lat={weather?.lat}
+        lon={weather?.lon}
+        place={weather?.location}
+        title={`Observed rainfall near ${weather?.location || "selected area"}`}
+        description="Recent-past radar composite for hazard context. It shows where rain fell minutes ago — warnings themselves come from the alert cards below, never from how this image looks."
+      />
 
       <BlueprintBuilder risk={risk} weather={weather} />
 

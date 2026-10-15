@@ -333,7 +333,12 @@ jobs:
           # animated UI is not reliable under WebKit in CI (the same flows
           # pass there when driven manually). WebKit render coverage stays
           # in browser-smoke; WG_BROWSERS can still enable webkit locally.
-          WG_BROWSERS=chromium,firefox python tests/chat_visibility.py
+          WG_BROWSERS=chromium,firefox           python tests/chat_visibility.py
+        working-directory: frontend
+      - name: Run site imagery regression (mocked providers)
+        # Same servers; deterministic mocks for radar/GIBS tiles + metadata.
+        run: |
+          WG_BROWSERS=chromium,firefox python tests/imagery_visibility.py
         working-directory: frontend
 
   frontend:

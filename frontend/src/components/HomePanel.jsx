@@ -6,6 +6,7 @@ import WxIcon from "./WxIcon";
 import RealIndiaMap from "./RealIndiaMap";
 import LiveWeatherChart from "./LiveWeatherChart";
 import Live3DIcon from "./Live3DIcon";
+import { getRadarFrames, latestFrame, radarTileUrl } from "../services/radar";
 
 function agoLabel(ist) {
   if (!ist) return "";
@@ -92,15 +93,14 @@ function LiveRadarPreview({ weather }) {
     map.setView([lat,lon],7,{animate:false});
     markerRef.current?.setLatLng([lat,lon]);
     let cancelled=false;
-    fetch("https://api.rainviewer.com/public/weather-maps.json")
-      .then(r=>r.json())
-      .then(data=>{
-        if(cancelled || !map || !data?.radar?.past?.length) return;
-        const frame=data.radar.past[data.radar.past.length-1];
-        setRadarTime(frame.time);
-        if(radarRef.current) map.removeLayer(radarRef.current);
-        radarRef.current=L.tileLayer(`${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,{opacity:.78,maxNativeZoom:7,maxZoom:10}).addTo(map);
-      }).catch(()=>{});
+    getRadarFrames().then(data=>{
+      if(cancelled || !map) return;
+      const frame=latestFrame(data);
+      if(!frame) return;
+      setRadarTime(frame.time);
+      if(radarRef.current) map.removeLayer(radarRef.current);
+      radarRef.current=L.tileLayer(radarTileUrl(data.host, frame),{opacity:.78,maxNativeZoom:7,maxZoom:10}).addTo(map);
+    }).catch(()=>{});
     return()=>{cancelled=true;};
   },[weather?.lat,weather?.lon]);
 
@@ -108,7 +108,7 @@ function LiveRadarPreview({ weather }) {
     <div className="wg-explain-live">
       <div ref={host} className="wg-explain-live-map" />
       <div className="wg-explain-live-overlay">
-        <span>● LIVE RADAR {radarTime ? `· ${new Date(radarTime*1000).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}` : ""}</span>
+        <span title="Recent-past composite frames, typically ~10 minutes delayed">● RADAR · RECENT HISTORY {radarTime ? `· ${new Date(radarTime*1000).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}` : ""}</span>
         <small>{weather?.location || "Selected location"} · recent precipitation</small>
       </div>
     </div>
