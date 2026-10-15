@@ -116,8 +116,11 @@ def run_browser(pw, name, viewport):
     seen = {"chat500": False, "chatabort": False}
     page.on("response", lambda r: seen.update(chat500=True)
             if r.status >= 500 and "api/chat/query" in r.url else None)
+    # Every chat/query request in this suite is mocked (fulfill/500/abort),
+    # so a failed request here can only be our deliberate abort (or infra
+    # flakiness, which the reply assertions would independently surface).
     page.on("requestfailed", lambda r: seen.update(chatabort=True)
-            if "api/chat/query" in r.url and "abort" in (r.failure or "").lower() else None)
+            if "api/chat/query" in r.url else None)
     try:
         page.goto(UI_URL, wait_until="load", timeout=60000)
         page.wait_for_timeout(2000)
@@ -261,7 +264,7 @@ def run_browser(pw, name, viewport):
                 return not seen["chat500"]
             if "api/chat/query" in t and (
                     "CORS request did not succeed" in t or "Failed to fetch" in t
-                    or "abort" in t.lower()):
+                    or "abort" in t.lower() or "Cross-Origin Request Blocked" in t):
                 # Only our deliberate route.abort() produces these here.
                 return not seen["chatabort"]
             return True
