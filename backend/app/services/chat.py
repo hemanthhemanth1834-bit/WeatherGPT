@@ -230,13 +230,19 @@ def _render_weather(place: str, state: str, data: WeatherData,
         "rain": rain, "precip": data.precipitation,
         "wind": data.wind_speed, "wdir": data.wind_direction,
         "hum": data.humidity, "pres": data.pressure,
-        "aqi": data.aqi, "aqi_status": data.aqi_status, "uv": data.uv_index,
+        "aqi": f"{data.aqi} (estimated)" if data.status == "LIVE" else f"{data.aqi} (not live)",
+        "aqi_status": data.aqi_status,
+        "uv": f"{data.uv_index} (estimated)" if not data.uv_index_source.startswith("Open-Meteo") else data.uv_index,
         "rise": data.sunrise, "set": data.sunset,
     }
     speech = template["speech"].format(**values)
     markdown = f"### {template['title'].format(**values)}\n\n" + template["body"].format(**values)
     markdown += (f"\n\n_Source: {data.data_source} · {data.status} · "
                  f"Updated {data.updated_at_ist or 'just now'}_")
+    if data.status == "LIVE" and data.data_type.lower() == "forecast":
+        markdown += "\n\n_These are live-retrieved model forecast values, not direct station observations. AQI shown above is an estimate; use the Air Quality view for the live AQI feed._"
+        if data.uv_index_source.startswith("Estimated") or data.visibility_source.startswith("Estimated"):
+            markdown += "\n\n_The selected model omitted UV and/or visibility, so any displayed fallback value is explicitly estimated._"
     return speech, markdown
 
 
@@ -403,9 +409,11 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
                   f"Baseline {ref['baseline_period']}; monsoon LPA {ref['lpa_monsoon_rainfall_mm']} mm.")
     if wants_travel:
         risk = assess_risk(data)
+        visibility_label = (f"{data.visibility} km" if data.visibility_source.startswith("Open-Meteo")
+                            else f"{data.visibility} km (estimated)")
         top = risk["advisories"][0] if risk["advisories"] else ""
         extra += (f"\n\n**Travel read (ESTIMATED risk {risk['overall']}):** {top} "
-                  f"Wind {data.wind_speed} km/h, visibility {data.visibility} km, "
+                  f"Wind {data.wind_speed} km/h, visibility {visibility_label}, "
                   f"rain chance {(data.hourly[0].rain_prob if data.hourly else 0)}%.")
     if wants_aqi:
         try:
@@ -473,6 +481,27 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
             extra += "\n\n**Solar estimate:** unavailable right now."
 
     speech, markdown = _render_weather(proper, state, data, lang)
+    tomorrow_terms = ("tomorrow", "tomorrow's", "repu", "कल", "उद्या", "நாளை",
+                      "రేపు", "আগামীকাল", "ನಾಳೆ", "നാളെ", "કાલે", "କାଲି")
+    special_intent = (wants_agri or wants_air or wants_sea or wants_alert or wants_climate
+                      or wants_travel or wants_aqi or wants_quake or wants_fire or wants_flood
+                      or wants_shelter or wants_solar)
+    if not special_intent and len(data.daily) > 1 and any(term in lowered for term in tomorrow_terms):
+        tomorrow = data.daily[1]
+        rain_text = ("rainfall is forecast" if tomorrow.rain_sum >= 0.1
+                     else "no measurable rainfall is forecast")
+        speech = (f"Tomorrow's forecast for {proper}: {tomorrow.condition}, "
+                  f"high {tomorrow.temp_max} degrees Celsius, low {tomorrow.temp_min} degrees, "
+                  f"{tomorrow.rain_sum} millimetres of expected rainfall. {rain_text}.")
+        markdown = (
+            f"### Tomorrow's forecast — {proper}, {state} ({tomorrow.date})\n\n"
+            f"- **Condition:** {tomorrow.condition}\n"
+            f"- **High / low:** {tomorrow.temp_max:g}°C / {tomorrow.temp_min:g}°C\n"
+            f"- **Expected rainfall:** {tomorrow.rain_sum} mm — {rain_text}\n"
+            f"- **Maximum wind:** {tomorrow.wind_max} km/h\n\n"
+            f"_Source: {data.data_source} · {data.status} · forecast date {tomorrow.date}. "
+            "Rainfall is a model forecast, not a guarantee or a measured observation._"
+        )
     markdown += extra
     template = TEMPLATES.get(lang, TEMPLATES["en"])
     suggestions = [s.format(place=proper, state=state) for s in template["suggest"]]

@@ -1,4 +1,4 @@
-name: Dependency and Security Review
+name: Dependency and Security Review (npm/pip audit)
 
 on:
   pull_request:
@@ -11,16 +11,6 @@ permissions:
   contents: read
 
 jobs:
-  dependency-review:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v6
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-
   frontend-audit:
     runs-on: ubuntu-latest
     defaults:

@@ -47,7 +47,9 @@ class WeatherData(BaseModel):
     cloud_cover: float = 0.0
     pressure: float = 1012.0
     uv_index: float = 6.0
+    uv_index_source: str = "Estimated fallback"
     visibility: float = 9.0
+    visibility_source: str = "Estimated fallback"
     aqi: int = 80
     aqi_status: str = "Satisfactory"
     sunrise: str = "06:05"

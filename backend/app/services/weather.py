@@ -78,7 +78,8 @@ def get_weather(lat: float, lon: float, place: str, state: str,
 
     model: 'auto' (Open-Meteo blend), 'gfs', 'ecmwf', or 'icon'.
     """
-    selection = "gfs" if (model or "").lower() == "gfs" else "auto"
+    requested = (model or "auto").strip().lower()
+    selection = requested if requested in {"auto", "gfs", "ecmwf", "icon"} else "auto"
     key = f"wx:{round(lat, 3)}:{round(lon, 3)}:{place}:{state}:{selection}"
     return cached(WEATHER_CACHE_TTL_SECONDS, key,
                   lambda: _download(lat, lon, place, state, selection))
@@ -98,7 +99,7 @@ def _download(lat: float, lon: float, place: str, state: str, model: str = "auto
             "&current=temperature_2m,relative_humidity_2m,apparent_temperature,"
             "precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m"
             "&hourly=temperature_2m,precipitation_probability,precipitation,"
-            "weather_code,wind_speed_10m,relative_humidity_2m"
+            "weather_code,wind_speed_10m,relative_humidity_2m,visibility"
             "&daily=weather_code,temperature_2m_max,temperature_2m_min,"
             "precipitation_sum,wind_speed_10m_max,sunrise,sunset,uv_index_max"
             f"&timezone=Asia%2FKolkata{model_param}"
@@ -115,9 +116,34 @@ def _download(lat: float, lon: float, place: str, state: str, model: str = "auto
 def _from_api(payload: dict, lat: float, lon: float, place: str,
               state: str, current_hour: str,
               model_label: str = "Open-Meteo NWP blend (GFS + ICON + ECMWF HRES)") -> WeatherData:
-    current = payload.get("current", {})
-    hourly_raw = payload.get("hourly", {})
-    daily_raw = payload.get("daily", {})
+    current = payload.get("current")
+    hourly_raw = payload.get("hourly")
+    daily_raw = payload.get("daily")
+    if not isinstance(current, dict) or not isinstance(hourly_raw, dict) or not isinstance(daily_raw, dict):
+        raise ValueError("Open-Meteo response is missing current/hourly/daily objects")
+
+    required_current = (
+        "temperature_2m", "relative_humidity_2m", "apparent_temperature",
+        "precipitation", "weather_code", "cloud_cover", "surface_pressure",
+        "wind_speed_10m", "wind_direction_10m",
+    )
+    missing_current = [key for key in required_current if current.get(key) is None]
+    if missing_current:
+        raise ValueError("Open-Meteo missing current data: " + ", ".join(missing_current))
+
+    required_arrays = {
+        "hourly": (hourly_raw, ("time", "temperature_2m", "weather_code")),
+        "daily": (daily_raw, ("time", "weather_code", "temperature_2m_max",
+                                "temperature_2m_min")),
+    }
+    for group_name, (group, fields) in required_arrays.items():
+        times = group.get("time")
+        if not isinstance(times, list) or not times:
+            raise ValueError(f"Open-Meteo {group_name} data has no timestamps")
+        for field in fields:
+            values = group.get(field)
+            if not isinstance(values, list) or len(values) < len(times):
+                raise ValueError(f"Open-Meteo {group_name}.{field} is incomplete")
 
     code = int(current.get("weather_code", 1))
     label, icon = WMO_LABELS.get(code, ("Clear Sky", "Sun"))
@@ -168,7 +194,14 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
     aqi = estimate_aqi(state)
     rise = (daily_raw.get("sunrise", ["06:05"]) or ["06:05"])[0]
     fall = (daily_raw.get("sunset", ["18:35"]) or ["18:35"])[0]
-    uv_list = daily_raw.get("uv_index_max", [6.0]) or [6.0]
+    uv_list = daily_raw.get("uv_index_max", [])
+    uv_value = uv_list[0] if uv_list and isinstance(uv_list[0], (int, float)) else None
+    uv_index = round(float(uv_value), 1) if uv_value is not None else 6.0
+    uv_source = "Open-Meteo daily forecast" if uv_value is not None else "Estimated fallback (UV omitted by selected model)"
+    visibility_values = hourly_raw.get("visibility", [])
+    visibility_value = visibility_values[start] if isinstance(visibility_values, list) and start < len(visibility_values) else None
+    visibility = round(float(visibility_value) / 1000, 1) if isinstance(visibility_value, (int, float)) else 8.0
+    visibility_source = "Open-Meteo hourly forecast" if isinstance(visibility_value, (int, float)) else "Estimated fallback (visibility omitted by selected model)"
     return WeatherData(
         location=place, state=state, country="India", lat=lat, lon=lon,
         current_temp=round(float(current.get("temperature_2m", 28.0)), 1),
@@ -180,8 +213,8 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         precipitation=rain_now,
         cloud_cover=float(current.get("cloud_cover", 0.0) or 0.0),
         pressure=round(float(current.get("surface_pressure", 1012.0)), 1),
-        uv_index=round(float(uv_list[0]), 1),
-        visibility=9.0, aqi=aqi, aqi_status=aqi_band(aqi),
+        uv_index=uv_index, uv_index_source=uv_source,
+        visibility=visibility, visibility_source=visibility_source, aqi=aqi, aqi_status=aqi_band(aqi),
         sunrise=rise.split("T")[1] if "T" in rise else rise,
         sunset=fall.split("T")[1] if "T" in fall else fall,
         hourly=hourly, daily=daily,
@@ -212,7 +245,9 @@ def _fallback(lat: float, lon: float, place: str, state: str) -> WeatherData:
         location=place, state=state, country="India", lat=lat, lon=lon,
         current_temp=27.0, feels_like=29.0, condition="Partly Cloudy",
         condition_code=2, humidity=65, wind_speed=12.0, wind_direction="W",
-        precipitation=0.0, cloud_cover=25.0, pressure=1011.0, uv_index=6.0, visibility=8.0,
+        precipitation=0.0, cloud_cover=25.0, pressure=1011.0, uv_index=6.0,
+        uv_index_source="Local estimate (upstream unreachable)", visibility=8.0,
+        visibility_source="Local estimate (upstream unreachable)",
         aqi=80, aqi_status="Satisfactory", sunrise="06:05", sunset="18:35",
         hourly=hourly, daily=daily,
         nwp_model="Unavailable — local estimate",

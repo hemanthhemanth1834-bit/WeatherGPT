@@ -36,10 +36,21 @@ def _download(lat: float, lon: float) -> List[Dict[str, Any]]:
     from .http import http_post
     clauses = "".join(f'{sel}(around:20000,{lat},{lon});' for _, sel in KINDS)
     query = f"[out:json][timeout:20];({clauses});out body 40;"
-    response = http_post(OVERPASS, data={"data": query}, headers=HEADERS, timeout=25)
+    try:
+        response = http_post(OVERPASS, data={"data": query}, headers=HEADERS, timeout=25)
+    except Exception as exc:
+        # Normalize network/provider failures so the API can return its documented 502.
+        raise RuntimeError(f"Overpass request failed: {exc}") from exc
     if response.status_code != 200:
         raise RuntimeError(f"Overpass HTTP {response.status_code}")
-    return response.json().get("elements", [])
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        # Overpass occasionally returns an HTML/text error page despite HTTP 200.
+        raise RuntimeError("Overpass returned an invalid JSON response") from exc
+    if not isinstance(payload, dict) or not isinstance(payload.get("elements", []), list):
+        raise RuntimeError("Overpass returned an unexpected response format")
+    return payload.get("elements", [])
 
 
 def emergency_places(lat: float, lon: float) -> Dict[str, Any]:
