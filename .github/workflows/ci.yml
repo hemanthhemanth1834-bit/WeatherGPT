@@ -329,8 +329,8 @@ jobs:
                   print("Failed to read UI log:", exc)
               raise SystemExit("Local UI preview did not become healthy within 60s.")
           PY
-          python frontend/tests/chat_visibility.py
-        working-directory: .
+          python tests/chat_visibility.py
+        working-directory: frontend
 
   frontend:
     runs-on: ubuntu-latest
