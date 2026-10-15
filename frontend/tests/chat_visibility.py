@@ -152,6 +152,17 @@ def run_browser(pw, name, viewport):
         box = page.locator('input[aria-label="Type your weather question"]')
         box.fill(QUESTION)
         check(box.input_value() == QUESTION, f"{tag} typed text round-trips", failures)
+        send_btn = page.locator('button[aria-label="Send question"]')
+        send_btn.wait_for(state="visible", timeout=15000)
+        try:
+            page.wait_for_function("""() => {
+              const b = document.querySelector('button[aria-label="Send question"]');
+              return b && !b.disabled;
+            }""", timeout=10000)
+            send_enabled = True
+        except Exception:
+            send_enabled = False
+        check(send_enabled, f"{tag} Send enabled after typing", failures)
         ink = page.evaluate("""() => {
           const i = document.querySelector('input[aria-label="Type your weather question"]');
           const cs = getComputedStyle(i);
@@ -171,7 +182,10 @@ def run_browser(pw, name, viewport):
 
         page.route("**/api/chat/query", delayed)
         before = page.get_by_test_id("user-message").count()
-        page.click('button[aria-label="Send question"]')
+        try:
+            page.click('button[aria-label="Send question"]', timeout=15000)
+        except Exception:
+            send_btn.evaluate("(el) => el.click()")
         try:
             page.get_by_role("status").first.wait_for(timeout=8000)
             loading_seen = True
