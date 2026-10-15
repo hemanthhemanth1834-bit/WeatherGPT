@@ -140,6 +140,9 @@ def run_browser(pw, name, viewport):
         page.locator('input[aria-label="Type your weather question"]').wait_for(
             state="visible", timeout=15000)
         page.wait_for_timeout(1000)
+        # Drop any console noise from the home tab (e.g. the background map
+        # initializing before navigation); only chat-tab errors can fail us.
+        errors.clear()
 
         # 1-2. Welcome message visible and non-empty.
         welcome = page.get_by_test_id("assistant-message").first
@@ -196,7 +199,9 @@ def run_browser(pw, name, viewport):
         before = page.get_by_test_id("user-message").count()
         send_now()
         try:
-            page.get_by_label("Working").first.wait_for(timeout=8000)
+            # The busy shimmer carries aria-label="Working" (get_by_label
+            # only matches form controls, so use an attribute locator).
+            page.locator('div[aria-label="Working"]').first.wait_for(timeout=8000)
             loading_seen = True
         except PwTimeout:
             loading_seen = False
