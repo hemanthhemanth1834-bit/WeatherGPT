@@ -123,12 +123,18 @@ export default function App() {
       setBusy(true);
       try {
         const reply = await sendChatQuery(query, personaForApi(persona), language, place);
+        // Normalize supported shapes: only render non-empty text, otherwise
+        // show an explicit error instead of an empty bubble.
+        const replyText =
+          typeof reply?.markdown_response === "string" && reply.markdown_response.trim()
+            ? reply.markdown_response
+            : "⚠️ The weather engine returned no readable reply. Please try again — no values are shown rather than guessed.";
         setMessages((prev) => [
           ...prev,
           {
             id: `b-${Date.now()}`,
             sender: "bot",
-            text: reply.markdown_response,
+            text: replyText,
             speech_text: reply.speech_text,
             weather: reply.structured_weather,
             alerts: reply.alerts,

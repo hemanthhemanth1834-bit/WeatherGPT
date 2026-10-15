@@ -536,7 +536,25 @@
   scrollbar-width:thin;
 }
 .wg-ai-message-list .wg-card{max-width:92%;box-sizing:border-box}
+/* P0: message bubbles are flex items inside a height-constrained scrollable
+   column. They must never shrink below their content: with overflow:hidden
+   their automatic minimum size is zero, so flex-shrink squished them and
+   clipped message text whenever the conversation exceeded the list height. */
+.wg-ai-message-list > *{flex-shrink:0}
 .wg-ai-message-list article{overflow-wrap:anywhere}
+/* Explicit readable message colors (single dark command-center theme). */
+.wg-ai-message{color:var(--wg-ink)}
+.wg-ai-message-body{color:var(--wg-ink);overflow-wrap:anywhere;word-break:normal}
+.wg-ai-message-body p,.wg-ai-message-body h1,.wg-ai-message-body h2,
+.wg-ai-message-body h3,.wg-ai-message-body h4,.wg-ai-message-body li,
+.wg-ai-message-body td,.wg-ai-message-body th,.wg-ai-message-body strong,
+.wg-ai-message-body em,.wg-ai-message-body blockquote,.wg-ai-message-body span{color:inherit}
+.wg-ai-message-body a{color:var(--wg-accent)}
+.wg-ai-message-body code{color:#bae6fd;background:rgba(56,189,248,.12);border-radius:.35rem;padding:.05rem .3rem}
+.wg-ai-message-body pre{background:rgba(8,13,26,.85);border:1px solid var(--wg-line);border-radius:.6rem;padding:.6rem .8rem;overflow-x:auto}
+.wg-ai-message-body pre code{background:none;padding:0}
+.wg-ai-message-body table{border-collapse:collapse;width:100%;font-size:.8rem}
+.wg-ai-message-body th,.wg-ai-message-body td{border:1px solid var(--wg-line);padding:.3rem .5rem;text-align:left}
 .wg-ai-context{
   display:flex;
   flex-direction:column;

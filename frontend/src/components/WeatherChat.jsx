@@ -110,10 +110,17 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
 
   const send = (event) => {
     event?.preventDefault();
-    if (!draft.trim()) return;
+    if (!draft.trim() || busy) return;
     onAsk(draft);
     setDraft("");
   };
+
+  // Never render an empty bubble: an undefined/blank reply means the API
+  // returned no usable text, so show an explicit notice instead.
+  const bodyText = (msg) =>
+    typeof msg.text === "string" && msg.text.trim()
+      ? msg.text
+      : "⚠️ This reply arrived without readable text. Please try again — no weather values are shown rather than guessed.";
 
   const toggleSpeech = (id, text) => {
     if (speaking === id) {
@@ -134,7 +141,7 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
         <div className="wg-ai-chat-column">
           <div className="wg-ai-message-list" role="log" aria-live="polite" aria-label="Conversation">
             {messages.map((msg) => (
-              <article key={msg.id} className="wg-card wg-enter"
+              <article key={msg.id} data-testid={msg.sender === "user" ? "user-message" : "assistant-message"} className="wg-card wg-enter wg-ai-message"
                 style={{ padding: "0.85rem 1rem", alignSelf: msg.sender === "user" ? "flex-end" : "flex-start", maxWidth: "100%", borderColor: msg.sender === "user" ? "rgba(56,189,248,.35)" : undefined }}>
                 <header style={{ display: "flex", justifyContent: "space-between", gap: "0.6rem", marginBottom: "0.35rem", fontSize: "0.72rem", color: "var(--wg-muted)" }}>
                   <strong>{msg.sender === "user" ? "You" : "WeatherGPT"}</strong>
@@ -144,8 +151,8 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
                     </button>
                   )}
                 </header>
-                <div style={{ fontSize: "0.86rem", lineHeight: 1.6 }}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+                <div className="wg-ai-message-body" data-testid="message-body" style={{ fontSize: "0.86rem", lineHeight: 1.6 }}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{bodyText(msg)}</ReactMarkdown>
                 </div>
                 {msg.weather && <div style={{ marginTop: "0.6rem" }}><ModernWeatherCard weather={msg.weather} /></div>}
                 {msg.suggested_actions?.length > 0 && (
@@ -170,7 +177,7 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
 
           <div className="wg-scrollrow" aria-label="Capability modes">
             {MODES.map(([label, query]) => (
-              <button key={label} className="wg-chip" style={{ cursor: "pointer", textTransform: "none", fontSize: "0.7rem" }} onClick={() => onAsk(query)} title={query}>
+              <button key={label} className="wg-chip" style={{ cursor: "pointer", textTransform: "none", fontSize: "0.7rem" }} onClick={() => onAsk(query)} title={query} disabled={busy}>
                 {label}
               </button>
             ))}
@@ -178,7 +185,7 @@ export default function WeatherChat({ messages, busy, language, persona, onAsk, 
 
           <div className="wg-scrollrow" aria-label="Suggested questions">
             {prompts.map((p) => (
-              <button key={p} className="wg-btn-ghost" style={{ whiteSpace: "nowrap" }} onClick={() => onAsk(p)}>{p}</button>
+              <button key={p} className="wg-btn-ghost" style={{ whiteSpace: "nowrap" }} onClick={() => onAsk(p)} disabled={busy}>{p}</button>
             ))}
           </div>
 
