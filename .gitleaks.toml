@@ -1,0 +1,10 @@
+# WeatherGPT gitleaks configuration: extend the default rule set and allowlist
+# documented false positives. No real credentials are committed; all keys
+# come from server-side environment variables (see .env.example).
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Deterministic Playwright chat-visibility test marker, not a credential"
+paths = ["frontend/tests/chat_visibility\\.py"]
+regexes = ["vis-probe-9f27"]

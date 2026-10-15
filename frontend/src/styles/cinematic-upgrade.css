@@ -2,7 +2,10 @@
    No remote assets, paid SDKs, or hosted media are required. */
 :root{
   --wg-cyan:#67e8f9;--wg-blue:#60a5fa;--wg-violet:#a78bfa;
-  --wg-ink:#030817;--wg-panel:rgba(7,16,35,.72);
+  /* NOTE: --wg-ink must stay the readable light token from index.css (#eaf1fb).
+     A previous override set it to near-black (#030817), which rendered
+     .wg-btn-ghost / .wg-input / .wg-util text invisible on the dark theme. */
+  --wg-panel:rgba(7,16,35,.72);
 }
 .wg-ref-app{background:
   radial-gradient(circle at 15% 10%,rgba(34,211,238,.10),transparent 26%),
