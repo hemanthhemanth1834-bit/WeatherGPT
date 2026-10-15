@@ -185,19 +185,29 @@ jobs:
           set -Ee
           trap 'status=$?; echo "Browser smoke failed (exit $status); preview log follows:"; sed -n "1,200p" /tmp/weathergpt-ui.log || true; exit "$status"' ERR
           npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/weathergpt-ui.log 2>&1 &
-          # Wait for the preview server to respond instead of assuming a fixed startup time.
-          for i in $(seq 1 30); do
-            if curl -sSf http://127.0.0.1:4173/ >/dev/null 2>&1; then
-              echo "Preview server is ready after approximately ${i}s"
-              break
-            fi
-            sleep 1
-          done
-          if ! curl -sSf http://127.0.0.1:4173/ >/dev/null 2>&1; then
-            echo "Preview server did not start within 30 seconds; preview log follows:"
-            sed -n '1,200p' /tmp/weathergpt-ui.log || true
-            exit 1
-          fi
+          python - <<'PY'
+          import time
+          import requests
+
+          url = "http://127.0.0.1:4173/"
+          for i in range(60):
+              try:
+                  response = requests.get(url, timeout=2)
+                  if response.status_code == 200:
+                      print(f"Preview server is healthy after approximately {i + 1}s")
+                      break
+              except requests.RequestException:
+                  pass
+              time.sleep(1)
+          else:
+              print("=== /tmp/weathergpt-ui.log ===")
+              try:
+                  with open("/tmp/weathergpt-ui.log", encoding="utf-8") as log:
+                      print(log.read())
+              except OSError as exc:
+                  print("Failed to read UI log:", exc)
+              raise SystemExit("Local UI preview did not become healthy within 60s.")
+          PY
 
           python - <<'PY'
           from playwright.sync_api import sync_playwright
@@ -206,41 +216,43 @@ jobs:
           with sync_playwright() as p:
               for browser_type in (p.chromium, p.firefox, p.webkit):
                   browser = browser_type.launch()
-                  context = browser.new_context(
-                      geolocation={"latitude": 16.5062, "longitude": 80.6480},
-                      permissions=["geolocation"],
-                      viewport={"width": 390, "height": 844},
-                  )
-                  page = context.new_page()
-                  severe = []
-                  page.on("console", lambda msg: severe.append(msg.text) if msg.type == "error" else None)
-                  page.goto(url, wait_until="networkidle", timeout=120000)
-                  if "WeatherGPT" not in page.title():
-                      raise SystemExit(f"Unexpected title in {browser_type.name}: {page.title()!r}")
-                  if page.locator("body").inner_text(timeout=10000).strip() == "":
-                      raise SystemExit(f"Empty mobile render in {browser_type.name}")
-                  if page.locator("main").count() != 1:
-                      raise SystemExit(f"Missing main landmark in {browser_type.name}")
-                  desktop = context.new_page()
-                  desktop.set_viewport_size({"width": 1440, "height": 900})
-                  desktop.goto(url, wait_until="networkidle", timeout=120000)
-                  if desktop.locator("main").count() != 1:
-                      raise SystemExit(f"Desktop landmark failure in {browser_type.name}")
-                  desktop.close()
-                  # Browser smoke validates our built UI, not third-party provider uptime.
-                  # Firefox can report a CORS/network error when Open-Meteo is unreachable in CI.
-                  unexpected = [
-                      msg for msg in severe
-                      if "ERR_CONNECTION_REFUSED" not in msg
-                      and not ("api.open-meteo.com" in msg and (
-                          "Cross-Origin Request Blocked" in msg
-                          or "CORS request did not succeed" in msg
-                      ))
-                  ]
-                  if unexpected:
-                      raise SystemExit(f"Browser console errors in {browser_type.name}: {unexpected[:10]}")
-                  print("Browser pass:", browser_type.name)
-                  browser.close()
+                  try:
+                      context = browser.new_context(
+                          geolocation={"latitude": 16.5062, "longitude": 80.6480},
+                          permissions=["geolocation"],
+                          viewport={"width": 390, "height": 844},
+                      )
+                      page = context.new_page()
+                      severe = []
+                      page.on("console", lambda msg: severe.append(msg.text) if msg.type == "error" else None)
+                      page.goto(url, wait_until="load", timeout=120000)
+                      if "WeatherGPT" not in page.title():
+                          raise SystemExit(f"Unexpected title in {browser_type.name}: {page.title()!r}")
+                      if page.locator("body").inner_text(timeout=10000).strip() == "":
+                          raise SystemExit(f"Empty mobile render in {browser_type.name}")
+                      if page.locator("main").count() != 1:
+                          raise SystemExit(f"Missing main landmark in {browser_type.name}")
+                      desktop = context.new_page()
+                      desktop.set_viewport_size({"width": 1440, "height": 900})
+                      desktop.goto(url, wait_until="load", timeout=120000)
+                      if desktop.locator("main").count() != 1:
+                          raise SystemExit(f"Desktop landmark failure in {browser_type.name}")
+                      desktop.close()
+                      # Browser smoke validates our built UI, not third-party provider uptime.
+                      # Firefox can report a CORS/network error when Open-Meteo is unreachable in CI.
+                      unexpected = [
+                          msg for msg in severe
+                          if "ERR_CONNECTION_REFUSED" not in msg
+                          and not ("api.open-meteo.com" in msg and (
+                              "Cross-Origin Request Blocked" in msg
+                              or "CORS request did not succeed" in msg
+                          ))
+                      ]
+                      if unexpected:
+                          raise SystemExit(f"Browser console errors in {browser_type.name}: {unexpected[:10]}")
+                      print("Browser pass:", browser_type.name)
+                  finally:
+                      browser.close()
           PY
 
   frontend:
