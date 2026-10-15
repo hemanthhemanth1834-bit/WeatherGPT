@@ -237,6 +237,19 @@ def run_browser(pw, name, viewport):
         page2.wait_for_function(
             """() => document.body.innerText.includes('Pune')""", timeout=30000)
         open_dashboard(page2, viewport)
+        # Lazy tiles below the fold only fail once scrolled into view.
+        for i in range(page2.get_by_test_id("live-imagery").count()):
+            try:
+                page2.get_by_test_id("live-imagery").nth(i).scroll_into_view_if_needed(timeout=8000)
+            except Exception:
+                pass
+        try:
+            page2.wait_for_function(
+                """() => [...document.querySelectorAll('[data-testid="live-imagery-status"]')]
+                     .every(el => el.innerText.trim() === 'UNAVAILABLE')""",
+                timeout=20000)
+        except Exception:
+            pass
         st2 = page2.get_by_test_id("live-imagery-status").all_inner_texts()
         check(all(s.strip() == "UNAVAILABLE" for s in st2) and len(st2) >= 2,
               f"{tag} provider outage degrades to UNAVAILABLE {st2}", failures)
