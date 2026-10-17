@@ -132,3 +132,12 @@ production behaviour completely; no data migration is involved.
 - The pre-existing CSP/console conditions in §4 were **not** modified; they
   await a separate decision (options recorded in `WEATHERGPT_REMAINING_WORK.md`
   §4).
+
+
+## 7. Follow-up release: CSP stylesheet cleanup (PR #27, 2026-10-17)
+
+PR [#27](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/27) was merged to `main` as `7e26b76c2f9617f194a8f747f6685d716d6f0998` after all CI jobs passed, including backend, frontend, browser-smoke, chat-visibility, service-smoke and production-smoke. Secret/workflow security and dependency/security review checks also passed. Vercel deployment `dpl_AgBoLwGVkMEPvNQo4pW91gKArq4W` reached READY and lists the production alias.
+
+The change removes the Google Fonts and redundant unpkg Leaflet stylesheet tags from `frontend/index.html`; it does not loosen the Content Security Policy and adds no dependencies. The PR preview rendered successfully and reported no external stylesheet links or browser resource/CSP errors.
+
+**Production verification is still pending.** A fresh browser inspection of `https://weathergpt-kappa-pink.vercel.app/` continued to report the two old external stylesheet links after the deployment reached READY. This discrepancy must be resolved with a fresh production session/cache check before the CSP console issue can be marked fixed. PR merge and deployment readiness are confirmed; public-alias behavior is not.
