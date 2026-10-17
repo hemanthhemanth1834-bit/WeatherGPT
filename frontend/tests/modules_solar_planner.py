@@ -43,6 +43,33 @@ def check(cond, msg, failures):
         failures.append(msg)
         print(f"  FAIL {msg}")
 
+def stable_location(page, timeout_ms=45000, settle_reads=2):
+    """Return the active location once it has STOPPED changing.
+
+    The header renders the weather payload's ``location`` and falls back to the
+    placeholder "Detecting location..." until the first weather response
+    arrives, so the raw first read can be the placeholder. This readiness
+    helper waits for the value to stabilise (two identical consecutive reads)
+    instead of asserting against a transient state.
+    """
+    deadline = page.evaluate("() => Date.now()") + timeout_ms
+    prev = None
+    settled = 0
+    while page.evaluate("() => Date.now()") < deadline:
+        try:
+            cur = page.locator(".wg-ref-location b").inner_text().strip()
+        except Exception:
+            cur = ""
+        if cur and cur == prev and "Detecting" not in cur:
+            settled += 1
+            if settled >= settle_reads:
+                return cur
+        else:
+            settled = 0
+        prev = cur
+        page.wait_for_timeout(500)
+    return prev or ""
+
 def run(browser_type):
     failures = []
     launch = {"headless": True}
@@ -54,8 +81,8 @@ def run(browser_type):
     page.on("console", lambda m: console_errors.append(m.text) if m.type == "error" else None)
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", timeout=45000)
-    page.wait_for_timeout(3000)
-    start_location = page.locator(".wg-ref-location b").inner_text()
+    start_location = stable_location(page)
+    print(f"  active location (settled): {start_location!r}")
 
     print("[solar]")
     nav(page, "Solar Energy Potential")
@@ -125,8 +152,27 @@ def run(browser_type):
     page.wait_for_timeout(15000)
     chat_text = page.inner_text("body")
     check("Grand Est" not in chat_text, "chat: filler-word geocode (Grand Est) gone", failures)
-    end_location = page.locator(".wg-ref-location b").inner_text()
-    check(end_location == start_location, f"chat: active location unchanged ({start_location})", failures)
+    end_location = stable_location(page, timeout_ms=20000)
+    check(end_location == start_location,
+          f"chat: active location unchanged ({start_location!r} -> {end_location!r})", failures)
+
+    print("[chat unknown-place honesty]")
+    # Regression: an unresolvable place name used to answer silently as the
+    # default city (and could even be substring-matched to an unrelated
+    # gazetteer entry, e.g. "krishnapatnam" -> Patna). It must now say which
+    # location the figures describe.
+    box.fill("Tell me about the weather in Krishnapatnam")
+    page.locator('button[aria-label="Send question"]').click()
+    page.wait_for_timeout(20000)
+    unknown_text = page.inner_text("body")
+    check("could not resolve" in unknown_text,
+          "chat: unresolvable place states the fallback honestly", failures)
+    check("Patna" not in unknown_text,
+          "chat: unresolvable place is not substring-matched to Patna", failures)
+    after_unknown = stable_location(page, timeout_ms=20000)
+    check(after_unknown == start_location,
+          f"chat: unresolvable place did not move the app location "
+          f"({start_location!r} -> {after_unknown!r})", failures)
 
     real_errors = [e for e in console_errors if "favicon" not in e.lower() and "fonts.googleapis" not in e]
     check(not real_errors, f"no console errors ({len(real_errors)})", failures)

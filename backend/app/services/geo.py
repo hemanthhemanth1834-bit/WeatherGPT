@@ -148,32 +148,46 @@ def _clean(text: str) -> str:
     return " ".join(text.split())
 
 
+def resolve(place: str) -> Tuple[float, float, str, str, bool]:
+    """Like :func:`geocode` but reports whether the name was really resolved.
+
+    Returns ``(lat, lon, name, state, resolved)``. ``resolved`` is False only
+    when the caller asked for a specific place that neither the gazetteer nor
+    the live geocoder knew and we fell back to the built-in default — callers
+    that show weather must say so instead of silently presenting the default
+    city as the requested one.
+    """
+    query = _clean(place)
+    if not query:
+        name, lat, lon, state = DEFAULT_LOCATION
+        return lat, lon, name, state, False
+
+    if query in GAZETTEER:
+        lat, lon, state, _area = GAZETTEER[query]
+        return lat, lon, query.title(), state, True
+
+    tokens = set(query.split())
+    for key in sorted(GAZETTEER, key=len, reverse=True):
+        if all(token in tokens for token in key.split()):
+            lat, lon, state, _area = GAZETTEER[key]
+            return lat, lon, key.title(), state, True
+
+    live = _geocode_live(query)
+    if live is not None:
+        lat, lon, name, state = live
+        return lat, lon, name, state, True
+
+    name, lat, lon, state = DEFAULT_LOCATION
+    return lat, lon, name, state, False
+
+
 def geocode(place: str) -> Tuple[float, float, str, str]:
     """Resolve a place name to (lat, lon, display name, state).
 
     Gazetteer first; live Open-Meteo geocoding second; built-in
     default last. Never raises for ordinary input.
     """
-    query = _clean(place)
-    if not query:
-        name, lat, lon, state = DEFAULT_LOCATION
-        return lat, lon, name, state
-
-    if query in GAZETTEER:
-        lat, lon, state, _area = GAZETTEER[query]
-        return lat, lon, query.title(), state
-
-    # Longest Gazetteer keys first so "new delhi" beats "delhi".
-    for key in sorted(GAZETTEER, key=len, reverse=True):
-        if key in query:
-            lat, lon, state, _area = GAZETTEER[key]
-            return lat, lon, key.title(), state
-
-    live = _geocode_live(query)
-    if live is not None:
-        return live
-
-    name, lat, lon, state = DEFAULT_LOCATION
+    lat, lon, name, state, _resolved = resolve(place)
     return lat, lon, name, state
 
 

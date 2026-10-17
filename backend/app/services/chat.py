@@ -117,6 +117,17 @@ _MONTH_NUM = {
 }
 
 
+def unresolved_location_note(place: str, shown: str) -> str:
+    """Honest note when the requested place could not be geocoded.
+
+    Without this, an unknown place silently answered as the built-in default
+    city (Pune), which reads as if that were the requested location.
+    Returns '' when the place resolved normally.
+    """
+    return (f"\n\n*Note: I could not resolve “{place}” to a location, so the "
+            f"figures above are for {shown}, not the place you named.*")
+
+
 def horizon_note(text: str) -> str:
     """Honest note when a question asks about a date beyond the forecast
     horizon (the data tool can only return ~7 days). Returns '' otherwise."""
@@ -439,7 +450,7 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         )
 
     place, explicit = extract_place_meta(text, request.location_name)
-    lat, lon, proper, state = geo.geocode(place)
+    lat, lon, proper, state, place_resolved = geo.resolve(place)
     data = get_weather(lat, lon, proper, state)
 
     wants_agri = persona == "farmer" or any(
@@ -617,6 +628,8 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
             "Rainfall is a model forecast, not a guarantee or a measured observation._"
         )
     markdown += extra
+    if explicit and not place_resolved:
+        markdown += unresolved_location_note(place, proper)
     markdown += horizon_note(text)
     template = TEMPLATES.get(lang, TEMPLATES["en"])
     suggestions = [s.format(place=proper, state=state) for s in template["suggest"]]
@@ -627,4 +640,5 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         aviation_briefing=briefing, marine_advisory=sea,
         quick_suggestions=suggestions, suggested_actions=ACTIONS,
         explicit_location=explicit,
+        location_resolved=place_resolved,
     )

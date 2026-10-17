@@ -92,3 +92,39 @@ Note: an earlier GIBS probe error was traced to a probe-script omission
 - Chat: filler words are no longer geocoded; the app location only syncs for
   explicit place names; live AQI (US EPA) flows into chat answers with source
   labelling; dates beyond the ~7-day horizon produce an explicit note.
+
+## Second-session findings (this audit)
+
+The sections above were re-verified on a clean worktree of
+`audit/verified-release`. In addition, a chat battery surfaced one further
+location defect that the first session had not covered.
+
+### Finding #7 (P0) — unknown place resolved to an unrelated city
+
+- Question: *"Tell me about the weather in Krishnapatnam"*.
+- Baseline reply: **"Weather for Patna, Bihar"** with Patna's coordinates and
+  `explicit_location=true`. Krishnapatnam is a real port town in Andhra
+  Pradesh, roughly 1200 km from Patna, and the reply gave no indication that a
+  different place had been substituted.
+- Cause: `geo.geocode()` matched gazetteer keys by plain substring, so
+  `"krishnapatnam"` matched the key `"patna"`. The same mechanism turned
+  `"Bellary Road"` into Pune.
+- Fixed with whole-token matching plus an explicit
+  `location_resolved` flag. Unknown names now answer for the fallback city
+  **with a visible note naming both places**; real names that merely contain a
+  gazetteer key (`Visakhapatnam`, `Prayagraj`) still resolve correctly.
+
+### Production status during this audit
+
+Production (`weathergpt-kappa-pink.vercel.app`) still serves the baseline
+commit `d7810ba`, so both of these remain live there until the audit branch is
+merged and deployed:
+
+| Probe | Production now | Audit branch locally |
+|-------|----------------|----------------------|
+| `GET /api/weather/current?location=Pune` → `aqi` | `78` (constant heuristic, no provenance field) | `133` (live US-EPA, `aqi_source` present) |
+| Chat: "weather in Krishnapatnam" | "Weather for Patna, Bihar" | Pune **+ "could not resolve" note**, `location_resolved=false` |
+
+Everything else in this document describes the baseline deployment and was
+observed directly from it; the second-session column above is marked as local
+until a deploy is verified.

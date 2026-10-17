@@ -149,9 +149,12 @@ export default function App() {
           const sw = reply.structured_weather;
           // Only sync the app location when the place was explicit in the
           // question (or matches the current one); never let a fallback
-          // guess silently move the active location.
+          // guess silently move the active location. An explicit place we
+          // could not resolve (location_resolved === false) must not move
+          // the app either — the reply names the city it actually describes.
           const explicit = reply.explicit_location !== false;
-          if (explicit || (sw.location || "").toLowerCase() === (place || "").toLowerCase()) {
+          const resolved = reply.location_resolved !== false;
+          if (resolved && (explicit || (sw.location || "").toLowerCase() === (place || "").toLowerCase())) {
             setWeather(sw);
             setPlace(sw.location);
             remember(sw.location);

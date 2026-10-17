@@ -32,6 +32,7 @@ caching/fallback behavior per path.
 | Solar azimuth/altitude | Date + latitude declination, sunrise/sunset arc | "Estimated … geometry proxy" | Explicitly not an ephemeris |
 | Risk/flood/sector indicators | Thresholds over live values | COMPUTED | Feet thresholds documented inline in `moduleMetrics` |
 | Alert validity windows | Computed from live telemetry | COMPUTED ("not official IMD bulletins") | Official pointer to IMD appended in chat |
+| Place resolution provenance | Gazetteer → Open-Meteo geocoding → declared default, reported by `geo.resolve()` | n/a (drives wording) | When a named place cannot be resolved at all, the chat reply states it and names the fallback city; `location_resolved=false` is returned to the client. Never substitutes a *different* real place for an unknown one. |
 | Cyclone track geometry | Static demonstration data | DEMO | Never presented as live positions |
 
 ## Static / curated content

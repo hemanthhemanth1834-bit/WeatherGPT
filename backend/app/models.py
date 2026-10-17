@@ -177,6 +177,9 @@ class ChatResponse(BaseModel):
     # location) rather than an explicit place name in the question; the
     # frontend uses this to avoid synchronising the app location to a guess.
     explicit_location: bool = True
+    # False when the named place could not be geocoded at all and the answer
+    # is therefore about the built-in default location, not the asked place.
+    location_resolved: bool = True
 
 
 class RiskAssessment(BaseModel):

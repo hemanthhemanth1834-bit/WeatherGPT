@@ -43,3 +43,25 @@ what was verified for **this release** and the findings.
 No new vulnerabilities introduced by this change set. All previously documented
 controls remain intact, and two new anti-spoofing behaviors (explicit-place
 sync guard, AQI provenance enforcement) further harden the product.
+
+## Second-session addendum (location-resolution fix)
+
+Change set: `backend/app/services/geo.py`, `backend/app/services/chat.py`,
+`backend/app/models.py`, `frontend/src/App.jsx`, two backend test files, one
+frontend browser suite, three audit documents. **No dependency changes, no new
+endpoints, no new hosts, no new credentials.**
+
+| Control | Verification | Result |
+|---------|--------------|--------|
+| Secrets | `git diff` scanned for key/token/password patterns; only the word "tokens" appears, as a Python variable | PASS |
+| Injection | The fix removes a matching ambiguity; no new string formatting into queries. `resolve()` calls the same `_geocode_live()` with the same `requests.utils.quote()` encoding | PASS |
+| XSS | The new note is plain Markdown text with typographic quotes; rendered by the existing markdown renderer. No `dangerouslySetInnerHTML` added | PASS |
+| Input validation | Place names remain free text through the existing 500-char cap; the token-set comparison is O(n) and cannot be steered into unbounded matching | PASS |
+| Error handling | The new note fires only on a genuine resolution miss; no provider error text or stack trace reaches the client | PASS |
+| Location integrity | Two distinct hijack vectors closed: (a) an unknown name can no longer be mapped onto an unrelated real city, (b) an unresolved answer can no longer silently move the app's active location | PASS |
+| Rate limiting / CORS / headers | Unchanged | PASS (unchanged) |
+
+Additional evidence: the browser captured the raw reply
+`{"explicit_location": true, "location_resolved": false}` while the app's
+active location stayed unchanged, confirming the guard operates on the real
+payload rather than a mocked one.
