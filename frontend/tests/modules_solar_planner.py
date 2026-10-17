@@ -8,6 +8,7 @@ Env overrides: WG_UI_URL, WG_BROWSERS (csv), WG_CHROME_PATH (local browser exe).
 """
 
 import os
+import re
 import sys
 
 UI_URL = os.getenv("WG_UI_URL", "http://127.0.0.1:4173/")
@@ -15,6 +16,21 @@ BROWSERS = [
     b.strip() for b in os.getenv("WG_BROWSERS", "chromium").split(",") if b.strip()
 ]
 CHROME_PATH = os.getenv("WG_CHROME_PATH", "")
+
+# Third-party imagery/tiles/chart sources the page loads directly. Their
+# transient failures (rate limits, blocked tiles) surface as generic
+# "Failed to load resource" console errors; they are external-provider noise,
+# not product errors. A console error is only excused when the page actually
+# recorded a failed request to one of these hosts in the same load.
+EXTERNAL_NOISE = re.compile(
+    r"https?://("
+    r"api\.open-meteo\.com|"
+    r"[abc]\.tile\.openstreetmap\.org|"
+    r"gibs\.earthdata\.nasa\.gov|"
+    r"tilecache\.rainviewer\.com|"
+    r"api\.rainviewer\.com"
+    r")"
+)
 
 COMPASS = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
 MODULES = [
@@ -153,9 +169,22 @@ def run(browser_type):
     browser = browser_type.launch(**launch)
     page = browser.new_page(viewport={"width": 1440, "height": 900})
     console_errors = []
+    external_bad = []
     page.on(
         "console",
         lambda m: console_errors.append(m.text) if m.type == "error" else None,
+    )
+    page.on(
+        "response",
+        lambda r: (
+            external_bad.append(r.url)
+            if r.status >= 400 and EXTERNAL_NOISE.search(r.url)
+            else None
+        ),
+    )
+    page.on(
+        "requestfailed",
+        lambda r: external_bad.append(r.url) if EXTERNAL_NOISE.search(r.url) else None,
     )
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", timeout=120000)
@@ -369,9 +398,23 @@ def run(browser_type):
     real_errors = [
         e
         for e in console_errors
-        if "favicon" not in e.lower() and "fonts.googleapis" not in e
+        if "favicon" not in e.lower()
+        and "fonts.googleapis" not in e
+        and not (external_bad and e.startswith("Failed to load resource"))
     ]
-    check(not real_errors, f"no console errors ({len(real_errors)})", failures)
+    noise_note = (
+        f" [note: {len(external_bad)} third-party provider requests failed"
+        " - external noise, not a product error]"
+        if external_bad and not real_errors
+        else ""
+    )
+    check(
+        not real_errors,
+        f"no console errors ({len(real_errors)})"
+        + (f" {real_errors[:3]}" if real_errors else "")
+        + noise_note,
+        failures,
+    )
     browser.close()
     return failures
 

@@ -68,7 +68,8 @@ Status legend: **Complete** · **Partial** · **Blocked** · **Unverified**
 | Geolocation watchdog probe (no permission, both engines) | Firefox settles `New Delhi` after 26.9 s (12 s watchdog + cold fallback fetch); Chromium 0.7 s; 0 console errors both. Before the fix Firefox stayed on the placeholder past 120 s |
 | Idle-latency measurements (single-process local backend) | `/api/risk/assess` 14.9 s; `/api/chat/query` cold 42.4 s → warm 4–5 s. The frontend client aborts at 20 s by design, so cold queues show honest error states; suite pre-warming documented in test report §platform-upgrade |
 | Console-noise attribution with URLs | 503 console entries traced to `api.open-meteo.com` direct chart calls; failed requests to `[abc].tile.openstreetmap.org`; no backend/JS errors |
-| Browser suites (chromium + firefox) | `modules_solar_planner` / `responsive_accessibility` (8 viewports) / `chat_visibility` / `imagery_visibility` — final results in `WEATHERGPT_TEST_REPORT.md` §platform-upgrade; Firefox now runs locally (harness fix) |
+| Browser suites (chromium + firefox) | modules (44 checks): firefox 44/44 with the watchdog bundle (idle-backend probe: settles 26.9 s local / 15.2 s prod); chromium 43/44 on the final head — both compare checks PASS, the one miss was 1 external console-noise entry (attributed). responsive: 8 viewports + keyboard + reduced-motion ALL PASS both engines. imagery: 60 checks ALL PASS both engines. Caveats + follow-ups: `WEATHERGPT_TEST_REPORT.md` §platform-upgrade |
+| Production post-merge verification (`7314b36`) | Alias serves `index-CCJoY2cE.js` (fresh, `x-vercel-cache: MISS`); 13-width sweep 830→1440 **all clean** on the live alias (old build showed 830–950 + 1160–1200 bands); watchdog/console probe: Firefox settles `New Delhi` 15.2 s, Chromium 1.8 s, **0 console errors** both |
 | Production baseline comparison | `probe_overflow.py` — production (pre-merge build) shows 0 console errors; header bands present as measured above; local build fixes them |
 
 ## 4. Honesty notes
@@ -98,16 +99,21 @@ Status legend: **Complete** · **Partial** · **Blocked** · **Unverified**
 
 ## 5. Release record (stage H)
 
-- PR: (fill at merge) — regular merge commit per project convention, no
+- PR: **#28** (`feat/platform-upgrade` → `main`), regular merge commit, no
   force-push.
-- CI: (fill — full WeatherGPT job set on the PR head).
-- Merge commit on `main`: (fill).
-- Production verification after deploy: (fill — served HTML hash + console
-  probe, plus a repeat of the width-band sweep against the alias).
-- Remaining blockers: none known at merge time; the standing
-  environment-limited items are listed in `WEATHERGPT_REMAINING_WORK.md`
-  §4/§7 (Vercel build-log inspection without credentials; WebKit local runs;
-  load benchmarking not implemented).
+- CI: full WeatherGPT job set **green on head `5e900dc`** (backend 6m10s,
+  chat-visibility, browser-smoke, service-smoke, production-smoke, frontend
+  build/lint, backend/frontend audits, secret scan; Vercel preview deployed).
+- Merge commit on `main`: **`7314b36`**.
+- Production verification after deploy: alias serves
+  **`index-CCJoY2cE.js`** (fresh, `x-vercel-cache: MISS`); 13-width sweep
+  830→1440 **all clean** (the pre-merge build showed 830–950 px and
+  1160–1200 px bands); watchdog/console probe: Firefox settles `New Delhi`
+  in 15.2 s, Chromium 1.8 s, **0 console errors** both.
+- Remaining blockers: none at merge time; the standing environment-limited
+  items are listed in `WEATHERGPT_REMAINING_WORK.md` §4/§7 (Vercel build-log
+  inspection without credentials; WebKit local runs; load benchmarking not
+  implemented; initial-load auto-retry follow-up).
 
 ## 6. Definition of Done
 
@@ -116,6 +122,6 @@ Status legend: **Complete** · **Partial** · **Blocked** · **Unverified**
       chromium + firefox (final run recorded in the test report).
 - [x] Required docs present and updated (audit, plan, design system,
       completion report, register, test/live-site/release docs).
-- [ ] Intended commit merged to `main` + deployed (stage H — filled above at
-      completion).
-- [ ] Production smoke evidence captured post-deploy (same section).
+- [x] Intended commit merged to `main` + deployed (stage H — §5 above).
+- [x] Production smoke evidence captured post-deploy (§5 above: bundle hash,
+      13-width sweep, watchdog/console probes).

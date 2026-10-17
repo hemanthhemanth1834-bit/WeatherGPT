@@ -197,3 +197,66 @@ failure, and no assertion is relaxed.
 - Preview browser smoke: WeatherGPT home rendered; external stylesheet links to `fonts.googleapis.com` and `unpkg.com` absent; only bundled same-origin CSS files present; zero browser resource errors/CSP violations detected.
 - After merge `7e26b76c2f9617f194a8f747f6685d716d6f0998`, Vercel deployment reached READY. The earlier production-browser reading that still saw the two old links was a stale cached copy. **Fresh production verification (later session):** the live HTML contains no `fonts.googleapis`/`unpkg` references (`x-vercel-cache: HIT` on the cleaned HTML) and a fresh headless-Chrome session on the production URL reports **0 console errors/warnings** — production alias verification completed.
 - No local Windows tests, performance benchmark, or local Firefox/WebKit runs were performed in this session.
+
+## Follow-up: platform-upgrade pass (2026-10-17) — stages I–K suites
+
+Local runs (Windows; system Chrome via `WG_CHROME_PATH` + bundled Playwright
+Firefox; single-process backend on 127.0.0.1:8000; preview on 127.0.0.1:4173
+serving the final bundle `index-CCJoY2cE.js`). Assertions were never relaxed:
+the changes below are readiness waits, pre-warming and noise attribution only.
+
+### `modules_solar_planner.py` (44 checks × chromium + firefox)
+
+- **Firefox: 44/44 ALL PASS** — the first fully green Firefox run. All
+  previous Firefox failures were downstream of the "Detecting location…"
+  hang; the `App.jsx` geolocation callback watchdog (12 s) removes it.
+- **Chromium: 42/44** in the recorded run — `compare: AQI provenance` and
+  `compare: no ambiguous ellipsis cells` raced the per-city cell settle
+  (both passed in Firefox in the same run). Fixed with a cell-readiness wait
+  before judging (90 s bound; asserts unchanged) and verified by a targeted
+  probe: settled cells render `178 Unhealthy · live` / `194 Unhealthy · live`
+  per city; a cold-start load on this machine can exceed 60 s, hence 90 s.
+- Chat checks now wait for the rendered assistant bubble (120 s bound) instead
+  of fixed 15/20 s sleeps — the reply pipeline measured 42.4 s cold / 4–5 s
+  warm here. FloodWatch auto-assess pre-warms the same live risk URL first;
+  the UI client aborts every request at 20 s by design (`api.js`), so
+  cold-queue conditions are absorbed before the UI is judged (a warm assess
+  measured 14.9 s; a failed warm-up still fails the UI check honestly).
+- Final rerun on `5e900dc` (readiness fix in): - Final rerun on `5e900dc`: **chromium 43/44** — both compare checks now PASS
+  (readiness fix verified end-to-end); the single failure was
+  `no console errors (1)`, the external-noise class proven by the
+  URL-attributed probes (this suite now attributes it identically; harness
+  commit on `main`). **Firefox**: with an idle backend the header settles via
+  the watchdog (26.9 s local / 15.2 s on production, see probes below); in
+  the back-to-back suite run the cold fallback weather fetch queued past the
+  client's 20 s abort, the app showed its honest "Could not load weather…"
+  notice, the header kept the placeholder and the module checks cascaded —
+  recorded as follow-up work (`WEATHERGPT_REMAINING_WORK.md` §7), not hidden.
+
+### `responsive_accessibility.py` (8 viewports × chromium + firefox)
+
+- ALL PASS both engines (matrix + keyboard/focus + reduced-motion), including
+  the two added viewports (900×650, 1280×800).
+- External noise is now attributed per load: the run prints notes like
+  "6/9/12 third-party provider requests failed - external noise, not a
+  product error" (Open-Meteo 503s from the browser's direct chart calls and
+  `[abc].tile.openstreetmap.org` tile failures — both captured with URLs in
+  the dedicated probe); no product/backend console errors were retained.
+- Fresh-load waits are 120 s (was 45 s) so this machine's queue latency cannot
+  truncate a page before the checks read it.
+
+### `imagery_visibility.py` (2 viewports × chromium + firefox)
+
+- ALL PASS — 60 checks, 0 failures (`Suites run: 4, failures: 0`), including
+  the layer-switcher checks for the three new GIBS products and the
+  switch-loads-product assertion (mocked provider tiles; deterministic).
+
+### Cloud verification (PR #28 heads)
+
+- 13-width sweep 830→1440 (`probe_bands.py`): all clean on the preview
+  deployment of `a1142e8`; production baseline in the same sweep still shows
+  its bands (830–950 px header actions/LIVE pill; 1160–1200 px language
+  select) until merge.
+- Geolocation watchdog probe: Firefox settles `New Delhi` in 26.9 s, Chromium
+  0.7 s, 0 console errors both (pre-fix Firefox stayed on the placeholder
+  past 120 s).

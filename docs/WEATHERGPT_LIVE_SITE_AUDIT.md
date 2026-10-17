@@ -145,3 +145,12 @@ Leaflet CSS is bundled). See release report §4.
 - PR #27 merged as `7e26b76c2f9617f194a8f747f6685d716d6f0998` after the full WeatherGPT CI job set passed (backend, frontend, browser-smoke, chat-visibility, service-smoke, production-smoke); security and dependency review workflows passed too.
 - The Vercel deployment for that merge reached READY. Its preview browser run rendered the home view, loaded the bundled `index-BuSzGuDf.css` and `maps-vh-t_kPv.css`, had no Google Fonts/unpkg stylesheet links, and reported no resource or CSP console errors.
 - **Production alias verification completed (2026-10-17, later session).** Fresh evidence: the live HTML contains no `fonts.googleapis`/`unpkg` references (`x-vercel-cache: HIT`, so the CDN edge itself is serving the cleaned HTML) and a fresh headless-Chrome session on the production URL reports **0 console errors/warnings**. The earlier reading that still saw the old links was a stale cached copy. Status: COMPLETED AND VERIFIED in production.
+
+
+## Follow-up verification — platform upgrade (PR #28, 2026-10-17)
+
+- PR [#28](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/28) merged to `main` as `7314b36` after the full WeatherGPT CI job set passed on head `5e900dc`.
+- The production alias serves the new bundle `index-CCJoY2cE.js` (fresh, `x-vercel-cache: MISS` at first fetch).
+- The pre-existing header width bands (830–950 px, 1160–1200 px on the old build) are gone in production: 13-width sweep 830→1440 **all clean** on the live alias.
+- Fresh browser sessions (Chromium + Firefox) settle the location (`New Delhi`; 1.8 s / 15.2 s via the geolocation fallback watchdog), render the home dashboard figures, and report **0 console errors/warnings** both.
+- Status: COMPLETED AND VERIFIED in production.

@@ -146,3 +146,24 @@ stylesheet links (`x-vercel-cache: HIT`), and a fresh headless-Chrome session
 reports **0 console errors/warnings** (previously 2 CSP errors per load). The
 earlier "old links still observed" reading was a stale cached copy. The CSP
 console issue is fixed and verified in production.
+
+## 8. Platform upgrade release (PR #28 → `7314b36`, 2026-10-17)
+
+PR [#28](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/28)
+(`feat/platform-upgrade`) was merged to `main` as **`7314b36`** after the full
+WeatherGPT CI job set passed on head `5e900dc` (backend 6m10s, chat-visibility,
+browser-smoke, service-smoke, production-smoke, frontend build/lint, audits,
+secret scan). Regular merge commit; no force-push.
+
+Head content: honest live-imagery expansion (3 verified NASA GIBS products +
+FloodWatch satellite flood-context figure), the pre-existing header width-band
+fix (progressive disclosure + shrinkable pill), CapabilitiesHub honest states,
+a geolocation callback watchdog, and test-suite readiness/noise-attribution
+hardening (asserts unchanged).
+
+**Production verification (same day).** The alias serves
+`index-CCJoY2cE.js` (fresh, `x-vercel-cache: MISS`); the 13-width sweep
+830→1440 is **all clean** (the pre-merge build showed its bands at 830–950 and
+1160–1200 px); fresh browser probes (Chromium + Firefox) settle `New Delhi`
+(1.8 s / 15.2 s via the fallback watchdog) with **0 console errors both**.
+Status: COMPLETED AND VERIFIED in production.
