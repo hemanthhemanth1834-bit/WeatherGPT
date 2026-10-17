@@ -4,8 +4,8 @@
 - Branch: `feat/platform-upgrade` (base `f882c76`, post PRs #26/#27)
 - Date: 2026-10-17
 - Production alias: `https://weathergpt-kappa-pink.vercel.app`
-- Verified local build: bundle `index-BGfPCF3E.js` / `index-iz0-hG_6.css`
-  (the final build of this pass, after the header-band fix)
+- Verified local build: bundle `index-CCJoY2cE.js` / `index-iz0-hG_6.css`
+  (final build of this pass: header-band fix + geolocation callback watchdog)
 
 Status legend: **Complete** · **Partial** · **Blocked** · **Unverified**
 (every row names the concrete evidence; nothing here is projected).
@@ -23,7 +23,8 @@ Status legend: **Complete** · **Partial** · **Blocked** · **Unverified**
 | G | Documentation package | **Complete** | audit + plan + design system + register + release/test/live-site docs |
 | H | Release (PR, CI, merge, production verify) | **Complete** | §5 below (fill: PR link, merge commit, alias probe) |
 | I | Live-imagery expansion (free/open sources) | **Complete** | live WMS probes (real JPEGs); probe 2 (layer switch + FloodWatch figure load); suite assertions |
-| J | Second-round fixes (platform cards, pill, header bands, harness) | **Complete** | probe 2; width sweep 830→1440 clean; Firefox suites now run locally |
+| J | Second-round fixes (platform cards, pill, header bands, harness) | **Complete** | probe 2; width sweep 830→1440 clean locally and on the PR-head cloud preview; Firefox suites now run locally |
+| K | Third round (geolocation watchdog, suite readiness/pre-warm, noise attribution) | **Complete** | audit §6.1.5–6.1.6, §6.3; watchdog probe (Firefox settles 26.9 s, Chromium 0.7 s); idle-latency measurements; final rerun in the test report |
 
 ## 2. What changed in this pass (summary)
 
@@ -45,18 +46,28 @@ Status legend: **Complete** · **Partial** · **Blocked** · **Unverified**
   an official flood warning"). No new hosts, no CSP changes, no keys, nothing
   labelled LIVE. Keyed stock-photo APIs were evaluated and **not** integrated
   (rationale in the data-source register).
+- **Third-round fixes** (audit §6.1.5–6.1.6): app-level geolocation callback
+  watchdog (12 s) so a pending permission prompt can no longer strand the app
+  on "Detecting location…" in engines that never call back (verified in
+  Firefox); suite readiness — chat checks wait for the rendered reply, the
+  risk and chat paths are pre-warmed so the client's intended 20 s abort is
+  not tripped by cold queues, responsive console-noise correlation with
+  recorded provider failures, and fresh-load waits ≥120 s (asserts unchanged).
 
 ## 3. Verification evidence
 
 | Check | Result |
 |-------|--------|
 | Backend `pytest -q` | 130 passed (365 s) — this pass added no backend changes |
-| Frontend `oxlint` | 0 errors, 28 pre-existing warnings |
+| Frontend `oxlint` | 0 errors; 29 pre-existing warnings (stash-comparison verified the third-round `App.jsx` watchdog adds none) |
 | `vite build` | success; code-split chunks; `three` 564.83 kB / 139.85 kB gz |
 | GIBS product probes (live) | `MODIS_Combined_Flood_2-Day` 141 KB, `Flood_3-Day` 133 KB, `MODIS_Combined_Value_Added_AOD` 36 KB, `IMERG_Precipitation_Rate` 76 KB real JPEGs for the previous day (current-day IMERG not yet populated → previous-day convention) |
 | Probe 1 (`probe_fixes.py`) | 6 fixes verified in one session (AQI tile `(live)`, alerts resolution, auto-assess, compare provenance, no negative rainfall axis, no solar artifact) |
 | Probe 2 (`probe2.py`, shots in `%TEMP%\opencode\shots3\`) | pill `Vijayawada (Andhra Pradesh)` one line (w=159, h=20); VIIRS + **flood layer** real product loads; FloodWatch figure loads; platform grid leaves CHECKING (`PARTIAL`/`UNAVAILABLE` honest states); compare `· live`/unavailable cells honest; 0 console errors |
-| Header width sweep (`probe_bands.py`) | 13 widths 830→1440: **all clean** on the new build; production baseline reproduced the old broken bands in the same sweep (830–950, 1160–1200) |
+| Header width sweep (`probe_bands.py`) | 13 widths 830→1440: **all clean** on the new build; production baseline reproduced the old broken bands in the same sweep (830–950, 1160–1200). Re-run against the PR-head cloud preview `a1142e8`: **all 13 widths clean**; the production alias still shows the bands until merge |
+| Geolocation watchdog probe (no permission, both engines) | Firefox settles `New Delhi` after 26.9 s (12 s watchdog + cold fallback fetch); Chromium 0.7 s; 0 console errors both. Before the fix Firefox stayed on the placeholder past 120 s |
+| Idle-latency measurements (single-process local backend) | `/api/risk/assess` 14.9 s; `/api/chat/query` cold 42.4 s → warm 4–5 s. The frontend client aborts at 20 s by design, so cold queues show honest error states; suite pre-warming documented in test report §platform-upgrade |
+| Console-noise attribution with URLs | 503 console entries traced to `api.open-meteo.com` direct chart calls; failed requests to `[abc].tile.openstreetmap.org`; no backend/JS errors |
 | Browser suites (chromium + firefox) | `modules_solar_planner` / `responsive_accessibility` (8 viewports) / `chat_visibility` / `imagery_visibility` — final results in `WEATHERGPT_TEST_REPORT.md` §platform-upgrade; Firefox now runs locally (harness fix) |
 | Production baseline comparison | `probe_overflow.py` — production (pre-merge build) shows 0 console errors; header bands present as measured above; local build fixes them |
 
@@ -76,6 +87,14 @@ Status legend: **Complete** · **Partial** · **Blocked** · **Unverified**
   single-process) is environmental; the UI's states were made honest
   (timeouts, explicit unavailable, no permanent "CHECKING") rather than
   refactoring the backend in this pass.
+- The geolocation watchdog falls back **honestly**: the header shows the
+  saved/default city with a MANUAL/SAVED source and a notice explains the
+  timeout — no location is invented, and a late browser callback still wins.
+- The frontend API client aborts at 20 s by design (`api.js`); under cold
+  queues the UI therefore shows its explicit error/retry states rather than
+  hanging. Suite readiness helpers pre-warm the same live paths before
+  judging; no assertion was relaxed and every pre-warm failure still fails
+  the UI check honestly.
 
 ## 5. Release record (stage H)
 

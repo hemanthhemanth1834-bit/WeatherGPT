@@ -41,6 +41,7 @@ in the session log.
 | H | Release (PR, CI green, merge, production verification, release docs) | see completion report | PR link + production alias probe in `WEATHERGPT_COMPLETION_REPORT.md` |
 | I | Live-imagery expansion (imagery pass; free/open sources) | see completion report | §I below; audit §6.2 |
 | J | Second-round fixes (platform card states, pill regression) | see completion report | audit §6.1; probe 2 (`shots3/`) |
+| K | Third round (geolocation watchdog, suite readiness/pre-warm, noise attribution) | see completion report | audit §6.1.5–6.1.6 + §6.3; watchdog probe; warm-latency measurements |
 
 ## Stage D — visual audit & polish
 
@@ -145,6 +146,28 @@ FloodWatch figure loads, 0 console errors.
 Evidence: probe 2 — grid shows `Weather Providers UNAVAILABLE`, zero CHECKING
 left; pill single-line with visible name (`w=159 px`, `h=20 px`); band sweep
 clean on the new build; suites re-run on chromium + firefox.
+
+## Stage K — third round (cross-browser robustness + suite readiness)
+
+1. **Geolocation callback watchdog** (`App.jsx`): 12 s timer mirroring the
+   TIMEOUT error branch — fixes Firefox (and real users) being stranded on
+   "Detecting location…" when the browser never invokes either
+   `getCurrentPosition` callback (pending permission prompt). A late callback
+   still wins. Verified: Firefox settles `New Delhi` in 26.9 s; Chromium
+   unchanged (0.7 s); 0 console errors.
+2. **Suite readiness instead of fixed sleeps** (`modules_solar_planner.py`):
+   `warm_chat()` + `wait_for_reply()` (waits for the rendered assistant
+   bubble, 120 s bound) replace fixed 15/20 s sleeps whose targets take 42 s
+   cold / 4–5 s warm; `warm_backend()` pre-warms the risk URL because the UI
+   client's intended 20 s abort makes the cold-queue case unpassable by
+   waiting. Asserts unchanged; failures still fail honestly.
+3. **Console-noise attribution** (`responsive_accessibility.py`): records
+   failed third-party requests (open-meteo, OSM tiles, GIBS, RainViewer) and
+   excuses only generic resource-load errors when such a failure occurred in
+   the same load; retained product errors are printed. Fresh-load waits
+   ≥120 s everywhere; settle default 90 s (covers the watchdog floor).
+4. **Cloud verification**: PR-head preview re-swept (13 widths clean; prod
+   still banded until merge).
 
 ## Definition of Done checklist
 

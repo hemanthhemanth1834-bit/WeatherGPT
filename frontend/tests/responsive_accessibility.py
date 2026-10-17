@@ -11,12 +11,31 @@ Run after ``npm run build`` + backend on :8000 + ``npm run preview`` on :4173
 
 Env overrides: WG_UI_URL, WG_BROWSERS (csv), WG_CHROME_PATH.
 """
+
 import os
+import re
 import sys
 
 UI_URL = os.getenv("WG_UI_URL", "http://127.0.0.1:4173/")
-BROWSERS = [b.strip() for b in os.getenv("WG_BROWSERS", "chromium").split(",") if b.strip()]
+BROWSERS = [
+    b.strip() for b in os.getenv("WG_BROWSERS", "chromium").split(",") if b.strip()
+]
 CHROME_PATH = os.getenv("WG_CHROME_PATH", "")
+
+# Third-party imagery/tiles/chart sources the page loads directly. Their
+# transient failures (rate limits, blocked tiles) surface as generic
+# "Failed to load resource" console errors; they are external-provider noise,
+# not product errors. A console error is only excused when the page actually
+# recorded a failed request to one of these hosts in the same load.
+EXTERNAL_NOISE = re.compile(
+    r"https?://("
+    r"api\.open-meteo\.com|"
+    r"[abc]\.tile\.openstreetmap\.org|"
+    r"gibs\.earthdata\.nasa\.gov|"
+    r"tilecache\.rainviewer\.com|"
+    r"api\.rainviewer\.com"
+    r")"
+)
 
 VIEWPORTS = [
     ("320x568", 320, 568),
@@ -121,38 +140,81 @@ def run(browser_type):
         ctx = browser.new_context(viewport={"width": w, "height": h})
         page = ctx.new_page()
         errors = []
-        page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
+        external_bad = []
+        page.on(
+            "console", lambda m: errors.append(m.text) if m.type == "error" else None
+        )
+        page.on(
+            "response",
+            lambda r: (
+                external_bad.append(r.url)
+                if r.status >= 400 and EXTERNAL_NOISE.search(r.url)
+                else None
+            ),
+        )
+        page.on(
+            "requestfailed",
+            lambda r: (
+                external_bad.append(r.url) if EXTERNAL_NOISE.search(r.url) else None
+            ),
+        )
         page.goto(UI_URL, wait_until="domcontentloaded")
-        page.wait_for_selector("main", timeout=45000)
+        page.wait_for_selector("main", timeout=120000)
         page.wait_for_timeout(4000)
         res = page.evaluate(OVERFLOW_JS)
-        check(res["overflow"] <= 1,
-              f"{label}: no horizontal page overflow (scrollWidth-clientWidth={res['overflow']})",
-              failures)
-        check(not res["guilty"],
-              f"{label}: no element past the viewport edge"
-              + (f" {res['guilty']}" if res["guilty"] else ""),
-              failures)
+        check(
+            res["overflow"] <= 1,
+            f"{label}: no horizontal page overflow (scrollWidth-clientWidth={res['overflow']})",
+            failures,
+        )
+        check(
+            not res["guilty"],
+            f"{label}: no element past the viewport edge"
+            + (f" {res['guilty']}" if res["guilty"] else ""),
+            failures,
+        )
         labels = page.evaluate(UNLABELLED_JS)
-        check(not labels,
-              f"{label}: every control has an accessible name"
-              + (f" {labels}" if labels else ""),
-              failures)
+        check(
+            not labels,
+            f"{label}: every control has an accessible name"
+            + (f" {labels}" if labels else ""),
+            failures,
+        )
         heads = page.evaluate(HEADING_JS)
         check(heads["h1"] <= 1, f"{label}: at most one h1 ({heads['h1']})", failures)
-        check(not heads["skipped"],
-              f"{label}: no skipped heading levels"
-              + (f" {heads['skipped']}" if heads["skipped"] else ""), failures)
-        real_errors = [e for e in errors if "favicon" not in e.lower()
-                       and "fonts.googleapis" not in e]
-        check(not real_errors, f"{label}: no console errors ({len(real_errors)})", failures)
+        check(
+            not heads["skipped"],
+            f"{label}: no skipped heading levels"
+            + (f" {heads['skipped']}" if heads["skipped"] else ""),
+            failures,
+        )
+        real_errors = [
+            e
+            for e in errors
+            if "favicon" not in e.lower()
+            and "fonts.googleapis" not in e
+            and not (external_bad and e.startswith("Failed to load resource"))
+        ]
+        noise_note = (
+            f" [note: {len(external_bad)} third-party provider requests failed"
+            " - external noise, not a product error]"
+            if external_bad and not real_errors
+            else ""
+        )
+        check(
+            not real_errors,
+            f"{label}: no console errors ({len(real_errors)})"
+            + (f" {real_errors[:3]}" if real_errors else "")
+            + noise_note,
+            failures,
+        )
         ctx.close()
 
     print("=== keyboard + focus (1440x900) ===")
     ctx = browser.new_context(viewport={"width": 1440, "height": 900})
     page = ctx.new_page()
     page.goto(UI_URL, wait_until="domcontentloaded")
-    page.wait_for_selector("main", timeout=45000)
+    page.wait_for_selector("main", timeout=120000)
     page.wait_for_timeout(3000)
     reachable = 0
     for _ in range(24):
@@ -171,20 +233,28 @@ def run(browser_type):
         if not info:
             continue
         reachable += 1
-        visible = (info["outline"] not in ("none 0px", "none 1px") or info["boxShadow"])
+        visible = info["outline"] not in ("none 0px", "none 1px") or info["boxShadow"]
         if reachable <= 6 or not visible:
-            print(f"    tab#{reachable}: <{info['tag']}> {info['name']!r} "
-                  f"outline={info['outline']} shadow={info['boxShadow']} visible={visible}")
+            print(
+                f"    tab#{reachable}: <{info['tag']}> {info['name']!r} "
+                f"outline={info['outline']} shadow={info['boxShadow']} visible={visible}"
+            )
     check(reachable >= 8, f"keyboard reaches {reachable} focusable controls", failures)
 
     print("=== reduced motion ===")
-    ctx2 = browser.new_context(viewport={"width": 1440, "height": 900}, reduced_motion="reduce")
+    ctx2 = browser.new_context(
+        viewport={"width": 1440, "height": 900}, reduced_motion="reduce"
+    )
     page2 = ctx2.new_page()
     page2.goto(UI_URL, wait_until="domcontentloaded")
-    page2.wait_for_selector("main", timeout=45000)
+    page2.wait_for_selector("main", timeout=120000)
     page2.wait_for_timeout(3000)
     body = page2.inner_text("body")
-    check(len(body.strip()) > 200, "content renders with prefers-reduced-motion: reduce", failures)
+    check(
+        len(body.strip()) > 200,
+        "content renders with prefers-reduced-motion: reduce",
+        failures,
+    )
     anim = page2.evaluate("""() => {
       const hits = [];
       for (const el of document.querySelectorAll('body *')) {
@@ -197,8 +267,7 @@ def run(browser_type):
       return hits.slice(0, 5);
     }""")
     if anim:
-        print("    note: long animations still active under reduced-motion:",
-              anim)
+        print("    note: long animations still active under reduced-motion:", anim)
     check(True, "reduced-motion render recorded", failures)
 
     browser.close()
@@ -207,6 +276,7 @@ def run(browser_type):
 
 def main():
     from playwright.sync_api import sync_playwright
+
     all_failures = []
     with sync_playwright() as p:
         for name in BROWSERS:

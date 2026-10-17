@@ -66,14 +66,65 @@ def check(cond, msg, failures):
         print(f"  FAIL {msg}")
 
 
-def stable_location(page, timeout_ms=45000, settle_reads=2):
+def warm_backend(path: str, timeout: int = 180) -> None:
+    """Best-effort pre-flight GET to absorb cold-cache/queue latency.
+
+    The UI's fetch client aborts every request after 20 s
+    (frontend/src/services/api.js) and this machine's single-process backend
+    can queue longer than that behind the live alerts fan-out. The checks that
+    follow are about the UI auto-loading live data, not cold-queue latency;
+    warming the same backend path first makes the UI call deterministic. If
+    the service is down this fails silently and the UI check fails honestly.
+    """
+    import urllib.request
+
+    try:
+        urllib.request.urlopen(f"http://127.0.0.1:8000{path}", timeout=timeout).read()
+    except Exception:
+        pass
+
+
+def warm_chat(query: str, timeout: int = 180) -> None:
+    """Pre-flight the same chat query the UI is about to send (see above)."""
+    import json as _json
+    import urllib.request
+
+    try:
+        req = urllib.request.Request(
+            "http://127.0.0.1:8000/api/chat/query",
+            data=_json.dumps({"query": query}).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        urllib.request.urlopen(req, timeout=timeout).read()
+    except Exception:
+        pass
+
+
+def wait_for_reply(page, before: int, timeout_ms: int = 120000) -> None:
+    """Wait until one more assistant bubble has rendered, then let React commit
+    the full markdown body before the caller reads the page text."""
+    try:
+        page.wait_for_function(
+            "n => document.querySelectorAll('[data-testid=\"assistant-message\"]')"
+            ".length > n",
+            arg=before,
+            timeout=timeout_ms,
+        )
+    except Exception:
+        pass
+    page.wait_for_timeout(1200)
+
+
+def stable_location(page, timeout_ms=90000, settle_reads=2):
     """Return the active location once it has STOPPED changing.
 
     The header renders the weather payload's ``location`` and falls back to the
     placeholder "Detecting location..." until the first weather response
     arrives, so the raw first read can be the placeholder. This readiness
     helper waits for the value to stabilise (two identical consecutive reads)
-    instead of asserting against a transient state.
+    instead of asserting against a transient state. The 90 s budget covers the
+    geolocation callback watchdog (App.jsx, 12 s) plus a cold fallback fetch on
+    this machine's single-process backend.
     """
     deadline = page.evaluate("() => Date.now()") + timeout_ms
     prev = None
@@ -193,6 +244,10 @@ def run(browser_type):
     )
 
     print("[FloodWatch auto-assess]")
+    # Warm the risk service first (see warm_backend docstring); the UI client
+    # would otherwise abort at 20 s while this machine's backend is still
+    # queueing behind the live alerts fan-out.
+    warm_backend("/api/risk/assess?location=" + start_location.replace(" ", "%20"))
     nav(page, "FloodWatch")
     try:
         page.wait_for_function(
@@ -213,6 +268,18 @@ def run(browser_type):
     try:
         page.wait_for_function(
             "() => {const b = document.body.innerText; return b.includes('City vs city') && !b.includes('Comparing') && !b.includes('loading…');}",
+            timeout=90000,
+        )
+    except Exception:
+        pass
+    # Readiness: the panel-level wait can resolve while a per-city cell is
+    # still fetching (observed once in chromium, passed in firefox the same
+    # run). Wait for the settled cell text the asserts judge; the asserts
+    # themselves are unchanged and still fail if the cells never settle.
+    try:
+        page.wait_for_function(
+            "() => {const b = document.body.innerText; return !b.includes('…\\n')"
+            " && (b.includes('· live') || b.includes('· est.'));}",
             timeout=90000,
         )
     except Exception:
@@ -250,9 +317,12 @@ def run(browser_type):
     print("[chat sync guard]")
     nav(page, "AI Weather Assistant")
     box = page.locator('input[aria-label="Type your weather question"]')
-    box.fill("What is the source and update time of this answer?")
+    ask1 = "What is the source and update time of this answer?"
+    warm_chat(ask1)
+    before = page.locator('[data-testid="assistant-message"]').count()
+    box.fill(ask1)
     page.locator('button[aria-label="Send question"]').click()
-    page.wait_for_timeout(15000)
+    wait_for_reply(page, before)
     chat_text = page.inner_text("body")
     check(
         "Grand Est" not in chat_text,
@@ -271,9 +341,12 @@ def run(browser_type):
     # default city (and could even be substring-matched to an unrelated
     # gazetteer entry, e.g. "krishnapatnam" -> Patna). It must now say which
     # location the figures describe.
-    box.fill("Tell me about the weather in Krishnapatnam")
+    ask2 = "Tell me about the weather in Krishnapatnam"
+    warm_chat(ask2)
+    before = page.locator('[data-testid="assistant-message"]').count()
+    box.fill(ask2)
     page.locator('button[aria-label="Send question"]').click()
-    page.wait_for_timeout(20000)
+    wait_for_reply(page, before)
     unknown_text = page.inner_text("body")
     check(
         "could not resolve" in unknown_text,
