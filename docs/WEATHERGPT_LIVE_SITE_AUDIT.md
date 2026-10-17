@@ -138,3 +138,10 @@ blocks the two external stylesheet tags in `index.html` (Google Fonts, unpkg
 Leaflet CSS) → 2 resource console errors per page in production only. Present
 since the baseline; impact is cosmetic (font falls back to the system stack;
 Leaflet CSS is bundled). See release report §4.
+
+
+## Follow-up verification — PR #27 CSP stylesheet cleanup (2026-10-17)
+
+- PR #27 merged as `7e26b76c2f9617f194a8f747f6685d716d6f0998` after the full WeatherGPT CI job set passed (backend, frontend, browser-smoke, chat-visibility, service-smoke, production-smoke); security and dependency review workflows passed too.
+- The Vercel deployment for that merge reached READY. Its preview browser run rendered the home view, loaded the bundled `index-BuSzGuDf.css` and `maps-vh-t_kPv.css`, had no Google Fonts/unpkg stylesheet links, and reported no resource or CSP console errors.
+- **Production alias is not yet confirmed fixed.** A fresh production browser session still saw the Google Fonts and unpkg Leaflet links despite the deployment metadata listing the production alias. This may be alias propagation or cached HTML; re-run a new browser session and inspect current production HTML before closing the issue. Until then, status is IMPLEMENTED BUT NOT VERIFIED in production.
