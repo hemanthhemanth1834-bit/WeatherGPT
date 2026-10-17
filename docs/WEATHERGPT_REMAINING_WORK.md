@@ -181,3 +181,12 @@ Covered by PR [#26](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/26
   `AlertCenter` view (navigation alias, documented as a non-defect).
 - The cyclone track panel remains `DEMO` geometry and is never presented as
   live storm positions.
+
+
+## 6. Follow-up: CSP stylesheet cleanup (PR #27, 2026-10-17)
+
+- PR [#27](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/27) merged to `main` as `7e26b76c2f9617f194a8f747f6685d716d6f0998` after all WeatherGPT CI jobs passed; dependency/security review and secret/workflow security checks also passed. Vercel production deployment reached READY.
+- Removed the blocked Google Fonts stylesheet and redundant unpkg Leaflet stylesheet links from `frontend/index.html`. No CSP weakening, new dependency, paid service, or API key was introduced.
+- Preview browser verification: home view renders; only the two same-origin bundled CSS files are linked; no Google Fonts/unpkg stylesheet links; no resource/CSP console errors detected.
+- **Production alias verification remains pending**: Vercel deployment metadata is READY and lists the production alias, but the last browser session still observed the old external links. Do not mark the production console fix verified until a fresh browser session confirms the alias serves the new HTML.
+- Remaining independent items: load/performance benchmark not implemented; Firefox/WebKit were not run locally (CI browser matrix covers Chromium/Firefox); direct Vercel build-log inspection remains unavailable without deployment credentials.
