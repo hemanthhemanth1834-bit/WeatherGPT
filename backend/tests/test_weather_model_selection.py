@@ -37,7 +37,59 @@ def test_live_weather_summary_marks_heuristic_aqi_as_estimated():
         hourly=[], daily=[],
     )
     _, markdown = _render_weather("Vijayawada", "Andhra Pradesh", data, "en")
-    assert "78 (estimated)" in markdown
+    assert "78 (heuristic estimate)" in markdown
+
+
+def test_live_weather_summary_shows_live_aqi_without_estimate_suffix():
+    from app.models import WeatherData
+    from app.services.chat import _render_weather
+
+    data = WeatherData(
+        location="Vijayawada", state="Andhra Pradesh", status="LIVE",
+        data_source="Open-Meteo", aqi=133, aqi_status="Moderate",
+        aqi_source="Open-Meteo Air Quality (live measurement)",
+        hourly=[], daily=[],
+    )
+    _, markdown = _render_weather("Vijayawada", "Andhra Pradesh", data, "en")
+    assert "133" in markdown
+    assert "heuristic" not in markdown
+
+
+def _fake_cached_weather():
+    from app.models import WeatherData
+    return WeatherData(
+        location="Pune", state="Maharashtra", status="LIVE",
+        data_source="Open-Meteo", aqi=78, aqi_status="Satisfactory",
+        aqi_source="State-level heuristic estimate (not a measurement)",
+        hourly=[], daily=[],
+    )
+
+
+def test_live_aqi_is_merged_on_top_of_cached_weather(monkeypatch):
+    fake = _fake_cached_weather()
+    monkeypatch.setattr(weather, "cached", lambda ttl, key, loader: fake)
+    monkeypatch.setattr(
+        "app.services.air_quality.get_air_quality",
+        lambda lat, lon: {"us_aqi": 133, "band": "Unhealthy for Sensitive Groups",
+                          "observed_at": "2026-10-17T11:30"},
+    )
+    out = weather.get_weather(18.52, 73.85, "Pune", "Maharashtra")
+    assert out.aqi == 133
+    assert out.aqi_status == "Unhealthy for Sensitive Groups"
+    assert "Open-Meteo Air Quality" in out.aqi_source
+
+
+def test_aqi_failure_keeps_labelled_heuristic(monkeypatch):
+    fake = _fake_cached_weather()
+    monkeypatch.setattr(weather, "cached", lambda ttl, key, loader: fake)
+
+    def boom(lat, lon):
+        raise RuntimeError("aqi upstream down")
+
+    monkeypatch.setattr("app.services.air_quality.get_air_quality", boom)
+    out = weather.get_weather(18.52, 73.85, "Pune", "Maharashtra")
+    assert out.aqi == 78
+    assert "heuristic" in out.aqi_source
 
 
 

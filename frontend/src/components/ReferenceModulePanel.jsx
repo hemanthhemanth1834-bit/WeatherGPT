@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Live3DIcon from "./Live3DIcon";
 import Solar3DScene from "./Solar3DScene";
+import { fetchCurrentWeather } from "../services/api";
 
 const MODULES = {
   life_cast: ["SECTORAL INTELLIGENCE","Life Cast","Personal lifestyle weather forecasts for jogging, cycling, laundry drying, drone flights, and outdoor health ratings.",["Outdoor Activity","Health & Comfort","Laundry & Drying","Drone / Cycling"]],
@@ -23,6 +24,42 @@ function hourValue(value, fallback) {
   return m ? num(m[1]) + num(m[2]) / 60 : fallback;
 }
 
+function nowHourIST() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: false,
+    }).formatToParts(new Date());
+    const h = num(parts.find((p) => p.type === "hour")?.value, 12);
+    const m = num(parts.find((p) => p.type === "minute")?.value, 0);
+    return h + m / 60;
+  } catch {
+    return 12;
+  }
+}
+
+function compassFrom(deg) {
+  const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  const norm = ((Math.round(deg) % 360) + 360) % 360;
+  return dirs[Math.round(norm / 45) % 8];
+}
+
+// Time-based solar geometry estimate (declination + sunrise/sunset arc).
+// Clearly a proxy: no horizon profile, refraction or local terrain is used.
+function solarPosition(lat, sunrise, sunset) {
+  const sr = hourValue(sunrise, 6.2);
+  const ss = hourValue(sunset, 18.1);
+  const dayLen = Math.max(0.5, ss - sr);
+  const now = nowHourIST();
+  const doy = Math.floor((Date.now() - Date.UTC(new Date().getUTCFullYear(), 0, 0)) / 86400000);
+  const decl = 23.44 * Math.sin((2 * Math.PI * (284 + doy)) / 365) * (Math.PI / 180);
+  const latRad = (num(lat, 18.5) * Math.PI) / 180;
+  const maxAlt = Math.max(5, 90 - Math.abs((latRad - decl) * 180 / Math.PI));
+  const t = Math.max(0, Math.min(1, (now - sr) / dayLen));
+  const altitude = Math.max(0, maxAlt * Math.sin(Math.PI * t));
+  const azimuth = (90 + 180 * t) % 360;
+  return { altitude: +altitude.toFixed(1), azimuth: +azimuth.toFixed(0), compass: compassFrom(azimuth), inDaylight: now >= sr && now <= ss };
+}
+
 function SolarDashboard({ weather, place, onTab, onAsk }) {
   const [ratedKw, setRatedKw] = useState(5);
   const [view, setView] = useState("overview");
@@ -39,8 +76,9 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
     const sunrise = weather?.sunrise || "06:13";
     const sunset = weather?.sunset || "18:06";
     const daylight = Math.max(0, hourValue(sunset, 18.1) - hourValue(sunrise, 6.2));
-    const altitude = Math.max(0, Math.min(90, 90 - uv * 10));
-    const azimuth = Math.round((hourValue(sunrise, 6.2) + hourValue(sunset, 18.1)) * 18.5);
+    const sun = solarPosition(weather?.lat, sunrise, sunset);
+    const altitude = sun.altitude;
+    const azimuth = sun.azimuth;
     const clearSky = Math.max(0, 100 - cloud);
     const psh = Math.max(0, +(daylight * Math.min(1.2, uv / 10) * (1 - cloud / 140)).toFixed(2));
     const daily = +(psh * ratedKw).toFixed(2);
@@ -55,7 +93,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
       const cloudFactor = Math.max(.15, 1 - cloud / 130);
       return +(peak * x * cloudFactor * (0.86 + 0.14 * Math.sin(i / 2))).toFixed(2);
     });
-    return { uv, cloud, humidity, sunrise, sunset, daylight, altitude, azimuth, clearSky, psh, daily, peak, co2, savings, noonHour, loss, profile };
+    return { uv, cloud, humidity, sunrise, sunset, daylight, altitude, azimuth, compass: sun.compass, clearSky, psh, daily, peak, co2, savings, noonHour, loss, profile };
   }, [weather, ratedKw]);
 
   useEffect(() => {
@@ -275,7 +313,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
         <div className="wg-solar-panel">
           <div className="wg-solar-panel-head"><div><h2>☼ Sun Position &amp; Solar Trajectory</h2><p>Solar elevation proxy &amp; azimuth context</p></div><span className="wg-solar-mini">Daylight: {data.daylight.toFixed(1)}h</span></div>
           <div className="wg-solar-sunbox" onPointerMove={handleSunPointerMove} onPointerLeave={() => setHoverExplain(null)}><div className="wg-solar-sun-label">Solar Noon ({Math.floor(data.noonHour)}:{Math.round((data.noonHour%1)*60).toString().padStart(2,"0")})</div><div className="wg-solar-arc"/><div className={"wg-solar-sun"+(animationOn?" is-traveling":"")} style={{left:trajectoryLeft+"%",top:trajectoryTop+"%"}}/><div className="wg-solar-dash"/><div className="wg-solar-sun-times"><span>🌅 Sunrise {data.sunrise}</span><span>Sun Altitude {data.altitude.toFixed(1)}°</span><span>🌇 Sunset {data.sunset}</span></div></div>
-          <div className="wg-solar-stats"><div className="wg-solar-stat"><small>Solar Azimuth Bearing</small><strong>{data.azimuth}° <em>(SW)</em></strong></div><div className="wg-solar-stat"><small>Solar Zenith Angle</small><strong>{(90-data.altitude).toFixed(1)}°</strong></div><div className="wg-solar-stat"><small>Cloud Attenuation</small><strong>-{data.loss}% Loss</strong></div><div className="wg-solar-stat"><small>Atmospheric UV Index</small><strong style={{color:"#22d3ee"}}>{data.uv.toFixed(1)} <em style={{color:"#94a3b8"}}>({data.uv<3?"Low":data.uv<6?"Moderate":"High"})</em></strong></div></div>
+          <div className="wg-solar-stats"><div className="wg-solar-stat"><small>Solar Azimuth Bearing</small><strong>{data.azimuth}° <em>({data.compass})</em></strong></div><div className="wg-solar-stat"><small>Solar Zenith Angle</small><strong>{(90-data.altitude).toFixed(1)}°</strong></div><div className="wg-solar-stat"><small>Cloud Attenuation</small><strong>-{data.loss}% Loss</strong></div><div className="wg-solar-stat"><small>Atmospheric UV Index</small><strong style={{color:"#22d3ee"}}>{data.uv.toFixed(1)} <em style={{color:"#94a3b8"}}>({data.uv<3?"Low":data.uv<6?"Moderate":"High"})</em></strong></div></div>
         </div>
         <div className="wg-solar-panel">
           <div className="wg-solar-panel-head"><div><h2>↗ Daylight Solar Generation Profile (kW)</h2><p>Estimated array output vs. clear-sky ceiling across daylight hours</p></div><span style={{color:"#fbbf24",fontWeight:900}}>● Actual estimate　<span style={{color:"#38bdf8"}}>--- Clear Sky Max</span></span></div>
@@ -297,6 +335,209 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Deterministic, clearly-labelled operational indicators for sector modules.
+// Every value derives from the live weather payload (Open-Meteo); nothing
+// is invented and thresholds are documented inline.
+// ---------------------------------------------------------------------------
+function statusTag(weather) {
+  return weather?.status === "LIVE" ? "LIVE" : "FALLBACK";
+}
+
+function moduleMetrics(module, weather) {
+  if (!weather || weather.current_temp == null) return null;
+  const t = num(weather.current_temp);
+  const feels = num(weather.feels_like, t);
+  const hum = num(weather.humidity);
+  const wind = num(weather.wind_speed);
+  const rainNow = num(weather.precipitation);
+  const cond = weather.condition || "—";
+  const today = (weather.daily && weather.daily[0]) || {};
+  const tomorrow = (weather.daily && weather.daily[1]) || {};
+  const next12 = (weather.hourly || []).slice(0, 12);
+  const maxRain12 = Math.round(Math.max(0, ...next12.map((h) => num(h.rain_prob))));
+  const maxWind = num(today.wind_max, wind);
+  const vis = weather.visibility;
+  const uv = num(weather.uv_index);
+  const rainToday = num(today.rain_sum);
+  const rainTomorrow = num(tomorrow.rain_sum);
+
+  if (module === "life_cast") {
+    const comfort = feels <= 28 && hum <= 70 ? "EXCELLENT" : feels <= 33 && hum <= 80 ? "GOOD" : "CAUTION";
+    const dry = hum <= 55 && maxRain12 < 30 ? "FAST" : hum <= 75 && maxRain12 < 60 ? "MODERATE" : "SLOW";
+    return [
+      { title: "Outdoor Activity", value: comfort, tag: "COMPUTED",
+        detail: `Feels ${feels}°C · humidity ${hum}% · rain ≤ ${maxRain12}% over 12 h` },
+      { title: "Health & Comfort", value: uv >= 8 ? "VERY HIGH UV" : uv >= 6 ? "HIGH UV" : uv >= 3 ? "MODERATE UV" : "LOW UV", tag: "COMPUTED",
+        detail: uv >= 6 ? "Seek shade midday · SPF 30+ · hat and sunglasses" : "Normal sun protection is sufficient" },
+      { title: "Laundry & Drying", value: dry, tag: "COMPUTED",
+        detail: `${hum}% humidity · wind ${wind} km/h · rain ≤ ${maxRain12}% over 12 h` },
+      { title: "Drone / Cycling", value: wind <= 15 && maxRain12 < 40 ? "FAVORABLE" : wind <= 25 ? "CAUTION" : "UNSUITABLE", tag: "COMPUTED",
+        detail: `Wind now ${wind} km/h · today's max ${maxWind} km/h` },
+    ];
+  }
+  if (module === "roadwatch") {
+    const hydro = rainNow >= 2.5 || rainToday >= 10 ? "HIGH" : rainNow > 0 || rainToday >= 2.5 ? "MODERATE" : "LOW";
+    const visBand = vis == null ? "UNKNOWN" : vis >= 10 ? "GOOD" : vis >= 4 ? "MODERATE" : "POOR";
+    return [
+      { title: "Hydroplaning Watch", value: hydro, tag: "COMPUTED",
+        detail: `Rain now ${rainNow} mm/h · today's forecast total ${rainToday} mm` },
+      { title: "Visibility Watch", value: visBand, tag: vis == null ? "ESTIMATED" : "COMPUTED",
+        detail: vis == null ? "Visibility not reported by the current model run" : `${vis} km · ${weather.visibility_source || "Open-Meteo"}` },
+      { title: "Crosswind Watch", value: maxWind <= 20 ? "LOW" : maxWind <= 35 ? "MODERATE" : "HIGH", tag: "COMPUTED",
+        detail: `Wind ${wind} km/h ${weather.wind_direction || ""} · today's max ${maxWind} km/h` },
+      { title: "Radar & Route", value: "OPEN", tag: "LIVE LOOKUP", link: "map",
+        detail: "RainViewer recent-past composite over OpenStreetMap" },
+    ];
+  }
+  if (module === "treeguard") {
+    return [
+      { title: "Windthrow Risk", value: maxWind <= 25 ? "LOW" : maxWind <= 45 ? "ELEVATED" : "HIGH", tag: "COMPUTED",
+        detail: `Today's max wind ${maxWind} km/h · rain total ${rainToday} mm` },
+      { title: "Branch-Fall Watch", value: maxWind <= 25 && rainNow < 1 ? "LOW" : "ELEVATED", tag: "COMPUTED",
+        detail: "Light winds and dry canopy conditions lower breakage odds" },
+      { title: "Urban Exposure", value: num(today.temp_max, t) >= 38 ? "HEAT STRESS" : "ROUTINE", tag: "COMPUTED",
+        detail: `High ${num(today.temp_max, t)}°C · AQI ${weather.aqi ?? "–"}${weather.aqi_status ? ` (${weather.aqi_status})` : ""}` },
+      { title: "Climate Context", value: "REFERENCE", tag: "STATIC", link: "climate",
+        detail: "Long-term warming context lives under Climate Trends" },
+    ];
+  }
+  if (module === "utilitywatch") {
+    return [
+      { title: "Storm Exposure", value: maxRain12 >= 60 ? "ELEVATED" : "LOW", tag: "COMPUTED",
+        detail: `Max rain probability next 12 h ${maxRain12}% · ${cond}` },
+      { title: "Heat Stress", value: feels >= 40 ? "HIGH" : feels >= 35 ? "MODERATE" : "LOW", tag: "COMPUTED",
+        detail: `Feels-like ${feels}°C · today's high ${num(today.temp_max, t)}°C` },
+      { title: "Flood Context", value: rainToday >= 50 || rainTomorrow >= 50 ? "WATCH" : "LOW", tag: "COMPUTED",
+        detail: `Forecast rain today ${rainToday} mm · tomorrow ${rainTomorrow} mm` },
+      { title: "Live Providers", value: (weather.data_source || "Open-Meteo").toUpperCase(), tag: statusTag(weather), link: "capabilities",
+        detail: `Weather ${weather.status || "LIVE"} · updated ${weather.updated_at_ist || "—"}` },
+    ];
+  }
+  if (module === "deep_cast") {
+    const daily = weather.daily || [];
+    const hi = daily.length ? Math.max(...daily.map((d) => num(d.temp_max))) : t;
+    const lo = daily.length ? Math.min(...daily.map((d) => num(d.temp_min, t))) : t;
+    const wet = daily.reduce((s, d) => s + num(d.rain_sum), 0);
+    return [
+      { title: "NWP Models", value: "BLEND", tag: "LIVE",
+        detail: weather.nwp_model || "Open-Meteo NWP blend" },
+      { title: "Soundings", value: "NOT CONFIGURED", tag: "STATIC",
+        detail: "Upper-air sounding feeds are not connected — no radiosonde or model column data is shown." },
+      { title: "7-Day Synoptic", value: `${lo}–${hi}°C`, tag: "FORECAST", link: "dashboard",
+        detail: `${daily.length} days · total forecast rain ${Math.round(wet)} mm · guidance, not observations` },
+      { title: "Provider Health", value: (weather.status || "LIVE"), tag: statusTag(weather), link: "capabilities",
+        detail: `${weather.data_source || "Open-Meteo"} · updated ${weather.updated_at_ist || "—"}` },
+    ];
+  }
+  return null;
+}
+
+const TRIP_DESTS = [
+  ["Visakhapatnam", 17.6868, 83.2185], ["Vijayawada", 16.5062, 80.6480],
+  ["Hyderabad", 17.385, 78.4867], ["Bengaluru", 12.9716, 77.5946],
+  ["Mumbai", 19.076, 72.8777], ["New Delhi", 28.6139, 77.209],
+  ["Chennai", 13.0827, 80.2707], ["Kolkata", 22.5726, 88.3639],
+];
+
+function TripPlannerMini({ weather, onAsk }) {
+  const from = weather?.location || "your location";
+  const [to, setTo] = useState("Visakhapatnam");
+  const [result, setResult] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const plan = async () => {
+    if (weather?.lat == null || weather?.lon == null) {
+      setErr("Waiting for your location — allow GPS or search a place first.");
+      return;
+    }
+    setBusy(true);
+    setErr("");
+    setResult(null);
+    try {
+      const dest = TRIP_DESTS.find((d) => d[0] === to) || TRIP_DESTS[0];
+      const w = await fetchCurrentWeather(dest[0], dest[1], dest[2]);
+      const rad = (d) => (d * Math.PI) / 180;
+      const R = 6371;
+      const dLat = rad(dest[1] - weather.lat);
+      const dLon = rad(dest[2] - weather.lon);
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(weather.lat)) * Math.cos(rad(dest[1])) * Math.sin(dLon / 2) ** 2;
+      const dist = Math.round(2 * R * Math.asin(Math.sqrt(a)));
+      const hrs = dist / 55; // documented planning average for highways
+      const now = nowHourIST();
+      const arrHour = (now + hrs) % 24;
+      let arrival = null;
+      if (hrs <= 10 && w.hourly?.length) {
+        const arrH = Math.floor(arrHour);
+        arrival = w.hourly.find((h) => parseInt(h.time, 10) === arrH) || null;
+      }
+      const etaLabel = `${String(Math.floor(arrHour)).padStart(2, "0")}:${String(Math.round((arrHour % 1) * 60)).padStart(2, "0")}`;
+      const rainHit = arrival ? num(arrival.rain_prob) : num(w.daily?.[0]?.rain_sum) >= 5 ? 60 : 0;
+      setResult({
+        dest: w.location, dist, hours: Math.floor(hrs), mins: Math.round((hrs % 1) * 60),
+        etaLabel, arrival, rainHit, now: { temp: w.current_temp, cond: w.condition },
+        dayTotal: w.daily?.[0]?.rain_sum ?? 0, source: w.data_source, status: w.status,
+        overHorizon: hrs > 10,
+      });
+    } catch {
+      setErr("Could not retrieve the destination forecast right now — provider did not respond.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="wg-card" style={{ padding: "1rem", marginBottom: "1rem" }} data-testid="trip-planner">
+      <strong>Trip weather planner</strong>
+      <p style={{ margin: ".3rem 0 .6rem", color: "var(--wg-muted)", fontSize: ".78rem" }}>
+        Weather at your estimated arrival time. Distances are straight-line at a planning average of
+        55 km/h — <b>estimates for planning, not routed driving times</b>. Forecasts can change before departure.
+      </p>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: ".6rem", alignItems: "center" }}>
+        <label style={{ fontSize: ".78rem", color: "var(--wg-muted)" }}>
+          From: <b style={{ color: "var(--wg-ink, #e5edf9)" }}>{from}</b>
+        </label>
+        <label style={{ fontSize: ".78rem", color: "var(--wg-muted)" }}>
+          To:&nbsp;
+          <select aria-label="Destination" value={to} onChange={(e) => setTo(e.target.value)}>
+            {TRIP_DESTS.map(([name]) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
+        <button className="wg-btn" onClick={plan} disabled={busy}>{busy ? "Planning…" : "Show arrival weather"}</button>
+      </div>
+      {err && <p style={{ color: "#fda4af", fontSize: ".78rem", margin: ".6rem 0 0" }}>{err}</p>}
+      {result && (
+        <div style={{ marginTop: ".7rem", fontSize: ".82rem", lineHeight: 1.6 }} data-testid="trip-result">
+          <div>
+            <b>{result.dest}</b> · {result.dist} km away · est. {result.hours}h {String(result.mins).padStart(2, "0")}m ·
+            arrival ≈ {result.etaLabel} IST
+          </div>
+          <div>
+            Now: {result.now.temp}°C, {result.now.cond}.{" "}
+            {result.arrival
+              ? `At arrival: ${result.arrival.temp}°C, ${result.arrival.condition} · rain chance ${result.arrival.rain_prob}%.`
+              : result.overHorizon
+                ? "Arrival is beyond the hourly window — check the daily outlook on the Live Weather page."
+                : `Rain total today ${result.dayTotal} mm.`}
+          </div>
+          {result.rainHit >= 50 && (
+            <div style={{ color: "#fbbf24", fontWeight: 700 }}>
+              ⚠ Rain likely around arrival — allow extra time and check radar before departure.
+            </div>
+          )}
+          <div style={{ color: "var(--wg-muted)", fontSize: ".7rem", marginTop: ".25rem" }}>
+            Destination values: {result.source} · {result.status}. ETA/distance are planning estimates, not routed guidance.
+          </div>
+          <button className="wg-btn-ghost" style={{ marginTop: ".5rem" }} onClick={() => onAsk?.(`I am travelling from ${from} to ${result.dest} (~${result.dist} km). What weather should I expect on the way and at arrival?`)}>
+            Ask WeatherGPT about this route →
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ReferenceModulePanel({ module, weather, onTab, onAsk }) {
   const item = MODULES[module] || MODULES.life_cast;
   const place = weather?.location || "your location";
@@ -312,11 +553,38 @@ export default function ReferenceModulePanel({ module, weather, onTab, onAsk }) 
     evacuation: "This module combines weather and geographic information for emergency decision support. For an active emergency, follow official government and emergency-service instructions first."
   }[module] || "This module explains weather information for your selected location and shows how the available data can be used.";
 
+  const metrics = moduleMetrics(module, weather);
+  const metricModule = ["life_cast", "roadwatch", "treeguard", "utilitywatch", "deep_cast"].includes(module);
+
   return (
     <section className="wg-ref-section" aria-label={item[1]}>
       <div className="wg-ref-section-head"><div><span className="wg-chip live">{item[0]}</span><h2>{item[1]}</h2><p style={{color:"var(--wg-muted)",maxWidth:"52rem"}}>{item[2]}</p></div></div>
       <div className="wg-card" style={{padding:"1rem",marginBottom:"1rem",borderLeft:"3px solid var(--wg-accent)"}}><strong>What this module does</strong><p style={{margin:".35rem 0 0",color:"var(--wg-muted)",lineHeight:1.65}}>{guidance}</p><small style={{color:"var(--wg-muted)"}}>Selected location: {place}. Values are shown only when the connected data source provides them.</small></div>
-      <div className="wg-ref-feature-grid">{item[3].map((title) => <button className="wg-ref-feature wg-card hoverable" key={title} onClick={() => onAsk?.(item[1] + ": " + title + " for " + place + ".")}><span className="wg-ref-icon"><Live3DIcon kind={module === "evacuation" ? "alert" : module === "roadwatch" ? "road" : module === "treeguard" ? "tree" : module === "trip_planner" ? "trip" : module === "life_cast" ? "life" : module === "deep_cast" ? "ai" : "weather"} size="sm" label={title} /></span><span className="wg-ref-feature-copy"><strong>{title}</strong><span>Shows what this feature means for {place}. Select it to ask WeatherGPT for a plain-language explanation using the available live context.</span><small className="wg-ref-feature-action">Open / Ask WeatherGPT →</small></span><span className="wg-ref-arrow">↗</span></button>)}</div>
+      {module === "trip_planner" && <TripPlannerMini weather={weather} onAsk={onAsk} />}
+      <div className="wg-ref-feature-grid">{item[3].map((title, i) => {
+        const m = metrics?.[i];
+        const activate = () => (m?.link ? onTab?.(m.link) : onAsk?.(item[1] + ": " + title + " for " + place + "."));
+        return (
+          <button className="wg-ref-feature wg-card hoverable" key={title} onClick={activate}>
+            <span className="wg-ref-icon"><Live3DIcon kind={module === "evacuation" ? "alert" : module === "roadwatch" ? "road" : module === "treeguard" ? "tree" : module === "trip_planner" ? "trip" : module === "life_cast" ? "life" : module === "deep_cast" ? "ai" : "weather"} size="sm" label={title} /></span>
+            <span className="wg-ref-feature-copy">
+              <strong>{title}</strong>
+              {m ? (
+                <>
+                  <span className="wg-mod-row"><span className="wg-mod-value">{m.value}</span><span className="wg-mod-tag">{m.tag}</span></span>
+                  <span>{m.detail}</span>
+                </>
+              ) : metricModule ? (
+                <span>Awaiting live weather for {place} — indicators appear once the forecast loads.</span>
+              ) : (
+                <span>Shows what this feature means for {place}. Select it to ask WeatherGPT for a plain-language explanation using the available live context.</span>
+              )}
+              <small className="wg-ref-feature-action">{m?.link ? "Open view →" : "Ask WeatherGPT for a plain-language explanation →"}</small>
+            </span>
+            <span className="wg-ref-arrow">↗</span>
+          </button>
+        );
+      })}</div>
       <div style={{display:"flex",flexWrap:"wrap",gap:".5rem",marginTop:".8rem"}}><button className="wg-btn" onClick={() => onTab("dashboard")}>Live Weather</button><button className="wg-btn-ghost" onClick={() => onTab("map")}>GIS / Radar</button><button className="wg-btn-ghost" onClick={() => onTab("alerts")}>Alerts</button><button className="wg-btn-ghost" onClick={() => onTab("capabilities")}>System &amp; Admin</button></div>
     </section>
   );
