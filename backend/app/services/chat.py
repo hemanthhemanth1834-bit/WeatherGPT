@@ -49,28 +49,124 @@ FILLER_WORDS = {
     "what", "weather", "today", "tomorrow", "rain", "temperature", "tell",
     "about", "forecast", "will", "there", "heavy", "current", "tomorrows",
     "मौसम", "हवामान", "माहिती", "நாளை", "వర్షం", "ବର୍ଷା", "മഴ",
+    # Deictics/pronouns and question scaffolding that must never be treated
+    # as place names (a live prod bug geocoded "of this" -> "This, France").
+    "this", "that", "these", "those", "here", "there", "it", "my", "our",
+    "your", "location", "selected", "current", "city", "place", "area",
+    "data", "update", "updated", "source", "sources", "answer", "official",
+    "warning", "warnings", "radar", "satellite", "showing", "available",
+    "unavailable", "right", "now", "tonight", "evening", "morning",
+    "afternoon", "week", "weekend", "crop", "crops", "farmer", "farmers",
+    "spray", "spraying", "before", "consider", "should", "could", "would",
+    "give", "show", "please", "report", "summary", "details", "info",
+    "information", "status", "help", "using", "model", "models", "feed",
+    "bulletin", "bulletin", "imd", "the", "and", "or", "is", "are", "was",
 }
 
+# Phrases that refer to the app's active/selected location rather than a
+# place name typed in the question.
+DEICTIC_PHRASES = (
+    "my location", "my selected location", "selected location", "my city",
+    "my area", "my place", "current location", "here", "my position",
+    "this location", "this city",
+)
 
-def extract_place(text: str, fallback: Optional[str] = None) -> str:
-    """Find the most likely place name inside a free-text query."""
+
+def extract_place_meta(text: str, fallback: Optional[str] = None) -> Tuple[str, bool]:
+    """Find the most likely place name. Returns (place, explicit).
+
+    explicit is False when we fell back to the caller-provided location
+    (the user's active location) or a default, so callers can avoid
+    synchronising the app location to a guess.
+    """
     lowered = text.lower()
+    for phrase in DEICTIC_PHRASES:
+        if phrase in lowered:
+            if fallback and fallback.strip().lower() not in ("", "your location", "auto"):
+                return fallback.strip().title(), False
+            return "New Delhi", False
     for key in sorted(geo.GAZETTEER, key=len, reverse=True):
         if re.search(r"\b" + re.escape(key) + r"\b", lowered):
-            return key.title()
+            return key.title(), True
     for native, english in sorted(NATIVE_PLACES.items(),
                                    key=lambda item: len(item[0]), reverse=True):
         if native in text:
-            return english
+            return english, True
     match = re.search(r"\b(?:in|at|near|for|around|of)\s+([A-Za-z][A-Za-z .'-]{2,})",
                       text, re.IGNORECASE)
     if match:
         candidate = match.group(1).strip().split()[0].strip(".,?'")
-        if candidate.lower() not in FILLER_WORDS and len(candidate) >= 3:
-            return candidate.title()
+        if (candidate.lower() not in FILLER_WORDS and len(candidate) >= 3
+                and candidate.isalpha()):
+            return candidate.title(), True
     if fallback and fallback.strip().lower() not in ("", "your location", "auto"):
-        return fallback.strip().title()
-    return "New Delhi"
+        return fallback.strip().title(), False
+    return "New Delhi", False
+
+
+def extract_place(text: str, fallback: Optional[str] = None) -> str:
+    """Backwards-compatible wrapper (place name only)."""
+    return extract_place_meta(text, fallback)[0]
+
+
+_MONTH_NUM = {
+    "january": 1, "february": 2, "march": 3, "april": 4, "may": 5, "june": 6,
+    "july": 7, "august": 8, "september": 9, "october": 10, "november": 11,
+    "december": 12, "jan": 1, "feb": 2, "mar": 3, "apr": 4, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "sept": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def unresolved_location_note(place: str, shown: str) -> str:
+    """Honest note when the requested place could not be geocoded.
+
+    Without this, an unknown place silently answered as the built-in default
+    city (Pune), which reads as if that were the requested location.
+    Returns '' when the place resolved normally.
+    """
+    return (f"\n\n*Note: I could not resolve “{place}” to a location, so the "
+            f"figures above are for {shown}, not the place you named.*")
+
+
+def horizon_note(text: str) -> str:
+    """Honest note when a question asks about a date beyond the forecast
+    horizon (the data tool can only return ~7 days). Returns '' otherwise."""
+    import datetime as _dt
+    lowered = text.lower()
+    ist = _dt.timezone(_dt.timedelta(hours=5, minutes=30))
+    now = _dt.datetime.now(ist)
+    hit = next((name for name in _MONTH_NUM
+                if re.search(r"\b" + name + r"\b", lowered)), None)
+    if not hit:
+        return ""
+    # "may"/"march" are common English words; only treat them as months
+    # when capitalised or followed by a day number ("15 may").
+    if hit in ("may", "march"):
+        capitalised = bool(re.search(r"\b" + hit.title() + r"\b", text))
+        followed_by_day = bool(re.search(r"\b" + hit + r"\s+\d{1,2}\b", lowered))
+        if not (capitalised or followed_by_day):
+            return ""
+    target_month = _MONTH_NUM[hit]
+    if target_month == now.month:
+        day_match = re.search(r"\b(\d{1,2})(?:st|nd|rd|th)?\b", lowered)
+        days_ahead = (int(day_match.group(1)) - now.day
+                      if day_match and 1 <= int(day_match.group(1)) <= 31 else None)
+    else:
+        months_ahead = (target_month - now.month) % 12
+        days_ahead = months_ahead * 30
+    if days_ahead is not None and days_ahead > 7:
+        return (f"\n\n*Note: my live forecast horizon is about 7 days, so the values "
+                f"above are for today — they cannot answer a question about {hit.title()}. "
+                f"For longer-range outlooks see Climate Trends or IMD seasonal guidance.*")
+    return ""
+
+
+def _aqi_label(data: WeatherData) -> str:
+    """AQI text that always names its provenance (live feed vs heuristic)."""
+    source = (getattr(data, "aqi_source", "") or "").lower()
+    if "open-meteo air quality" in source:
+        return f"{data.aqi}"
+    return f"{data.aqi} (heuristic estimate)"
 
 
 def extract_pair(text: str) -> Tuple[str, str]:
@@ -230,7 +326,7 @@ def _render_weather(place: str, state: str, data: WeatherData,
         "rain": rain, "precip": data.precipitation,
         "wind": data.wind_speed, "wdir": data.wind_direction,
         "hum": data.humidity, "pres": data.pressure,
-        "aqi": f"{data.aqi} (estimated)" if data.status == "LIVE" else f"{data.aqi} (not live)",
+        "aqi": _aqi_label(data),
         "aqi_status": data.aqi_status,
         "uv": f"{data.uv_index} (estimated)" if not data.uv_index_source.startswith("Open-Meteo") else data.uv_index,
         "rise": data.sunrise, "set": data.sunset,
@@ -302,18 +398,43 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
     if any(w in lowered for w in compare_words):
         first, second = extract_pair(text)
         result = _compare(first, second)
-        speech = (f"Comparing {result.city1.location} and {result.city2.location}. "
+        tomorrow = any(t in lowered for t in ("tomorrow", "next day"))
+        c1, c2 = result.city1, result.city2
+        if tomorrow and len(c1.daily) > 1 and len(c2.daily) > 1:
+            d1, d2 = c1.daily[1], c2.daily[1]
+            speech = (f"Comparing tomorrow for {c1.location} and {c2.location}. "
+                      f"{c1.location} high {d1.temp_max} degrees, {c2.location} high {d2.temp_max} degrees.")
+            markdown = (
+                f"### Comparing {c1.location} vs {c2.location} — tomorrow ({d1.date})\n\n"
+                f"| | {c1.location} | {c2.location} |\n"
+                f"|---|---|---|\n"
+                f"| High / low | **{d1.temp_max}°C / {d1.temp_min}°C** | **{d2.temp_max}°C / {d2.temp_min}°C** |\n"
+                f"| Condition | {d1.condition} | {d2.condition} |\n"
+                f"| Expected rainfall | {d1.rain_sum} mm | {d2.rain_sum} mm |\n"
+                f"| Max wind | {d1.wind_max} km/h | {d2.wind_max} km/h |\n\n"
+                f"*Tomorrow values come from the {c1.data_source} daily forecast, not observations.*"
+            )
+            return ChatResponse(
+                query=text, detected_language=lang, persona=persona,
+                speech_text=speech, markdown_response=markdown,
+                structured_weather=c1, comparison_data=result,
+                quick_suggestions=[f"7-day outlook for {c1.location}",
+                                   f"Risks in {c2.location}"],
+                suggested_actions=ACTIONS,
+                explicit_location=True,
+            )
+        speech = (f"Comparing {c1.location} and {c2.location}. "
                   f"{result.temp_warmer_city} is warmer by {abs(result.temp_diff)} degrees. "
                   f"Travel safety {result.travel_safety_score} out of 100.")
         markdown = (
-            f"### Comparing {result.city1.location} vs {result.city2.location}\n\n"
-            f"| | {result.city1.location} | {result.city2.location} |\n"
+            f"### Comparing {c1.location} vs {c2.location}\n\n"
+            f"| | {c1.location} | {c2.location} |\n"
             f"|---|---|---|\n"
-            f"| Temp | **{result.city1.current_temp}°C** | **{result.city2.current_temp}°C** |\n"
-            f"| Humidity | {result.city1.humidity}% | {result.city2.humidity}% |\n"
-            f"| AQI | {result.city1.aqi} | {result.city2.aqi} |\n"
-            f"| Rain chance | {result.city1.hourly[0].rain_prob if result.city1.hourly else 0}%"
-            f" | {result.city2.hourly[0].rain_prob if result.city2.hourly else 0}% |\n\n"
+            f"| Temp | **{c1.current_temp}°C** | **{c2.current_temp}°C** |\n"
+            f"| Humidity | {c1.humidity}% | {c2.humidity}% |\n"
+            f"| AQI | {_aqi_label(c1)} | {_aqi_label(c2)} |\n"
+            f"| Rain chance | {c1.hourly[0].rain_prob if c1.hourly else 0}%"
+            f" | {c2.hourly[0].rain_prob if c2.hourly else 0}% |\n\n"
             f"Warmer: **{result.temp_warmer_city}** "
             f"(+{abs(result.temp_diff)}°C) · Cleaner air: **{result.aqi_better_city}** · "
             f"Travel safety: **{result.travel_safety_score}/100**\n\n{result.travel_advisory}"
@@ -321,14 +442,15 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         return ChatResponse(
             query=text, detected_language=lang, persona=persona,
             speech_text=speech, markdown_response=markdown,
-            structured_weather=result.city1, comparison_data=result,
-            quick_suggestions=[f"7-day outlook for {result.city1.location}",
-                               f"Risks in {result.city2.location}"],
+            structured_weather=c1, comparison_data=result,
+            quick_suggestions=[f"7-day outlook for {c1.location}",
+                               f"Risks in {c2.location}"],
             suggested_actions=ACTIONS,
+            explicit_location=True,
         )
 
-    place = extract_place(text, request.location_name)
-    lat, lon, proper, state = geo.geocode(place)
+    place, explicit = extract_place_meta(text, request.location_name)
+    lat, lon, proper, state, place_resolved = geo.resolve(place)
     data = get_weather(lat, lon, proper, state)
 
     wants_agri = persona == "farmer" or any(
@@ -402,7 +524,10 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         if not alerts:
             alerts = active_alerts()
         lines = "\n".join(f"- **[{a.severity}]** {a.headline}" for a in alerts[:4])
-        extra += f"\n\n**Alerts (computed, not official):**\n{lines}"
+        extra += (f"\n\n**Alerts (computed, not official):**\n{lines}\n"
+                  f"*Official bulletins: IMD (mausam.imd.gov.in) — WeatherGPT does not "
+                  f"integrate official bulletin feeds; for life-safety decisions follow "
+                  f"IMD/NDMA and local authorities.*")
     if wants_climate:
         ref = climate_reference(f"{proper} ({state})")
         extra += (f"\n\n**Climate reference (STATIC):** {ref['summary']} "
@@ -503,6 +628,9 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
             "Rainfall is a model forecast, not a guarantee or a measured observation._"
         )
     markdown += extra
+    if explicit and not place_resolved:
+        markdown += unresolved_location_note(place, proper)
+    markdown += horizon_note(text)
     template = TEMPLATES.get(lang, TEMPLATES["en"])
     suggestions = [s.format(place=proper, state=state) for s in template["suggest"]]
     return ChatResponse(
@@ -511,4 +639,6 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         structured_weather=data, alerts=alerts, agri_advisory=advisory,
         aviation_briefing=briefing, marine_advisory=sea,
         quick_suggestions=suggestions, suggested_actions=ACTIONS,
+        explicit_location=explicit,
+        location_resolved=place_resolved,
     )

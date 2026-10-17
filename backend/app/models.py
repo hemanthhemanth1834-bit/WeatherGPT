@@ -52,6 +52,7 @@ class WeatherData(BaseModel):
     visibility_source: str = "Estimated fallback"
     aqi: int = 80
     aqi_status: str = "Satisfactory"
+    aqi_source: str = "State-level heuristic estimate (not a measurement)"
     sunrise: str = "06:05"
     sunset: str = "18:35"
     hourly: List[HourlyPoint] = Field(default_factory=list)
@@ -172,6 +173,13 @@ class ChatResponse(BaseModel):
     marine_advisory: Optional[MarineAdvisory] = None
     quick_suggestions: List[str] = Field(default_factory=list)
     suggested_actions: List[Dict[str, str]] = Field(default_factory=list)
+    # False when the place was a fallback guess (e.g. the user's active
+    # location) rather than an explicit place name in the question; the
+    # frontend uses this to avoid synchronising the app location to a guess.
+    explicit_location: bool = True
+    # False when the named place could not be geocoded at all and the answer
+    # is therefore about the built-in default location, not the asked place.
+    location_resolved: bool = True
 
 
 class RiskAssessment(BaseModel):

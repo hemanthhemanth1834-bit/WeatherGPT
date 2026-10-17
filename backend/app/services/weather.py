@@ -81,8 +81,30 @@ def get_weather(lat: float, lon: float, place: str, state: str,
     requested = (model or "auto").strip().lower()
     selection = requested if requested in {"auto", "gfs", "ecmwf", "icon"} else "auto"
     key = f"wx:{round(lat, 3)}:{round(lon, 3)}:{place}:{state}:{selection}"
-    return cached(WEATHER_CACHE_TTL_SECONDS, key,
+    data = cached(WEATHER_CACHE_TTL_SECONDS, key,
                   lambda: _download(lat, lon, place, state, selection))
+    if isinstance(data, WeatherData):
+        data = _apply_live_aqi(data, lat, lon)
+    return data
+
+
+def _apply_live_aqi(data: WeatherData, lat: float, lon: float) -> WeatherData:
+    """Merge the live AQI feed on top of the cached weather payload.
+
+    Kept OUTSIDE the weather cache so a transient AQI outage can never bake
+    the heuristic estimate into cached weather for the whole cache TTL.
+    The live AQI fetch is itself cached (30 min) and cheap on cache hits.
+    """
+    try:
+        from .air_quality import get_air_quality
+        live = get_air_quality(lat, lon)
+        data.aqi = int(live["us_aqi"])
+        data.aqi_status = live["band"]
+        data.aqi_source = (f"Open-Meteo Air Quality (US EPA) · observed {live['observed_at']}"
+                           if live.get("observed_at") else "Open-Meteo Air Quality (US EPA)")
+    except Exception:
+        pass
+    return data
 
 
 def _download(lat: float, lon: float, place: str, state: str, model: str = "auto") -> WeatherData:
@@ -191,7 +213,12 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
             wind_max=round(float(wmax[i]), 1) if i < len(wmax) else 15.0,
         ))
 
+    # Air quality: the stored payload carries the labelled state-level
+    # heuristic; the live Open-Meteo Air Quality feed is merged on top by
+    # _apply_live_aqi() in get_weather() (outside this cache).
     aqi = estimate_aqi(state)
+    aqi_status = aqi_band(aqi)
+    aqi_source = "State-level heuristic estimate (not a measurement)"
     rise = (daily_raw.get("sunrise", ["06:05"]) or ["06:05"])[0]
     fall = (daily_raw.get("sunset", ["18:35"]) or ["18:35"])[0]
     uv_list = daily_raw.get("uv_index_max", [])
@@ -214,7 +241,8 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         cloud_cover=float(current.get("cloud_cover", 0.0) or 0.0),
         pressure=round(float(current.get("surface_pressure", 1012.0)), 1),
         uv_index=uv_index, uv_index_source=uv_source,
-        visibility=visibility, visibility_source=visibility_source, aqi=aqi, aqi_status=aqi_band(aqi),
+        visibility=visibility, visibility_source=visibility_source, aqi=aqi, aqi_status=aqi_status,
+        aqi_source=aqi_source,
         sunrise=rise.split("T")[1] if "T" in rise else rise,
         sunset=fall.split("T")[1] if "T" in fall else fall,
         hourly=hourly, daily=daily,

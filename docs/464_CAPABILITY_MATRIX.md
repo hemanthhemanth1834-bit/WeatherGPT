@@ -463,11 +463,11 @@ Total rows: **464** (count verified by ID sequence).
 | PQ002 | Platform quality | Lazy 3D chunk (~560KB) | Existing | Earth3D lazy | code split | — | — | STATIC | — | build | README | YES |
 | PQ003 | Platform quality | Entry ~374KB budget | Existing | index chunk | code split | — | — | STATIC | — | build | matrix-only | YES |
 | PQ004 | Platform quality | No new dependencies | Existing | 2 added total | three+topojson | MIT/BSD | — | STATIC | — | build | THIRD_PARTY | YES |
-| PQ005 | Platform quality | Keyboard/ARIA/focus | Existing | labels/roles | semantic HTML | — | — | STATIC | — | browser QA | matrix-only | YES |
+| PQ005 | Platform quality | Keyboard/ARIA/focus | Existing | labels/roles | semantic HTML | — | — | STATIC | — | tests/responsive_accessibility.py | matrix-only | YES |
 | PQ006 | Platform quality | Contrast/readability | Existing | token palette | — | — | — | STATIC | — | browser QA | matrix-only | YES |
-| PQ007 | Platform quality | Reduced motion | Existing | media query | CSS guard | — | — | STATIC | — | browser QA | matrix-only | YES |
+| PQ007 | Platform quality | Reduced motion | Existing | media query | CSS guard | — | — | STATIC | — | tests/responsive_accessibility.py | matrix-only | YES |
 | PQ008 | Platform quality | Screen-reader data paths | Existing | lists/tables | text alternatives | — | — | STATIC | — | browser QA | matrix-only | YES |
-| PQ009 | Platform quality | Mobile overflow audit | Existing | 390/430 screens | responsive CSS | — | — | STATIC | — | browser QA | matrix-only | YES |
+| PQ009 | Platform quality | Mobile overflow audit | Existing | 320/390/430 screens | responsive CSS | — | — | STATIC | — | tests/responsive_accessibility.py | matrix-only | YES |
 | PQ010 | Platform quality | Touch targets | Existing | 2.5rem controls | CSS minimums | — | — | STATIC | — | browser QA | matrix-only | YES |
 | DC001 | Docs/SIH | README accuracy | Existing | — | — | Verified content | — | STATIC | — | doc review | README | INFRA |
 | DC002 | Docs/SIH | Architecture doc | Existing | — | — | Verified content | — | STATIC | — | doc review | ARCHITECTURE | INFRA |

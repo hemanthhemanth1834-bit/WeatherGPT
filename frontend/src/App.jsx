@@ -146,9 +146,19 @@ export default function App() {
           },
         ]);
         if (reply.structured_weather) {
-          setWeather(reply.structured_weather);
-          setPlace(reply.structured_weather.location);
-          remember(reply.structured_weather.location);
+          const sw = reply.structured_weather;
+          // Only sync the app location when the place was explicit in the
+          // question (or matches the current one); never let a fallback
+          // guess silently move the active location. An explicit place we
+          // could not resolve (location_resolved === false) must not move
+          // the app either — the reply names the city it actually describes.
+          const explicit = reply.explicit_location !== false;
+          const resolved = reply.location_resolved !== false;
+          if (resolved && (explicit || (sw.location || "").toLowerCase() === (place || "").toLowerCase())) {
+            setWeather(sw);
+            setPlace(sw.location);
+            remember(sw.location);
+          }
         }
       } catch {
         setMessages((prev) => [

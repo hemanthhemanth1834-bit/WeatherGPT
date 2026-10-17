@@ -23,7 +23,9 @@ function matchesCategory(alert, cat) {
 
 export default function SevereWeatherPanel({ weather, onAsk }) {
   const [alerts, setAlerts] = useState([]);
+  const [alertsFailed, setAlertsFailed] = useState(false);
   const [track, setTrack] = useState(null);
+  const [trackFailed, setTrackFailed] = useState(false);
   const [cat, setCat] = useState("Cyclone");
   const [error, setError] = useState("");
   const [showContacts, setShowContacts] = useState(false);
@@ -37,25 +39,25 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      try {
-        const [al, tr, gd, qk, fr] = await Promise.all([
-          fetchActiveAlerts(),
-          fetchCycloneTrack(),
-          fetchDisasters("world").catch(() => null),
-          fetchEarthquakes(4.5, 7).catch(() => null),
-          fetchWildfires(12).catch(() => null),
-        ]);
-        if (!cancelled) {
-          setAlerts(al);
-          setTrack(tr);
-          setGlobal(gd);
-          setQuakes(qk);
-          setFires(fr);
-        }
-      } catch {
-        if (!cancelled) setError("Severe-weather feed failed to load — please retry.");
+      const [al, tr, gd, qk, fr] = await Promise.allSettled([
+        fetchActiveAlerts(),
+        fetchCycloneTrack(),
+        fetchDisasters("world"),
+        fetchEarthquakes(4.5, 7),
+        fetchWildfires(12),
+      ]);
+      if (!cancelled) {
+        setAlerts(al.status === "fulfilled" && Array.isArray(al.value) ? al.value : []);
+        setAlertsFailed(al.status !== "fulfilled");
+        setTrack(tr.status === "fulfilled" ? tr.value : null);
+        setTrackFailed(tr.status !== "fulfilled");
+        setGlobal(gd.status === "fulfilled" ? gd.value : null);
+        setQuakes(qk.status === "fulfilled" ? qk.value : { error: true });
+        setFires(fr.status === "fulfilled" ? fr.value : { error: true });
       }
-    })();
+    })().catch(() => {
+      if (!cancelled) setError("Severe-weather feed failed to load — please retry.");
+    });
     return () => {
       cancelled = true;
     };
@@ -66,13 +68,13 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
     if (weather?.location) {
       fetchRiskAssessment(weather.location, weather.lat, weather.lon)
         .then((r) => !cancelled && setRisk(r))
-        .catch(() => !cancelled && setRisk(null));
+        .catch(() => !cancelled && setRisk({ error: true }));
       fetchFloodRisk(weather.location, weather.lat, weather.lon)
         .then((f) => !cancelled && setFlood(f))
-        .catch(() => !cancelled && setFlood(null));
+        .catch(() => !cancelled && setFlood({ error: true }));
       fetchEmergencyPlaces(weather.lat, weather.lon)
         .then((p) => !cancelled && setPlaces(p))
-        .catch(() => !cancelled && setPlaces(null));
+        .catch(() => !cancelled && setPlaces({ error: true }));
     }
     return () => {
       cancelled = true;
@@ -119,6 +121,8 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
           </h3>
           {!flood ? (
             <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Computing rain + elevation proxy…</p>
+          ) : flood.error ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Flood-risk proxy unavailable right now — provider did not respond. Try again shortly.</p>
           ) : (
             <>
               <div style={{ fontSize: "1.1rem", fontWeight: 800 }}>
@@ -139,6 +143,8 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
           </h3>
           {!places ? (
             <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Searching OpenStreetMap near you…</p>
+          ) : places.error ? (
+            <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>Lookup unavailable right now — the OpenStreetMap service did not respond. Call 112 for emergencies.</p>
           ) : places.count === 0 ? (
             <p style={{ fontSize: "0.78rem", color: "var(--wg-muted)" }}>None mapped within 20 km. Call 112 for help.</p>
           ) : (
@@ -248,9 +254,15 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
         <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
           <div className="wg-section-title">Cyclone status · Bay of Bengal (DEMO)</div>
           <p style={{ fontSize: "0.85rem", lineHeight: 1.65 }}>
-            System: <strong>{track?.system_name || "Illustrative low-pressure track"}</strong>
-            <br />Basin: {track?.basin || "Bay of Bengal"} · plotted {track?.features?.[1]?.properties?.time || "recently"}
-            <br />Movement: north-westward along the plotted line; forecast points are illustrative, not predicted landfall.
+            {trackFailed ? (
+              <>Track feed unavailable right now — this panel is demonstration geometry only and never shows live cyclone positions.</>
+            ) : (
+              <>
+                System: <strong>{track?.system_name || "Illustrative low-pressure track"}</strong>
+                <br />Basin: {track?.basin || "Bay of Bengal"} · plotted {track?.features?.[1]?.properties?.time || "recently"}
+                <br />Movement: north-westward along the plotted line; forecast points are illustrative, not predicted landfall.
+              </>
+            )}
           </p>
           <p className="wg-mono" style={{ fontSize: "0.68rem", color: "var(--wg-muted)" }}>
             {track?.disclaimer || "Demonstration geometry for map display."}
@@ -267,7 +279,13 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
             ))}
           </div>
           <div style={{ marginTop: "0.7rem", display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-            {shown.length === 0 && <p style={{ fontSize: "0.82rem", color: "var(--wg-muted)" }}>No computed {cat.toLowerCase()} alerts right now.</p>}
+            {shown.length === 0 && (
+              <p style={{ fontSize: "0.82rem", color: "var(--wg-muted)" }}>
+                {alertsFailed
+                  ? "Alert feed unreachable right now — showing nothing rather than stale guidance."
+                  : `No computed ${cat.toLowerCase()} alerts right now.`}
+              </p>
+            )}
             {shown.map((a) => (
               <div key={a.id} style={{ fontSize: "0.82rem", padding: "0.5rem 0.7rem", background: "rgba(148,163,184,.06)", borderRadius: "0.6rem" }}>
                 <strong>[{a.severity}]</strong> {a.headline}
