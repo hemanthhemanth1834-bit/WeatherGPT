@@ -109,6 +109,9 @@
 .wg-ref-settings-row{padding:8px 14px;border-radius:16px;background:rgba(30,41,59,.4)}
 .wg-ref-engine{padding:12px 8px 0}
 @media(max-width:1100px){.wg-ref-brand-name{font-size:22px}.wg-ref-nav-item{font-size:13px}}
+/* Very narrow phones (<=400px): compact brand so menu + brand + header actions fit at 320px
+   (previously the settings icon button landed past the right edge and was clipped away). */
+@media(max-width:400px){.wg-ref-brand-name{font-size:15px}.wg-ref-brand-name em{display:none}}
 
 /* LIVE 3D TELEMETRY ICON SYSTEM — compact, everywhere, no external assets */
 .wg-live3d{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;isolation:isolate;perspective:80px;transform-style:preserve-3d;vertical-align:middle}

@@ -89,11 +89,11 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
           <button className="wg-ref-weather-pill" onClick={() => go("home")} title="Change Weather Animated Theme & Ambience">
             <span className="wg-ref-mini-weather"><Live3DIcon kind="rain" size="xs" label="Live weather" /></span><span><b>{temp == null ? "—" : `${temp}°C`} <Sparkles size={11} /></b><small>Theme: Auto</small></span>
           </button>
-          <button type="button" title="Open Dual Station Weather Comparison Matrix" onClick={() => go("compare")}><ArrowRightLeft size={16}/></button>
-          <button type="button" title="Font Scale: 112%" onClick={() => document.documentElement.classList.toggle("wg-font-large")}><Type size={14}/><span>A+</span></button>
+          <button type="button" aria-label="Open station comparison" title="Open Dual Station Weather Comparison Matrix" onClick={() => go("compare")}><ArrowRightLeft size={16}/></button>
+          <button type="button" aria-label="Toggle larger font size" title="Font Scale: 112%" onClick={() => document.documentElement.classList.toggle("wg-font-large")}><Type size={14}/><span>A+</span></button>
           <span className="wg-ref-online" role="status" aria-live="polite"><i />Online</span>
-          <button type="button" className="wg-ref-icon-btn" title="Open Smart Weather Alerts & Early Warning Center" onClick={() => go("alerts")}><Bell size={16}/>{alertCount > 0 && <b>{alertCount}</b>}</button>
-          <button className="wg-ref-icon-btn" title="Open WeatherGPT Platform Settings" onClick={() => go("capabilities")}><Settings size={16}/></button>
+          <button type="button" className="wg-ref-icon-btn" aria-label={alertCount > 0 ? `Open alerts and early warnings (${alertCount} active)` : "Open alerts and early warnings"} title="Open Smart Weather Alerts & Early Warning Center" onClick={() => go("alerts")}><Bell size={16}/>{alertCount > 0 && <b>{alertCount}</b>}</button>
+          <button className="wg-ref-icon-btn" aria-label="Open platform settings and status" title="Open WeatherGPT Platform Settings" onClick={() => go("capabilities")}><Settings size={16}/></button>
           <button type="button" className="wg-ref-install" onClick={installApp} title={installPrompt ? "Install WeatherGPT" : "Install WeatherGPT PWA when supported"}><Download size={14}/>Install App</button>
           <button type="button" className="wg-ref-live"><Live3DIcon kind="live" size="xs" label="Live telemetry"/>LIVE</button>
           <div className="wg-ref-language"><Globe size={15}/><select value={language === "auto" ? "en" : language} onChange={(e) => onLanguageChange?.(e.target.value)}>

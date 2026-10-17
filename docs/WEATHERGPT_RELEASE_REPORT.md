@@ -20,6 +20,7 @@ PR [#26](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/26)
 |------------|-------|---------|
 | Chat grounding + live AQI + module indicators (first session) | `backend/app/services/chat.py`, `backend/app/services/weather.py`, `backend/app/models.py`, `frontend/src/App.jsx`, `frontend/src/components/ReferenceModulePanel.jsx`, `frontend/src/components/SevereWeatherPanel.jsx`, `frontend/src/index.css`, + docs/tests | Six audited defects from `WEATHERGPT_BASELINE_AUDIT.md` |
 | Location resolution correctness + honesty (this session) | `backend/app/services/geo.py`, `backend/app/services/chat.py`, `backend/app/models.py`, `frontend/src/App.jsx`, + tests/docs | Unknown place must never be answered as a different real city; the fallback must be named |
+| Accessibility labels + 320px header fix + responsive/a11y suite (this session) | `frontend/src/components/ReferenceChrome.jsx`, `frontend/src/components/ReferenceChrome.css`, `frontend/tests/responsive_accessibility.py` | Icon-only header controls labelled; header fits at 320px; the responsive/accessibility matrix is now an automated suite |
 
 No dependency changes. No new services. No new credentials. No paid APIs.
 
@@ -34,6 +35,7 @@ No dependency changes. No new services. No new credentials. No paid APIs.
 | Chat visibility regression | `python tests/chat_visibility.py` | 2 suites, 0 failures |
 | Imagery honesty regression | `python tests/imagery_visibility.py` | 2 suites, 0 failures |
 | Modules / solar / planner / chat guard | `python tests/modules_solar_planner.py` | 30 checks, 0 failures |
+| Responsive / accessibility matrix | `python tests/responsive_accessibility.py` | 39 checks, 0 failures (after fixing the 320px defect it caught) |
 | Live chat grounding battery | 9 questions against the local API | all grounded; one defect found and fixed (see below) |
 | API smoke battery (17 endpoints) | local port 8000 | 17/17 HTTP 200 |
 | Static assets | preview port 4173 | `/robots.txt`, `/sitemap.xml`, `/manifest.json` 200 |

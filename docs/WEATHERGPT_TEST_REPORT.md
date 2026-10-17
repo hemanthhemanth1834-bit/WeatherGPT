@@ -20,6 +20,7 @@ Python 3.12.10, Node 24.19.0, oxlint, vite 8, Playwright with system Chrome).
 | `python tests/chat_visibility.py` | 2 suites, **0 failures** | contrast min 16.58:1; no clipped messages |
 | `python tests/imagery_visibility.py` | 2 suites, **0 failures** | `DELAYED`/`UNAVAILABLE` honesty asserted |
 | `python tests/modules_solar_planner.py` | **30 checks, 0 failures**, exit 0 | 26 original + 4 new location-honesty assertions |
+| `python tests/responsive_accessibility.py` (**new**) | **39 checks, 0 failures**, exit 0 | 6-viewport matrix + keyboard/focus + reduced-motion; its first run caught the real 320px defect recorded below; fully green after the fix |
 | API smoke battery (17 endpoints, port 8000) | **17/17 HTTP 200** | `/robots.txt` + `/sitemap.xml` are frontend assets → verified 200 on the preview server (`/manifest.json` too) |
 
 > Operational note for future runs: `vite preview` caches `index.html` at
@@ -31,8 +32,10 @@ Python 3.12.10, Node 24.19.0, oxlint, vite 8, Playwright with system Chrome).
 
 Command: `python -m pytest tests/ -q` (from `backend/`, `PYTHONUTF8=1`)
 
-- **121 passed**, 0 failed, 1 third-party deprecation warning
+- **130 passed**, 0 failed, 1 third-party deprecation warning
   (`starlette.testclient` / `httpx` notice — pre-existing, not ours).
+  121 of these were the branch baseline; 9 were added by the location fix
+  described below.
 - New coverage added by this release:
   - `tests/test_chat_grounding.py` (10 tests): filler words are not places;
     deictic phrases use the active location without the explicit flag;
@@ -80,8 +83,39 @@ with `WG_BROWSERS=chromium`, `WG_CHROME_PATH` pointing at system Chrome.
 | `test_geo.py::test_resolve_reports_real_provenance` | `resolve()` provenance is truthful |
 | `test_geo.py::test_resolve_uses_live_geocoder_when_gazetteer_misses` | live hits report `resolved=True` |
 | `test_geo.py::test_geocode_signature_unchanged` | existing 4-tuple callers unaffected |
+| `test_chat_grounding.py::test_unresolved_location_note_names_both_places` | the note names both places |
 | `test_chat_grounding.py::test_unknown_place_is_reported_unresolved` | the honesty note fires |
-| `modules_solar_planner.py` `[chat unknown-place honesty]` (2 assertions) | note visible in the UI; no "Patna" leak |
+| `modules_solar_planner.py` `[chat unknown-place honesty]` (4 assertions) | note visible in the UI; no "Patna" leak; app location does not move |
+
+## Responsive & accessibility verification (second session)
+
+New suite `frontend/tests/responsive_accessibility.py`, run against the built
+bundle + live backend on chromium:
+
+- **Viewport matrix** — 320×568, 360×740, 390×844, 768×1024, 1024×768,
+  1440×900. Per viewport: no page-level horizontal overflow; no visible,
+  in-flow element past the viewport edge; every control has an accessible
+  name; at most one `h1`; no skipped heading levels; zero console errors.
+- **Keyboard/focus** — 24 focusable controls reached with Tab; the first six
+  all show a visible focus outline/ring.
+- **Reduced motion** — content renders completely under
+  `prefers-reduced-motion: reduce`.
+- **Result**: 39 checks, 0 failures (final run on the rebuilt bundle).
+
+Deliberate checker semantics (so the result stays meaningful): the overflow
+probe ignores decorative `aria-hidden` layers, the off-canvas closed mobile
+drawer, and elements clipped by a real container (the map viewport's tile
+canvases) — but it does **not** treat the app root's `overflow-x:hidden` as
+legitimate clipping, so genuine header overflow is still reported. That is
+exactly how the defect below was caught on the suite's first run.
+
+Defect found and fixed: at 320px the header's settings icon button was pushed
+past the right edge (318→352 in a 320px viewport) and clipped away by the app
+root — `0` page overflow never showed it. Fixed with a `≤400px` compact-brand
+rule in `ReferenceChrome.css`; after the fix the button occupies 274→308 and
+the whole matrix is green. Four icon-only header controls (station comparison,
+font scale, alerts, settings) were given explicit `aria-label`s so the
+accessible-name check no longer relies on icon glyphs.
 
 ## Live chat grounding spot-checks (local API, same code as deploy)
 
@@ -112,3 +146,17 @@ live feed was fetched but not merged into the main weather path.
   smoke) but not exhaustively fuzzed.
 - Firefox is exercised in CI, not locally (local runs used chromium via system
   Chrome; CI matrix includes firefox).
+
+## Deliberate retry/readiness behaviour (not hidden failures)
+
+Two places intentionally wait rather than fail immediately. Both wait for a
+first successful result and record the outcome; neither swallows a genuine
+failure, and no assertion is relaxed.
+
+- `modules_solar_planner.py` clicks "Show arrival weather" up to twice, then
+  waits up to 30 s for `[data-testid="trip-result"]`. The first attempt can hit
+  a cold provider (the backend fetches the destination's live weather); a
+  permanent failure still raises on the second attempt.
+- The suites wait for the preview server and the backend to answer before
+  starting. Every suite asserts `no console errors (0)` at the end, so a
+  provider error that reached the browser would still be reported.

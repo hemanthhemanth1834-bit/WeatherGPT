@@ -40,6 +40,7 @@ Covered by PR [#26](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/26
 | 2.6 | Life Cast / RoadWatch / TreeGuard / UtilityWatch / Deep-Cast placeholder copy | Browser suite: ≥4 cards and ≥4 non-empty computed metric values per module, placeholder copy absent, labels COMPUTED/LIVE/FORECAST/STATIC/ESTIMATED | COMPLETED AND VERIFIED |
 | 2.7 | Trip Planner arrival weather | Distance, arrival time and explicit "planning estimates" disclaimer all asserted present | COMPLETED AND VERIFIED |
 | 2.8 | Deep-Cast honesty for unconfigured soundings | `NOT CONFIGURED` text asserted present (no fabricated sounding data) | COMPLETED AND VERIFIED |
+| 2.9 | Icon-only header controls: accessible names; responsive/a11y matrix unverified | 4 `aria-label`s added (station comparison, font scale, alerts, settings); new `frontend/tests/responsive_accessibility.py`: 6-viewport matrix (320→1440), accessible-name check, heading order, keyboard reachability + visible focus, reduced-motion render — **39 checks, 0 failures** | COMPLETED AND VERIFIED |
 
 ## 3. Defects found and fixed in THIS session
 
@@ -134,6 +135,29 @@ Covered by PR [#26](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/26
   bundle hash is now checked explicitly. Recorded as an operational note in
   `WEATHERGPT_TEST_REPORT.md`.
 - **Status**: COMPLETED AND VERIFIED (not a product defect).
+
+### 3.6 P2 — header settings button unreachable at 320px
+
+- **Found by**: the new `responsive_accessibility.py` suite, 320×568 cell. At
+  ≤820px the settings icon button (which opens Settings/Platform) is the only
+  visible header action; at 320px it was laid out at x=318–352 — a ~2px
+  sliver, clipped away by the app root's `overflow-x:hidden` guard, invisible
+  and untappable.
+- **Root cause**: `menu (38) + gap (14) + brand (flex-shrink:0, 240) + gap
+  (14) + actions (34)` = 352px of natural width; nothing brought it inside
+  320px.
+- **Fix**: `frontend/src/components/ReferenceChrome.css` —
+  `@media(max-width:400px)` compacts the brand (`font-size:15px`, hides the
+  decorative "PRO AI" badge). The full brand returns at ≥401px.
+- **Reproduced before / after**:
+
+  | Probe at 320×568 | Before | After |
+  |------------------|--------|-------|
+  | `.wg-ref-header-actions` box | 318→352 (clipped away) | 274→308 (fully inside) |
+  | Header screenshot | gear icon not visible | gear icon visible top-right |
+  | Matrix result | 1 FAIL | 0 failures (39 checks) |
+
+- **Status**: COMPLETED AND VERIFIED.
 
 ## 4. Remaining work
 
