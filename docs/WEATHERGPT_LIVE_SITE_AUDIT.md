@@ -116,15 +116,25 @@ location defect that the first session had not covered.
 
 ### Production status during this audit
 
-Production (`weathergpt-kappa-pink.vercel.app`) still serves the baseline
-commit `d7810ba`, so both of these remain live there until the audit branch is
-merged and deployed:
+Production served the baseline commit `d7810ba` during the main audit, with
+both defects live. Post-merge update below.
 
-| Probe | Production now | Audit branch locally |
-|-------|----------------|----------------------|
-| `GET /api/weather/current?location=Pune` → `aqi` | `78` (constant heuristic, no provenance field) | `133` (live US-EPA, `aqi_source` present) |
-| Chat: "weather in Krishnapatnam" | "Weather for Patna, Bihar" | Pune **+ "could not resolve" note**, `location_resolved=false` |
+### Post-merge verification (merge `a7680cd`, 2026-10-17)
 
-Everything else in this document describes the baseline deployment and was
-observed directly from it; the second-session column above is marked as local
-until a deploy is verified.
+The audit branch was merged and deployed. The same probes now run against
+production show both defects fixed:
+
+| Probe | Baseline (`d7810ba`) | Production after merge `a7680cd` |
+|-------|----------------------|----------------------------------|
+| `GET /api/weather/current?location=Pune` → `aqi` | `78` (constant heuristic, no provenance field) | **`134`**, `aqi_source` `Open-Meteo Air Quality (US EPA) · observed 2026-10-17T13:30` — consistent with `/api/air-quality` (`us_aqi 134`, same observation) |
+| Chat "weather in Krishnapatnam" (`location_name=Pune`) | "Weather for Patna, Bihar" | Pune **+ "could not resolve" note**, `location_resolved=false`; no word-boundary "Patna" anywhere |
+
+Full post-merge evidence (chat battery, smoke, browser suites incl.
+modules/solar and responsive/a11y against production):
+`WEATHERGPT_RELEASE_REPORT.md` §4.
+
+Pre-existing condition noted during the post-merge runs: the `vercel.json` CSP
+blocks the two external stylesheet tags in `index.html` (Google Fonts, unpkg
+Leaflet CSS) → 2 resource console errors per page in production only. Present
+since the baseline; impact is cosmetic (font falls back to the system stack;
+Leaflet CSS is bundled). See release report §4.

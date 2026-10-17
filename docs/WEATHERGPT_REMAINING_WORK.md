@@ -163,8 +163,10 @@ Covered by PR [#26](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/26
 
 | Task | Detail | Status |
 |------|--------|--------|
-| Merge PR #26 to `main` | PR is mergeable/clean with green CI and a Vercel preview build. Merge to `main` was **not** performed: it publishes to the public production site. Authorisation given for this session covered pushing the branch and updating the PR, not merging. | BLOCKED (awaiting authorisation) |
-| Production verification of the fixes | Requires the merge/deploy above. Production as of this run still shows `aqi=78` for Pune and the Patna false-positive. | NOT TESTED (blocked by deploy) |
+| Merge PR #26 to `main` | Merged as `a7680cd` on 2026-10-17 after explicit owner authorisation; all workflows on `main@a7680cd` green. | COMPLETED AND VERIFIED |
+| Production deployment | Vercel production now serves the merged bundle (`assets/index-BuSzGuDf.css`, matching the local build hash). | COMPLETED AND VERIFIED |
+| Production verification of the fixes | API/chat probes plus all four browser suites re-run against production: AQI consistent (134 ≡ 134, same observation); unknown place answered with the resolution note, no Patna; modules/solar and responsive/a11y checks all pass. See `WEATHERGPT_RELEASE_REPORT.md` §4. | COMPLETED AND VERIFIED |
+| Pre-existing production console noise: CSP blocks 2 external stylesheet tags (Google Fonts; redundant unpkg Leaflet CSS) → 2 errors/page; transient provider 503s can appear rarely | Cosmetic only (font falls back to the system stack; Leaflet CSS is bundled, map unaffected). Present since baseline `d7810ba`. Options: allow `fonts.googleapis.com` in `style-src` + `fonts.gstatic.com` in `font-src` (loads the designed Inter font), or delete the two dead `<link>` tags. Left unchanged — a security-header change needs its own decision. | NOT IMPLEMENTED (pre-existing; awaiting decision) |
 | Firefox/WebKit local runs | Only chromium is installed locally (`chromium-1243`); CI runs chromium+firefox. Not a product gap — a local-coverage gap. | NOT TESTED (locally) |
 | Vercel deployment-log inspection | Propagate API returned 403 (no Vercel token in this environment). Deployment identity was verified indirectly via the GitHub `Vercel` commit status on the PR head. | BLOCKED (no credentials) |
 | Load/performance benchmarking | Never claimed. `three` chunk is 565 kB (139 kB gzip) — a P3 optimisation candidate. | NOT IMPLEMENTED |

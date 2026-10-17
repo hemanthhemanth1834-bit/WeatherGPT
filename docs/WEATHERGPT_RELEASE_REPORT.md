@@ -56,42 +56,79 @@ app's active location. Both are fixed with regression coverage.
 | Secret and Workflow Security | PR #26 head `518934e` | success |
 | Dependency and Security Review | PR #26 head `518934e` | success |
 | Vercel (commit status) | PR #26 head `518934e` | success — preview deployment completed |
+| WeatherGPT CI | `main@a7680cd` (merge of #26) | success — run `39017152156`, all jobs green (4m41s) |
+| Secret and Workflow Security | `main@a7680cd` | success — run `39017152165` |
+| Dependency and Security Review (npm/pip audit) | `main@a7680cd` | success — run `39017152188` |
+| Vercel production deployment | `main@a7680cd` | completed — production serves the merged bundle (see §4) |
 
 ## 4. Production status
 
-**Not yet deployed by this run.** Production still serves the baseline commit.
-Confirmed directly during this run:
+**Deployed and verified.** PR #26 was merged to `main` as `a7680cd`
+(2026-10-17T08:23Z, authorised by the project owner) and the Vercel production
+deployment completed. Everything below was run directly against
+`https://weathergpt-kappa-pink.vercel.app` (read-only probes).
 
-- `GET /api/health` → 200 `{"status":"healthy","service":"WeatherGPT Engine"}`
-- `GET /api/air-quality?location=Pune` → `us_aqi 133`, fresh `observed_at`
-- `GET /api/weather/current?location=Pune` → `aqi 78` (heuristic, no
-  provenance field) — the defect the release candidate removes
+Deploy identity:
 
-Consequently the following remain live in production until the branch is
-merged and deployed, and are **not** claimed as fixed there:
+- Production HTML references `assets/index-BuSzGuDf.css` — the exact content
+  hash of the local build of the merged commit.
+- All GitHub Actions workflows on `main@a7680cd` are green (§3).
 
-1. Chat answers for an unknown place can be presented as an unrelated real
-   city (e.g. Krishnapatnam → Patna).
-2. The main weather path still reports the state-level heuristic AQI instead
-   of the available live feed.
-3. Life Cast / RoadWatch / TreeGuard / UtilityWatch / Deep-Cast still render
-   placeholder copy rather than computed indicators.
-4. The solar panel can show an impossible azimuth from a hardcoded direction.
+API verification:
 
-Post-deploy verification plan (to run only after a verified merge):
-`/api/health`, `/api/weather/current?location=Pune` (expect live AQI and
-`aqi_source`), `POST /api/chat/query` with the Krishnapatnam question (expect
-the resolution note and no Patna), plus the 20-section UI walk at 390 px and
-1440 px.
+| Probe | Result |
+|-------|--------|
+| `GET /api/weather/current?location=Pune` | `aqi` **134**, `aqi_source` `Open-Meteo Air Quality (US EPA) · observed 2026-10-17T13:30` |
+| `GET /api/air-quality?location=Pune` | `us_aqi` **134**, `observed_at 2026-10-17T13:30` — **consistent** with the weather path (baseline: 133 vs 78) |
+| 17-endpoint smoke + `POST /api/language/analyze` | 18/18 HTTP 200 |
+| `/robots.txt`, `/sitemap.xml`, `/manifest.json` | 200 |
+
+Chat verification (payload exactly as the frontend sends it —
+`{query, persona, language, location_name}`):
+
+| Question (`location_name=Pune`) | Result |
+|---------------------------------|--------|
+| "Tell me about the weather in Krishnapatnam" | `location_resolved=false`; note *"I could not resolve “Krishnapatnam” to a location, so the figures above are for Pune, not the place you named."*; no word-boundary `Patna` anywhere |
+| "What about my selected location?" | answered for Pune, `explicit_location=false` |
+| "What is the AQI in Pune?" | *"Air quality (LIVE, US AQI (EPA)): US AQI 134 …, PM2.5 30.3, PM10 38.9"* |
+| "…15 November 2026…" | explicit horizon note (*"my live forecast horizon is about 7 days…"*) |
+
+Browser suites re-run against production (chromium, read-only):
+
+| Suite | Result on production |
+|-------|----------------------|
+| `modules_solar_planner.py` | all functional checks PASS (solar 212° / compass "SW" consistent + estimate label; all five sector modules ≥4 computed values, no placeholder copy; trip planner; deep-cast honest; severe slots resolved; chat guard + unknown-place honesty, app location unchanged) |
+| `chat_visibility.py` | 2 suites, 0 failures |
+| `imagery_visibility.py` | all functional checks PASS at 1440px and 390px (DELAYED labels, retry, mocked tiles) |
+| `responsive_accessibility.py` | all checks PASS at 320→1440 (overflow, accessible names, headings, keyboard, reduced-motion) — only the console-error check fails, on the pre-existing CSP entries below |
+
+Pre-existing production console conditions (present in the baseline
+`d7810ba` configuration — not introduced by this release):
+
+1. The `vercel.json` CSP (`style-src 'self' 'unsafe-inline'`) blocks the two
+   external stylesheet links still present in `frontend/index.html`
+   (Google Fonts; `unpkg.com` Leaflet 1.9.4) → 2 resource-load console errors
+   per page. Impact is cosmetic: `--wg-font` falls back to the system stack,
+   and Leaflet's CSS is bundled into the app CSS (`.leaflet-container` present
+   in the built stylesheet), so the map is unaffected.
+2. Transient upstream provider failures can appear as resource errors in the
+   console of one run (a 503 was observed once in `imagery_visibility` at
+   390px); the UI degrades exactly as designed and no functional check failed.
+
+Both are recorded in `WEATHERGPT_REMAINING_WORK.md` §4. No production change
+was made for them in this release.
 
 ## 5. Rollback position
 
-The release candidate is a single, self-contained change set with no schema,
-dependency or infrastructure changes. Reverting the merge commit restores the
-previous behaviour completely; no data migration is involved.
+The release is a self-contained change set with no schema, dependency or
+infrastructure changes. Reverting merge commit `a7680cd` restores the previous
+production behaviour completely; no data migration is involved.
 
-## 6. Decision required
+## 6. Decisions taken
 
-Merging to `main` publishes to the public production site. That step was
-**not** taken in this run; the branch is pushed and the PR is updated with the
-findings above so the merge can be performed deliberately.
+- Merge to `main` and production verification were authorised by the project
+  owner on 2026-10-17 and performed in this run (merge `a7680cd`; results in
+  §4).
+- The pre-existing CSP/console conditions in §4 were **not** modified; they
+  await a separate decision (options recorded in `WEATHERGPT_REMAINING_WORK.md`
+  §4).

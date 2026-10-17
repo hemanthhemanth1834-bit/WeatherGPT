@@ -140,6 +140,30 @@ accessible-name check no longer relies on icon glyphs.
 The two endpoints disagree, which is exactly the P0 defect PR #26 removes: the
 live feed was fetched but not merged into the main weather path.
 
+## Production verification (post-merge `a7680cd`)
+
+Run after the authorised merge and Vercel deploy, directly against
+`https://weathergpt-kappa-pink.vercel.app` (read-only). Full tables in
+`WEATHERGPT_RELEASE_REPORT.md` §4; summary:
+
+- API: `weather/current` `aqi 134` ≡ `air-quality` `us_aqi 134` (same 13:30
+  observation; baseline disagreed 78 vs 133).
+- Chat (frontend payload): Krishnapatnam → honest "could not resolve" note,
+  no word-boundary `Patna`; deictic → active location,
+  `explicit_location=false`; live AQI line `US AQI 134`; horizon note for
+  November.
+- Smoke: 18/18 HTTP 200; `/robots.txt`, `/sitemap.xml`, `/manifest.json` 200.
+- Browser suites against production (chromium): modules/solar/planner/chat
+  honesty — all functional checks PASS; `chat_visibility.py` 0 failures;
+  `imagery_visibility.py` functional checks PASS (one transient provider 503
+  console entry at 390px); `responsive_accessibility.py` all viewport checks
+  PASS (320→1440).
+- Console caveat (production only, pre-existing, not introduced by this
+  release): the Vercel CSP blocks the two external stylesheet tags in
+  `index.html` → 2 resource console errors per load (font falls back to the
+  system stack; Leaflet CSS is bundled, map unaffected). Local/CI pages carry
+  no CSP header and show 0 console errors.
+
 ## What is *not* covered (honest gaps)
 
 - No load/performance benchmarking was run; no claims are made about throughput.
