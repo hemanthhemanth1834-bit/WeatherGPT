@@ -217,9 +217,27 @@ export default function App() {
       setLocating(true);
       setLocState({ source: "UNKNOWN", status: "DETECTING" });
       if (manual) setNotice("Detecting location…");
+      // Watchdog for browsers that leave getCurrentPosition pending without
+      // ever invoking either callback (e.g. an undecided permission prompt):
+      // the spec's 10 s timeout is not honoured by every engine. After 12 s
+      // fall back exactly like the TIMEOUT error branch so the app can never
+      // sit on "Detecting location…" indefinitely. A late callback still wins
+      // because the requestId guard passes only for the current request.
+      const gpsWatchdog = setTimeout(() => {
+        if (locRequestId.current !== requestId) return;
+        setLocating(false);
+        setLocState({ source: "UNKNOWN", status: "ERROR" });
+        if (manual) setNotice("Location request timed out. Search for a location manually.");
+        if (!manual && savedFallback && savedFallback.length > 0) {
+          searchPlace(savedFallback[0], null, null, null, "SAVED");
+        } else if (!manual) {
+          searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+        }
+      }, 12000);
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           if (locRequestId.current !== requestId) return;
+          clearTimeout(gpsWatchdog);
           const { latitude, longitude, accuracy } = pos.coords;
           try {
             const rev = await fetchReverseGeocode(latitude, longitude);
@@ -241,6 +259,7 @@ export default function App() {
         },
         (err) => {
           if (locRequestId.current !== requestId) return;
+          clearTimeout(gpsWatchdog);
           setLocating(false);
           if (err && err.code === err.TIMEOUT) {
             setLocState({ source: "UNKNOWN", status: "ERROR" });

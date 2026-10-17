@@ -13,7 +13,7 @@
 | Open-Meteo Elevation | api.open-meteo.com/v1/elevation | none | FREE non-commercial | attribution | fair use + 24h cache | LIVE |
 | NOAA ADDS | aviationweather.gov/api/data | none | PUBLIC DATA (US gov) | public domain-ish | fair use + 30min cache | LIVE |
 | RainViewer | api.rainviewer.com | none | FREE tier | attribution required | aggressive client cache | LIVE |
-| NASA GIBS | gibs.earthdata.nasa.gov/wmts | none | PUBLIC DATA | NASA open-data policy | link-out, no proxy | LIVE |
+| NASA GIBS | gibs.earthdata.nasa.gov/wms + /wmts | none | PUBLIC DATA | NASA open-data policy | imagery loaded directly in-browser (no proxy) | LIVE (DELAYED-labelled daily products) |
 | NASA EONET | eonet.gsfc.nasa.gov/api | none | PUBLIC DATA | NASA open-data policy | 30min cache | LIVE |
 | USGS FDSN | earthquake.usgs.gov/fdsnws | none | PUBLIC DATA (US gov) | USGS policy | 10min cache | LIVE |
 | GDACS API | gdacs.org/gdacsapi | none | PUBLIC (UN JRC) | cite source | 30min cache | LIVE |

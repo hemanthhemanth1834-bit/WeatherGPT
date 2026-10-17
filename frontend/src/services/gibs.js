@@ -27,6 +27,33 @@ export const GIBS_LAYERS = {
     layer: "MODIS_Terra_CorrectedReflectance_TrueColor",
     resolution: "250 m",
   },
+  flood: {
+    id: "flood",
+    label: "MODIS flood water (2-day)",
+    layer: "MODIS_Combined_Flood_2-Day",
+    resolution: "250 m",
+    cadence: "2-day composite",
+    description:
+      "Satellite-derived surface-water detection (MODIS 2-day composite) — flood context, not an official flood warning.",
+  },
+  imerg: {
+    id: "imerg",
+    label: "IMERG rain rate",
+    layer: "IMERG_Precipitation_Rate",
+    resolution: "~10 km",
+    cadence: "daily product",
+    description:
+      "GPM IMERG satellite precipitation-rate product — rain context, not a rain gauge.",
+  },
+  aod: {
+    id: "aod",
+    label: "MODIS aerosol depth",
+    layer: "MODIS_Combined_Value_Added_AOD",
+    resolution: "gridded",
+    cadence: "daily product",
+    description:
+      "Satellite aerosol optical-depth context — not a ground AQI measurement.",
+  },
 };
 
 export function gibsWmtsTile(layer, date, zxy = "{z}/{y}/{x}") {

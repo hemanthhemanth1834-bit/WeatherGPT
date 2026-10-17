@@ -140,4 +140,9 @@ PR [#27](https://github.com/hemanthhemanth1834-bit/WeatherGPT/pull/27) was merge
 
 The change removes the Google Fonts and redundant unpkg Leaflet stylesheet tags from `frontend/index.html`; it does not loosen the Content Security Policy and adds no dependencies. The PR preview rendered successfully and reported no external stylesheet links or browser resource/CSP errors.
 
-**Production verification is still pending.** A fresh browser inspection of `https://weathergpt-kappa-pink.vercel.app/` continued to report the two old external stylesheet links after the deployment reached READY. This discrepancy must be resolved with a fresh production session/cache check before the CSP console issue can be marked fixed. PR merge and deployment readiness are confirmed; public-alias behavior is not.
+**Production verification completed (same day, later session).** A fresh probe
+of `https://weathergpt-kappa-pink.vercel.app/` serves HTML with no external
+stylesheet links (`x-vercel-cache: HIT`), and a fresh headless-Chrome session
+reports **0 console errors/warnings** (previously 2 CSP errors per load). The
+earlier "old links still observed" reading was a stale cached copy. The CSP
+console issue is fixed and verified in production.

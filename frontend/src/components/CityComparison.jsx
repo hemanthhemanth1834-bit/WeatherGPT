@@ -9,6 +9,10 @@ const PRESETS = [
   ["Shimla", "Manali"],
 ];
 
+function aqiIsLive(src) {
+  return (src || "").toLowerCase().includes("open-meteo air quality");
+}
+
 function Row({ label, a, b }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "7rem 1fr 1fr", gap: "0.5rem", fontSize: "0.83rem", padding: "0.45rem 0.6rem", background: "rgba(148,163,184,.05)", borderRadius: "0.6rem" }}>
@@ -37,9 +41,9 @@ export default function CityComparison({ onAsk }) {
       const [r1, r2, all] = await Promise.all([
         fetchRiskAssessment(data.city1.location).catch(() => null),
         fetchRiskAssessment(data.city2.location).catch(() => null),
-        fetchActiveAlerts().catch(() => []),
+        fetchActiveAlerts().catch(() => null),
       ]);
-      const hits = (city) => all.filter((x) => x.district.toLowerCase().includes(city.toLowerCase())).length;
+      const hits = (city) => all ? all.filter((x) => (x.district || "").toLowerCase().includes(city.toLowerCase())).length : null;
       setExtra({
         risk1: r1?.overall, risk2: r2?.overall,
         alerts1: hits(data.city1.location), alerts2: hits(data.city2.location),
@@ -95,9 +99,9 @@ export default function CityComparison({ onAsk }) {
           <Row label="Temperature" a={`${result.city1.current_temp}°C`} b={`${result.city2.current_temp}°C`} />
           <Row label="Humidity" a={`${result.city1.humidity}%`} b={`${result.city2.humidity}%`} />
           <Row label="Wind" a={`${result.city1.wind_speed} km/h ${result.city1.wind_direction}`} b={`${result.city2.wind_speed} km/h ${result.city2.wind_direction}`} />
-          <Row label="Risk (est.)" a={extra.risk1 || "…"} b={extra.risk2 || "…"} />
-          <Row label="Alerts" a={extra.alerts1 ?? "…"} b={extra.alerts2 ?? "…"} />
-          <Row label="AQI (est.)" a={`${result.city1.aqi} ${result.city1.aqi_status}`} b={`${result.city2.aqi} ${result.city2.aqi_status}`} />
+          <Row label="Risk (est.)" a={busy ? "loading…" : extra.risk1 || "unavailable"} b={busy ? "loading…" : extra.risk2 || "unavailable"} />
+          <Row label="Alerts" a={busy ? "loading…" : extra.alerts1 ?? "unavailable"} b={busy ? "loading…" : extra.alerts2 ?? "unavailable"} />
+          <Row label="AQI" a={`${result.city1.aqi} ${result.city1.aqi_status} · ${aqiIsLive(result.city1.aqi_source) ? "live" : "est."}`} b={`${result.city2.aqi} ${result.city2.aqi_status} · ${aqiIsLive(result.city2.aqi_source) ? "live" : "est."}`} />
           <p style={{ fontSize: "0.85rem", margin: "0.3rem 0 0" }}>
             Warmer: <strong>{result.temp_warmer_city}</strong> ({result.temp_diff}°C) · Cleaner air:{" "}
             <strong>{result.aqi_better_city}</strong> · Travel safety: <strong>{result.travel_safety_score}/100</strong>

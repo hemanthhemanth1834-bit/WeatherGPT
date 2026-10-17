@@ -82,7 +82,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
         </div>
 
         <button type="button" className="wg-ref-location" onClick={() => go("map")}>
-          <Live3DIcon kind="map" size="xs" label="Live location" /><span><b>{location}</b><small>({state})</small></span><em>CHANGE</em>
+          <Live3DIcon kind="map" size="xs" label="Live location" /><span className="wg-ref-location-text"><b>{location}</b><small>({state})</small></span><em>CHANGE</em>
         </button>
 
         <div className="wg-ref-header-actions">

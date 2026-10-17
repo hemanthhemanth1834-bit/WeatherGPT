@@ -10,11 +10,11 @@ caching/fallback behavior per path.
 
 | Source | Used for | Backend path | Cache | Verified freshness | Label shown |
 |--------|----------|--------------|-------|--------------------|-------------|
-| Open-Meteo Forecast API | Current + hourly + daily weather | `services/weather.py` | ~10 min in-process TTL | Current hour (matched UI) | `LIVE · Open-Meteo` + model name + `updated_at_ist` |
+| Open-Meteo Forecast API | Current + hourly + daily weather (backend); hourly chart overlay (direct browser calls — keyless, documented) | `services/weather.py`; `WeatherDashboard.jsx`/`LiveWeatherChart.jsx` | ~10 min in-process TTL (backend) | Current hour (matched UI) | `LIVE · Open-Meteo` + model name + `updated_at_ist` |
 | Open-Meteo Air Quality API | US-EPA AQI + pollutants | `services/air_quality.py` | 30 min | observed_at within current half-hour (audit: 133 Pune, "Unhealthy for Sensitive Groups") | `LIVE` AQI, source string embedded | 
 | Open-Meteo Geocoding | Place → coordinates | `services/geo.py` | per-query | Live per query | n/a (input resolution) |
 | RainViewer Radar | Radar tiles (recent-past composite) | `services/radar.py` (frontend tiles) | manifest ~2 min | 12 frames, ~1.8 min age; 0 nowcast frames (honest: no fake nowcast) | `RECENT HISTORY` / `DELAYED` |
-| NASA GIBS (VIIRS/MODIS) | Daily true-color satellite imagery | `services/gibs.py` | daily product | Previous day's product | `DELAYED · daily product` + date |
+| NASA GIBS (VIIRS/MODIS + flood/AOD/IMERG layers) | Satellite imagery: true-color, MODIS flood-water composite (2-day), aerosol optical depth, GPM IMERG rain rate | `services/gibs.js` (frontend WMS) | daily product (loads direct from GIBS) | Live-checked this session: VIIRS/MODIS/Flood-2Day/AOD/IMERG all return real JPEGs for the previous day; current-day IMERG is not yet populated (hence the previous-day convention) | `DELAYED` + per-layer product name, cadence and date |
 | USGS Earthquake API | Seismic events | `services/disasters.py` (feed) | ~10 min | Same-day events | `OFFICIAL · USGS` |
 | NASA EONET | Wildfire/hotspot events | `services/disasters.py` | ~10 min | Current events | `OFFICIAL · EONET` |
 | GDACS (UN JRC) | Global disaster context | `services/disasters.py` | ~10 min | Current events | `OFFICIAL · GDACS` (read-only context) |
@@ -52,3 +52,44 @@ caching/fallback behavior per path.
    value, never a permanent loading state.
 4. Official warning authority is always IMD/NDMA; third-party feeds are
    marked as context only.
+
+## Licensing & attribution (checked during the audit)
+
+| Source | License / terms | Obligation |
+|--------|-----------------|------------|
+| Open-Meteo (forecast, air quality, geocoding, archive) | Free for non-commercial use, CC-BY-4.0-style attribution requested | Source named in every UI provenance line ("Open-Meteo …") |
+| RainViewer radar tiles | Free tier for personal/educational use | UI carries "Source: RainViewer (personal/educational use)" next to the imagery |
+| NASA GIBS (VIIRS/MODIS true-color, MODIS flood-water composite, MODIS aerosol depth, GPM IMERG rain rate) | U.S. public domain | "NASA GIBS (U.S. public domain)" shown per figure; per-layer notes state context vs official warning |
+| USGS earthquakes, NASA EONET, GDACS (UN JRC) | Public/open feeds | "OFFICIAL third-party" label + link/id in the panels |
+| OpenStreetMap tiles + Nominatim/Overpass | ODbL / usage policy (attribution + light use) | OSM attribution rendered on maps; queries are per-user and cached |
+| Leaflet, three.js, react, lucide | MIT/BSD-family permissive | bundled; license texts retained in the repository |
+
+No paid API or mandatory key is used anywhere in the shipped product; a new
+resource may only be added after its license is recorded in this table.
+
+## Live-imagery architecture (imagery pass)
+
+All imagery flows through one reusable component
+(`frontend/src/components/LiveImagery.jsx`) providing: loading skeleton,
+explicit status chips (`DELAYED` etc.), observed-at line, source attribution
+link, error state with retry, and an optional layer switcher. Provider
+adapters live in `frontend/src/services/gibs.js` (NASA GIBS WMS; per-layer
+metadata — label, resolution, cadence, honest description) and
+`frontend/src/services/radar.js` (RainViewer tiles, recent-past frames).
+
+Layers shipped: VIIRS/MODIS true-color (cloud/land context), MODIS flood
+water 2-day composite (FloodWatch page), GPM IMERG rain rate and MODIS
+aerosol optical depth (switchable on the satellite figures). Every layer is
+the previous day's real product; nothing is labelled LIVE.
+
+### Why no keyed stock-photo APIs (Unsplash / Pexels / Pixabay)
+
+- Those APIs require keys; the project ships keyless-only and no key can be
+  provisioned or verified end-to-end from this environment.
+- On a weather-warning product, stock photography invites misrepresentation
+  ("is this the current flood?"). The topic calls for scientific imagery —
+  satellite and radar products — which GIBS and RainViewer provide free with
+  clear public-domain / permissive terms and per-product timestamps.
+- Wikimedia Commons / NASA Images could later add *clearly illustrative*
+  content (About page etc.) after per-file licence review; recorded as
+  future work rather than shipped unreviewed.
