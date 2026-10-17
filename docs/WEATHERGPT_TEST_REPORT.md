@@ -22,6 +22,7 @@ Python 3.12.10, Node 24.19.0, oxlint, vite 8, Playwright with system Chrome).
 | `python tests/modules_solar_planner.py` | **30 checks, 0 failures**, exit 0 | 26 original + 4 new location-honesty assertions |
 | `python tests/responsive_accessibility.py` (**new**) | **39 checks, 0 failures**, exit 0 | 6-viewport matrix + keyboard/focus + reduced-motion; its first run caught the real 320px defect recorded below; fully green after the fix |
 | API smoke battery (17 endpoints, port 8000) | **17/17 HTTP 200** | `/robots.txt` + `/sitemap.xml` are frontend assets → verified 200 on the preview server (`/manifest.json` too) |
+| GitHub Actions on the pushed head `518934e` | **all checks pass** | backend 4m37s, browser-smoke 1m48s, chat-visibility 2m42s, frontend 16s, production-smoke 18s, service-smoke 20s, secret-scan, backend-audit, frontend-audit; Vercel preview deployment completed |
 
 > Operational note for future runs: `vite preview` caches `index.html` at
 > startup. After `npm run build` you must restart the preview server, or the

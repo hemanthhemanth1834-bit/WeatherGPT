@@ -52,10 +52,10 @@ app's active location. Both are fixed with regression coverage.
 | WeatherGPT CI | `main@d7810ba` | success (run `38766374244`) |
 | Secret and Workflow Security | `main@d7810ba` | success |
 | Dependency and Security Review | `main@d7810ba` | success |
-| WeatherGPT CI | PR #26 head | success |
-| Secret and Workflow Security | PR #26 head | success |
-| Dependency and Security Review | PR #26 head | success |
-| Vercel (commit status) | PR #26 head | success — preview deployment completed |
+| WeatherGPT CI | PR #26 head `518934e` | success — all jobs green (backend 4m37s, browser-smoke 1m48s, chat-visibility 2m42s, frontend, production-smoke, service-smoke) |
+| Secret and Workflow Security | PR #26 head `518934e` | success |
+| Dependency and Security Review | PR #26 head `518934e` | success |
+| Vercel (commit status) | PR #26 head `518934e` | success — preview deployment completed |
 
 ## 4. Production status
 
