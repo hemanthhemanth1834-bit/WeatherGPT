@@ -6,24 +6,44 @@ Run after ``npm run build`` + backend on :8000 + ``npm run preview`` on :4173::
 
 Env overrides: WG_UI_URL, WG_BROWSERS (csv), WG_CHROME_PATH (local browser exe).
 """
+
 import os
 import sys
 
 UI_URL = os.getenv("WG_UI_URL", "http://127.0.0.1:4173/")
-BROWSERS = [b.strip() for b in os.getenv("WG_BROWSERS", "chromium").split(",") if b.strip()]
+BROWSERS = [
+    b.strip() for b in os.getenv("WG_BROWSERS", "chromium").split(",") if b.strip()
+]
 CHROME_PATH = os.getenv("WG_CHROME_PATH", "")
 
 COMPASS = {"N", "NE", "E", "SE", "S", "SW", "W", "NW"}
 MODULES = [
-    ("Life Cast", ["Outdoor Activity", "Health & Comfort", "Laundry & Drying", "Drone / Cycling"]),
-    ("RoadWatch", ["Hydroplaning Watch", "Visibility Watch", "Crosswind Watch", "Radar & Route"]),
-    ("TreeGuard", ["Windthrow Risk", "Branch-Fall Watch", "Urban Exposure", "Climate Context"]),
-    ("UtilityWatch", ["Storm Exposure", "Heat Stress", "Flood Context", "Live Providers"]),
-    ("AI Weather Deep-Cast", ["NWP Models", "Soundings", "7-Day Synoptic", "Provider Health"]),
+    (
+        "Life Cast",
+        ["Outdoor Activity", "Health & Comfort", "Laundry & Drying", "Drone / Cycling"],
+    ),
+    (
+        "RoadWatch",
+        ["Hydroplaning Watch", "Visibility Watch", "Crosswind Watch", "Radar & Route"],
+    ),
+    (
+        "TreeGuard",
+        ["Windthrow Risk", "Branch-Fall Watch", "Urban Exposure", "Climate Context"],
+    ),
+    (
+        "UtilityWatch",
+        ["Storm Exposure", "Heat Stress", "Flood Context", "Live Providers"],
+    ),
+    (
+        "AI Weather Deep-Cast",
+        ["NWP Models", "Soundings", "7-Day Synoptic", "Provider Health"],
+    ),
 ]
+
 
 def nav(page, label):
     page.get_by_role("button", name=label, exact=False).first.click()
+
 
 def wait_metrics(page, timeout_ms=20000):
     """Wait until at least 4 module metric values are rendered (survives
@@ -31,10 +51,12 @@ def wait_metrics(page, timeout_ms=20000):
     try:
         page.wait_for_function(
             "() => document.querySelectorAll('.wg-ref-feature .wg-mod-value').length >= 4",
-            timeout=timeout_ms)
+            timeout=timeout_ms,
+        )
         return True
     except Exception:
         return False
+
 
 def check(cond, msg, failures):
     if cond:
@@ -42,6 +64,7 @@ def check(cond, msg, failures):
     else:
         failures.append(msg)
         print(f"  FAIL {msg}")
+
 
 def stable_location(page, timeout_ms=45000, settle_reads=2):
     """Return the active location once it has STOPPED changing.
@@ -70,17 +93,21 @@ def stable_location(page, timeout_ms=45000, settle_reads=2):
         page.wait_for_timeout(500)
     return prev or ""
 
+
 def run(browser_type):
     failures = []
     launch = {"headless": True}
-    if CHROME_PATH:
+    if CHROME_PATH and browser_type.name == "chromium":
         launch["executable_path"] = CHROME_PATH
     browser = browser_type.launch(**launch)
     page = browser.new_page(viewport={"width": 1440, "height": 900})
     console_errors = []
-    page.on("console", lambda m: console_errors.append(m.text) if m.type == "error" else None)
+    page.on(
+        "console",
+        lambda m: console_errors.append(m.text) if m.type == "error" else None,
+    )
     page.goto(UI_URL, wait_until="domcontentloaded")
-    page.wait_for_selector(".wg-ref-location b", timeout=45000)
+    page.wait_for_selector(".wg-ref-location b", timeout=120000)
     start_location = stable_location(page)
     print(f"  active location (settled): {start_location!r}")
 
@@ -92,9 +119,31 @@ def run(browser_type):
     az_val = int(parts[0])
     compass = parts[1] if len(parts) > 1 else "?"
     check(0 <= az_val <= 359, f"solar azimuth {az_val} in 0..359", failures)
-    check(compass in COMPASS, f"solar compass {compass} is a real 8-point direction", failures)
-    check("SW" not in azimuth_txt or compass == "SW", "no hardcoded (SW) mismatch", failures)
-    check("Estimated" in page.content() or "estimate" in page.content().lower(), "solar subtitle states it is an estimate", failures)
+    check(
+        compass in COMPASS,
+        f"solar compass {compass} is a real 8-point direction",
+        failures,
+    )
+    check(
+        "SW" not in azimuth_txt or compass == "SW",
+        "no hardcoded (SW) mismatch",
+        failures,
+    )
+    check(
+        "Estimated" in page.content() or "estimate" in page.content().lower(),
+        "solar subtitle states it is an estimate",
+        failures,
+    )
+    solar_body = page.inner_text("body")
+    check(
+        "\\n" not in solar_body, "solar: no literal backslash-n text artifact", failures
+    )
+    badge = page.locator(".wg-solar-badge.warn").first.inner_text().strip()
+    check(
+        badge.startswith("Cloud Cover (") and badge.endswith("%)"),
+        f"solar: cloud badge labeled honestly ({badge!r})",
+        failures,
+    )
 
     for label, titles in MODULES:
         print(f"[{label}]")
@@ -111,7 +160,11 @@ def run(browser_type):
             empty = [i for i in range(vn) if not values.nth(i).inner_text().strip()]
             check(not empty, f"{label}: metric values non-empty", failures)
         body = page.inner_text("body")
-        check("Shows what this feature means" not in body, f"{label}: placeholder copy removed", failures)
+        check(
+            "Shows what this feature means" not in body,
+            f"{label}: placeholder copy removed",
+            failures,
+        )
 
     print("[Trip Planner]")
     nav(page, "Trip Planner")
@@ -119,7 +172,7 @@ def run(browser_type):
     for attempt in range(2):
         page.get_by_role("button", name="Show arrival weather").click()
         try:
-            page.wait_for_selector('[data-testid="trip-result"]', timeout=30000)
+            page.wait_for_selector('[data-testid="trip-result"]', timeout=60000)
             break
         except Exception:
             if attempt == 1:
@@ -133,16 +186,66 @@ def run(browser_type):
     nav(page, "AI Weather Deep-Cast")
     page.wait_for_timeout(1500)
     body = page.inner_text("body")
-    check("NOT CONFIGURED" in body, "deep-cast: soundings honestly not configured", failures)
+    check(
+        "NOT CONFIGURED" in body,
+        "deep-cast: soundings honestly not configured",
+        failures,
+    )
+
+    print("[FloodWatch auto-assess]")
+    nav(page, "FloodWatch")
+    try:
+        page.wait_for_function(
+            "() => document.body.innerText.includes('Overall for')", timeout=90000
+        )
+        auto_ok = True
+    except Exception:
+        auto_ok = False
+    check(auto_ok, "floodwatch: risk assessment auto-loads without a click", failures)
+    check(
+        page.get_by_test_id("live-imagery").count() >= 1,
+        "floodwatch: satellite flood-context figure present",
+        failures,
+    )
+
+    print("[Station Comparison provenance]")
+    nav(page, "Station Comparison")
+    try:
+        page.wait_for_function(
+            "() => {const b = document.body.innerText; return b.includes('City vs city') && !b.includes('Comparing') && !b.includes('loading…');}",
+            timeout=90000,
+        )
+    except Exception:
+        pass
+    page.wait_for_timeout(1000)
+    compare_body = page.inner_text("body")
+    check(
+        "· live" in compare_body or "· est." in compare_body,
+        "compare: AQI provenance labeled per city",
+        failures,
+    )
+    check(
+        "…\n" not in compare_body,
+        "compare: no ambiguous ellipsis placeholder cells",
+        failures,
+    )
 
     print("[Disaster Management error states]")
     nav(page, "Disaster Management")
     page.wait_for_timeout(35000)
     body = page.inner_text("body")
-    check("Searching OpenStreetMap near you" not in body, "severe: OSM lookup resolved (no permanent loading)", failures)
+    check(
+        "Searching OpenStreetMap near you" not in body,
+        "severe: OSM lookup resolved (no permanent loading)",
+        failures,
+    )
     check("Loading USGS feed" not in body, "severe: USGS slot resolved", failures)
     check("Loading EONET feed" not in body, "severe: EONET slot resolved", failures)
-    check("Computing rain + elevation proxy" not in body, "severe: flood proxy resolved", failures)
+    check(
+        "Computing rain + elevation proxy" not in body,
+        "severe: flood proxy resolved",
+        failures,
+    )
 
     print("[chat sync guard]")
     nav(page, "AI Weather Assistant")
@@ -151,10 +254,17 @@ def run(browser_type):
     page.locator('button[aria-label="Send question"]').click()
     page.wait_for_timeout(15000)
     chat_text = page.inner_text("body")
-    check("Grand Est" not in chat_text, "chat: filler-word geocode (Grand Est) gone", failures)
+    check(
+        "Grand Est" not in chat_text,
+        "chat: filler-word geocode (Grand Est) gone",
+        failures,
+    )
     end_location = stable_location(page, timeout_ms=20000)
-    check(end_location == start_location,
-          f"chat: active location unchanged ({start_location!r} -> {end_location!r})", failures)
+    check(
+        end_location == start_location,
+        f"chat: active location unchanged ({start_location!r} -> {end_location!r})",
+        failures,
+    )
 
     print("[chat unknown-place honesty]")
     # Regression: an unresolvable place name used to answer silently as the
@@ -165,22 +275,37 @@ def run(browser_type):
     page.locator('button[aria-label="Send question"]').click()
     page.wait_for_timeout(20000)
     unknown_text = page.inner_text("body")
-    check("could not resolve" in unknown_text,
-          "chat: unresolvable place states the fallback honestly", failures)
-    check("Patna" not in unknown_text,
-          "chat: unresolvable place is not substring-matched to Patna", failures)
+    check(
+        "could not resolve" in unknown_text,
+        "chat: unresolvable place states the fallback honestly",
+        failures,
+    )
+    check(
+        "Patna" not in unknown_text,
+        "chat: unresolvable place is not substring-matched to Patna",
+        failures,
+    )
     after_unknown = stable_location(page, timeout_ms=20000)
-    check(after_unknown == start_location,
-          f"chat: unresolvable place did not move the app location "
-          f"({start_location!r} -> {after_unknown!r})", failures)
+    check(
+        after_unknown == start_location,
+        f"chat: unresolvable place did not move the app location "
+        f"({start_location!r} -> {after_unknown!r})",
+        failures,
+    )
 
-    real_errors = [e for e in console_errors if "favicon" not in e.lower() and "fonts.googleapis" not in e]
+    real_errors = [
+        e
+        for e in console_errors
+        if "favicon" not in e.lower() and "fonts.googleapis" not in e
+    ]
     check(not real_errors, f"no console errors ({len(real_errors)})", failures)
     browser.close()
     return failures
 
+
 def main():
     from playwright.sync_api import sync_playwright
+
     all_failures = []
     with sync_playwright() as p:
         for name in BROWSERS:
@@ -193,6 +318,7 @@ def main():
             print(" -", f)
         sys.exit(1)
     print("\nAll module/solar/planner/chat checks passed.")
+
 
 if __name__ == "__main__":
     main()

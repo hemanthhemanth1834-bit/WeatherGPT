@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { fetchCurrentWeather, fetchRiskAssessment, fetchTravelSafety } from "../services/api";
 import SourceBadge from "./SourceBadge";
+import LiveImagery from "./LiveImagery";
+import { GIBS_LAYERS, gibsDate, gibsIndiaWms } from "../services/gibs";
 
 const LEVEL_STYLES = {
   LOW: "bg-emerald-500/15 text-emerald-300 border-emerald-500/40",
@@ -40,6 +42,11 @@ export default function RiskPanel({ location }) {
     }
   };
 
+  useEffect(() => {
+    if ((location || "").trim()) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
+
   const drivers = climate && risk
     ? [
         { hazard: "heat", value: `${climate.current_temp}°C (feels ${climate.feels_like}°C)`, level: risk.levels.heat },
@@ -61,6 +68,11 @@ export default function RiskPanel({ location }) {
       </div>
       <SourceBadge source="WeatherGPT Risk Engine v1 (local) + Open-Meteo live values" dataType="ESTIMATED" status="SIMULATED" />
       {error && <div className="wg-alert error" role="alert">{error}</div>}
+      {loading && !risk && (
+        <p role="status" style={{ fontSize: "0.8rem", color: "var(--wg-muted)", margin: 0 }}>
+          Assessing {location} with the deterministic risk engine…
+        </p>
+      )}
       {!risk && !loading && !error && (
         <p style={{ fontSize: "0.8rem", color: "var(--wg-muted)", margin: 0 }}>
           Computes LOW / MODERATE / HIGH / EXTREME for heat, rainfall, flood, wind, thunderstorm and cyclone
@@ -96,6 +108,19 @@ export default function RiskPanel({ location }) {
           <p style={{ fontSize: "0.68rem", color: "var(--wg-faint)", margin: 0 }}>{risk.disclaimer}</p>
         </div>
       )}
+      <div style={{ marginTop: "0.4rem" }}>
+        <LiveImagery
+          title="Satellite flood-water context · India"
+          description={`${GIBS_LAYERS.flood.description} Observation is from ${gibsDate(1)} (2-day composite) — pair with official CWC/IMD bulletins.`}
+          src={gibsIndiaWms(GIBS_LAYERS.flood.layer, gibsDate(1))}
+          alt={`NASA GIBS MODIS flood-water composite over India, ${gibsDate(1)}`}
+          sourceName="NASA GIBS (U.S. public domain)"
+          sourceUrl="https://worldview.earthdata.nasa.gov/"
+          observedAt={`${gibsDate(1)} · 2-day composite`}
+          status="DELAYED"
+          minHeight="10rem"
+        />
+      </div>
     </div>
   );
 }

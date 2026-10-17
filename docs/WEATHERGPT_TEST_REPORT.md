@@ -179,9 +179,13 @@ first successful result and record the outcome; neither swallows a genuine
 failure, and no assertion is relaxed.
 
 - `modules_solar_planner.py` clicks "Show arrival weather" up to twice, then
-  waits up to 30 s for `[data-testid="trip-result"]`. The first attempt can hit
+  waits up to 60 s for `[data-testid="trip-result"]`. The first attempt can hit
   a cold provider (the backend fetches the destination's live weather); a
-  permanent failure still raises on the second attempt.
+  permanent failure still raises on the second attempt. First-load waits were
+  widened in the platform-upgrade pass (initial location settle 120 s,
+  FloodWatch assess 90 s, compare 90 s) because this machine's single-process
+  backend queues behind the ~50 s live alerts fan-out — the asserts themselves
+  are unchanged; they only allow the app to finish before judging it.
 - The suites wait for the preview server and the backend to answer before
   starting. Every suite asserts `no console errors (0)` at the end, so a
   provider error that reached the browser would still be reported.
@@ -191,5 +195,5 @@ failure, and no assertion is relaxed.
 
 - GitHub CI on PR head `c184381aec8ed5ceb6bcc324af8a76eacb52ffb5`: browser-smoke, service-smoke, chat-visibility, frontend build/lint, production-smoke and backend tests all completed successfully. Secret/workflow security and dependency/security review workflows passed.
 - Preview browser smoke: WeatherGPT home rendered; external stylesheet links to `fonts.googleapis.com` and `unpkg.com` absent; only bundled same-origin CSS files present; zero browser resource errors/CSP violations detected.
-- After merge `7e26b76c2f9617f194a8f747f6685d716d6f0998`, Vercel deployment reached READY. A later production browser inspection still saw the two old external stylesheet links, so production alias verification is pending. Do not interpret preview success or deployment READY as proof that the public alias is serving the new HTML.
+- After merge `7e26b76c2f9617f194a8f747f6685d716d6f0998`, Vercel deployment reached READY. The earlier production-browser reading that still saw the two old links was a stale cached copy. **Fresh production verification (later session):** the live HTML contains no `fonts.googleapis`/`unpkg` references (`x-vercel-cache: HIT` on the cleaned HTML) and a fresh headless-Chrome session on the production URL reports **0 console errors/warnings** — production alias verification completed.
 - No local Windows tests, performance benchmark, or local Firefox/WebKit runs were performed in this session.

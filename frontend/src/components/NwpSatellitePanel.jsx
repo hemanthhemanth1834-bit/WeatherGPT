@@ -111,7 +111,7 @@ export default function NwpSatellitePanel({ location, lat, lon, focus = "nwp" })
       {focus === "satellite" && (
         <IndiaSatelliteImagery
           title={`True-color satellite · ${location || "India"}`}
-          description="Daily true-color view (VIIRS SNPP / MODIS Terra) for cloud and land context. Switch layers — both are real NASA GIBS products from the previous day, not live observations."
+          description="True-color, flood-water, rain-rate and aerosol layers over India — every layer is a real NASA GIBS product from the previous day, not a live observation."
         />
       )}
 

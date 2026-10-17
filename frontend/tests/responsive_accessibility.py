@@ -23,7 +23,9 @@ VIEWPORTS = [
     ("360x740", 360, 740),
     ("390x844", 390, 844),
     ("768x1024", 768, 1024),
+    ("900x650", 900, 650),
     ("1024x768", 1024, 768),
+    ("1280x800", 1280, 800),
     ("1440x900", 1440, 900),
 ]
 
@@ -110,7 +112,7 @@ def check(cond, msg, failures):
 def run(browser_type):
     failures = []
     launch = {"headless": True}
-    if CHROME_PATH:
+    if CHROME_PATH and browser_type.name == "chromium":
         launch["executable_path"] = CHROME_PATH
     browser = browser_type.launch(**launch)
 

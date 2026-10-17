@@ -11,7 +11,7 @@ Provider statuses are runtime-dependent; use `/api/providers/health` for the cur
 | Open-Meteo Archive (ERA5) | yearly/monthly history | LIVE | Free, no key | Reanalysis, 2–5 day lag |
 | GFS via Open-Meteo | `models=gfs_seamless` selector | LIVE | Free, no key | Single-model run, no cycle meta |
 | RainViewer | radar tiles + timeline | LIVE | Free, no key | Composite, ~10 min delay |
-| NASA GIBS | satellite viewer links + tile pattern | LIVE | Free, no key | Viewed at provider, not proxied |
+| NASA GIBS | satellite imagery via WMS (true-color, flood water, rain rate, aerosol) + viewer links | LIVE (daily product) | Free, no key | Loaded directly in-browser, not proxied; previous-day products labelled DELAYED |
 | NOAA ADDS | METAR/TAF 6 Indian airports | LIVE | Free, no key | US source; outages fall back STATIC |
 | BigDataCloud | GPS reverse-geocode | LIVE | Free, no key | Low-volume fair use |
 | GDACS (UN JRC) | global disaster events | OFFICIAL third-party | Free, no key | Global context, not Indian warnings |

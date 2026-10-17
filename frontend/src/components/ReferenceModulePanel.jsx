@@ -284,7 +284,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
         <div className="wg-solar-kicker">
           <div className="wg-solar-icon"><Live3DIcon kind="solar" size="md" label="Solar intelligence" /></div>
           <span className="wg-solar-badge">SOLAR PHOTOVOLTAIC INTELLIGENCE</span>
-          <span className="wg-solar-badge warn">Cloud Attenuation ({data.cloud.toFixed(0)}%)</span><span className="wg-solar-3d-label">● 3D SOLAR ENGINE</span>
+          <span className="wg-solar-badge warn">Cloud Cover ({data.cloud.toFixed(0)}%)</span><span className="wg-solar-3d-label">● 3D SOLAR ENGINE</span>
         </div>
         <div className="wg-solar-title-row">
           <h1>Solar Energy<br/>Potential</h1>
@@ -294,7 +294,7 @@ function SolarDashboard({ weather, place, onTab, onAsk }) {
             <div className="wg-solar-array-buttons">{[3,5,10,25].map(k => <button key={k} className={ratedKw===k?"active":""} onClick={()=>setRatedKw(k)}>{k}k</button>)}</div>
           </div>
         </div>
-        <Solar3DScene cloud={data.cloud} uv={data.uv} ratedKw={ratedKw} altitude={data.altitude} />\n        <p className="wg-solar-hero-copy">Atmospheric solar potential modeled from available UV index, cloud cover and daylight timing. Generation figures are transparent <b>ESTIMATES</b>, not metered PV output.</p>
+        <Solar3DScene cloud={data.cloud} uv={data.uv} ratedKw={ratedKw} altitude={data.altitude} /> <p className="wg-solar-hero-copy">Atmospheric solar potential modeled from available UV index, cloud cover and daylight timing. Generation figures are transparent <b>ESTIMATES</b>, not metered PV output.</p>
       </div>
 
       <div className="wg-solar-metrics">

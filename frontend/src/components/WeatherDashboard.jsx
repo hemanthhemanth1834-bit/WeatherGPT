@@ -308,7 +308,7 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
           <div className="wg-card" style={{ padding: "0.5rem 0.9rem", textAlign: "right" }}>
-            <div style={{ fontSize: "0.68rem", color: "var(--wg-muted)" }}>AQI (estimated)</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--wg-muted)" }}>{(weather.aqi_source || "").toLowerCase().includes("open-meteo air quality") ? "AQI (live)" : "AQI (estimated)"}</div>
             <div style={{ fontWeight: 800 }}>{weather.aqi} · {weather.aqi_status}</div>
           </div>
           <button className="wg-btn" onClick={() => onAsk(`Full weather and hazard outlook for ${weather.location} this week`)}>

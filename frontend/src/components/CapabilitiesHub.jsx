@@ -12,9 +12,18 @@ export default function CapabilitiesHub() {
   const [saveMessage, setSaveMessage] = useState("");
   const [matrix, setMatrix] = useState(null);
 
+  const withTimeout = (promise, ms) => Promise.race([
+    promise,
+    new Promise((_, reject) => window.setTimeout(() => reject(new Error("diagnostic timeout")), ms)),
+  ]);
+
   const runDiagnostics = async () => {
     setState("checking");
-    const [p, e, m] = await Promise.allSettled([fetchProvidersHealth(true), fetchEngineStatus(), fetch("/api/platform/capabilities").then((r) => r.ok ? r.json() : Promise.reject(new Error("matrix")))]);
+    const [p, e, m] = await Promise.allSettled([
+      withTimeout(fetchProvidersHealth(true), 75000),
+      withTimeout(fetchEngineStatus(), 20000),
+      withTimeout(fetch("/api/platform/capabilities").then((r) => r.ok ? r.json() : Promise.reject(new Error("matrix"))), 20000),
+    ]);
     if (p.status === "fulfilled") setProviders(p.value);
     if (e.status === "fulfilled") setEngine(e.value);
     if (m.status === "fulfilled") setMatrix(m.value);
@@ -66,8 +75,8 @@ export default function CapabilitiesHub() {
         </article>
         <article className="wg-admin-status-card wg-admin-green">
           <span>Weather Providers</span>
-          <strong>{providers ? `${liveCount} LIVE` : "CHECKING"}</strong>
-          <small>{rows.length ? `${rows.length} providers checked` : "Live provider health"}</small>
+          <strong>{providers ? `${liveCount} LIVE` : state === "checking" ? "CHECKING" : "UNAVAILABLE"}</strong>
+          <small>{rows.length ? `${rows.length} providers checked` : state === "checking" ? "Live provider health" : "Provider check failed — rerun diagnostics"}</small>
         </article>
         <article className="wg-admin-status-card wg-admin-purple">
           <span>User Data</span>

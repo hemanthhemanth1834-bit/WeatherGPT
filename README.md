@@ -823,6 +823,15 @@ The live CI badge at the top reflects GitHub Actions workflow state.
 | <code>docs/SIH_PPT.md</code> | Presentation content |
 | <code>docs/SIH_COMPLETE_IMPLEMENTATION.md</code> | Complete implementation map |
 | <code>docs/SIH_QA.md</code> | Judge Q&A |
+| <code>docs/WEATHERGPT_COMPLETION_AUDIT.md</code> | Platform completion audit (findings + fixes) |
+| <code>docs/WEATHERGPT_IMPLEMENTATION_PLAN.md</code> | Stage A–J plan and status |
+| <code>docs/WEATHERGPT_VISUAL_DESIGN_SYSTEM.md</code> | Visual design system |
+| <code>docs/WEATHERGPT_COMPLETION_REPORT.md</code> | Final status table + release evidence |
+| <code>docs/WEATHERGPT_RELEASE_REPORT.md</code> | Release verification record |
+| <code>docs/WEATHERGPT_TEST_REPORT.md</code> | Test evidence |
+| <code>docs/WEATHERGPT_LIVE_SITE_AUDIT.md</code> | Live-site audit |
+| <code>docs/WEATHERGPT_DATA_SOURCE_REGISTER.md</code> | Per-source register + licensing |
+| <code>docs/WEATHERGPT_REMAINING_WORK.md</code> | Remaining-work register |
 
 ---
 

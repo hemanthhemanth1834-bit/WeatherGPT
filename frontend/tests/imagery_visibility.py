@@ -164,6 +164,22 @@ def run_browser(pw, name, viewport):
                               permissions=["geolocation"])
     page = ctx.new_page()
     errors = []
+    # External provider responses (rate-limits like 429/503, and the
+    # deliberate outage-mock 404s) surface as "Failed to load resource"
+    # console errors whose text does not include the URL. Correlate by
+    # status code so only unexpected failures are flagged.
+    external_statuses = set()
+
+    def _note_external(r):
+        try:
+            if r.status >= 400 and any(h in r.url for h in (
+                    "api.open-meteo.com", "gibs.earthdata.nasa.gov",
+                    "tilecache.rainviewer.com", "api.rainviewer.com")):
+                external_statuses.add(str(r.status))
+        except Exception:
+            pass
+
+    page.on("response", _note_external)
     page.on("console", lambda m: errors.append(m.text) if m.type == "error" else None)
     page.on("pageerror", lambda e: errors.append(str(e)))
     try:
@@ -217,16 +233,30 @@ def run_browser(pw, name, viewport):
               and page.get_by_text("LIVE REFERENCE").count() == 0,
               f"{tag} no stale LIVE imagery labels remain", failures)
 
+        # GIBS topic layers (flood water / rain rate / aerosol): the switcher
+        # offers them and switching loads the selected product image.
+        for layer_label in ("MODIS flood water (2-day)", "IMERG rain rate", "MODIS aerosol depth"):
+            check(page.get_by_role("button", name=layer_label).count() >= 1,
+                  f"{tag} satellite switcher offers {layer_label}", failures)
+        flood_btn = page.get_by_role("button", name="MODIS flood water (2-day)").first
+        if flood_btn.count():
+            flood_btn.click()
+            page.wait_for_timeout(400)
+            try:
+                page.wait_for_function(
+                    """() => [...document.querySelectorAll('[data-testid="live-imagery-img"]')]
+                         .some(i => (i.src || '').includes('MODIS_Combined_Flood_2-Day') && i.naturalWidth > 0)""",
+                    timeout=15000)
+                switched = True
+            except Exception:
+                switched = False
+            check(switched, f"{tag} flood layer switch loads the selected product image", failures)
+
         # Failure path: fresh page, providers down.
         page2 = ctx.new_page()
-        seen404 = {"tile": False}
+        page2.on("response", _note_external)
         page2.on("console", lambda m: errors.append("p2:" + m.text) if m.type == "error" else None)
         page2.on("pageerror", lambda e: errors.append("p2:" + str(e)))
-        # Our deliberate tile-404 mocks surface as resource-load console
-        # errors; correlate them so only unexpected failures count.
-        page2.on("response", lambda r: seen404.update(tile=True)
-                 if r.status == 404 and ("gibs.earthdata.nasa.gov" in r.url
-                                         or "tilecache.rainviewer.com" in r.url) else None)
         mock_backend(page2)
         mock_geo(page2)
         page2.route("**/api.rainviewer.com/**", lambda r: r.fulfill(status=500, body="{}"))
@@ -261,8 +291,9 @@ def run_browser(pw, name, viewport):
                  and "api.open-meteo.com" not in e and "net::" not in e
                  and "leaflet" not in e.lower()
                  and "fonts.g" not in e and "500 (Internal Server Error)" not in e
-                 and not ("Failed to load resource" in e and "status of 404" in e
-                          and seen404["tile"])]
+                 and not ("Failed to load resource" in e
+                          and any(f"status of {c}" in e
+                                  for c in external_statuses))]
         check(not noise, f"{tag} no relevant console/page errors {noise[:3]}", failures)
     except Exception as exc:
         failures.append(f"{tag} exception: {type(exc).__name__}: {str(exc)[:200]}")

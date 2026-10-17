@@ -10,7 +10,7 @@ function Bars({ values, color, format, labels = [], ariaLabel = "Climate chart" 
   const max = Math.max(...finite);
   const span = Math.max(max - min, 1);
   const pad = span * 0.16;
-  const lo = min - pad;
+  const lo = finite.every((v) => v >= 0) ? Math.max(0, min - pad) : min - pad;
   const hi = max + pad;
   const W = 1100, H = 280, L = 58, R = 22, T = 24, B = 48;
   const pts = nums.map((v, i) => {

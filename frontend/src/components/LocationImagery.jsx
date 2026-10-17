@@ -88,7 +88,13 @@ export function IndiaSatelliteImagery({ title, description, layerId = "viirs", o
       alt={`NASA GIBS ${def.label} satellite over India, ${date}`}
       sourceName="NASA GIBS (U.S. public domain)"
       sourceUrl="https://worldview.earthdata.nasa.gov/"
-      observedAt={`${date} · daily product`}
+      observedAt={`${date} · ${def.cadence || "daily product"}`}
+      description={
+        def.description
+          ? `${def.description} Observation is from ${date}, not this minute.`
+          : description ||
+            `Daily true-color view (${def.label}, ${def.resolution}) for cloud context. Observation is from ${date}, not this minute.`
+      }
       status="DELAYED"
       layers={Object.values(GIBS_LAYERS).map((l) => ({ id: l.id, label: l.label }))}
       activeLayer={layer}
