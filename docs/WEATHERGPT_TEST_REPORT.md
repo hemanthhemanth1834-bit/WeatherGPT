@@ -185,3 +185,11 @@ failure, and no assertion is relaxed.
 - The suites wait for the preview server and the backend to answer before
   starting. Every suite asserts `no console errors (0)` at the end, so a
   provider error that reached the browser would still be reported.
+
+
+## Follow-up: PR #27 stylesheet/CSP regression checks (2026-10-17)
+
+- GitHub CI on PR head `c184381aec8ed5ceb6bcc324af8a76eacb52ffb5`: browser-smoke, service-smoke, chat-visibility, frontend build/lint, production-smoke and backend tests all completed successfully. Secret/workflow security and dependency/security review workflows passed.
+- Preview browser smoke: WeatherGPT home rendered; external stylesheet links to `fonts.googleapis.com` and `unpkg.com` absent; only bundled same-origin CSS files present; zero browser resource errors/CSP violations detected.
+- After merge `7e26b76c2f9617f194a8f747f6685d716d6f0998`, Vercel deployment reached READY. A later production browser inspection still saw the two old external stylesheet links, so production alias verification is pending. Do not interpret preview success or deployment READY as proof that the public alias is serving the new HTML.
+- No local Windows tests, performance benchmark, or local Firefox/WebKit runs were performed in this session.
