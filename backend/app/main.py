@@ -19,7 +19,7 @@ from .services.advisories import (aviation_briefing, climate_reference,
                                   supported_crops)
 from .services.agent_tools import list_tools
 from .services.air_quality import get_air_quality, uv_guidance
-from .services.alerts import active_alerts, cyclone_track
+from .services.alerts import active_alerts
 from .services.chat import _compare as compare_places
 from .services.chat import answer
 from .services.gdacs import global_disasters
@@ -352,10 +352,6 @@ def alerts(state: Optional[str] = None, district: Optional[str] = None,
            severity: Optional[str] = None) -> List[CAPAlert]:
     return active_alerts(state=state, district=district, severity=severity)
 
-
-@app.get("/api/alerts/cyclone-track")
-def cyclone() -> dict:
-    return cyclone_track()
 
 
 @app.get("/api/alerts/india")
