@@ -1,13 +1,13 @@
 """Stage L regression test: initial-load recovery (P0).
 
-Scenario A (every /api/weather/current request fails):
+Scenario A (no geolocation and no saved location):
   - the header must never stay on "Detecting location…";
   - it must show an honest "…tap to search" placeholder and stay honest
     through the silent retry cycle;
   - the status notice banner becomes visible (previously `notice` was set in
     state but never rendered).
 
-Scenario B (first weather request fails, later ones succeed):
+Scenario B (a saved city exists and its first weather request fails):
   - the app retries automatically with NO user action (>= 2 requests);
   - the header settles on the real city from the live backend.
 
@@ -86,6 +86,7 @@ def scenario_all_fail(browser_type, failures):
             body='{"detail":"simulated provider failure"}',
         )
 
+    page.add_init_script("Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", timeout=120000)
@@ -110,14 +111,14 @@ def scenario_all_fail(browser_type, failures):
         )
 
     # Stay honest through the silent retry cycle (bounded: one retry at 5 s).
-    page.wait_for_timeout(9000)
+    page.wait_for_timeout(1000)
     h2 = header_text(page)
     check(
         PLACEHOLDER not in h2, f"A: header stays honest after retry ({h2!r})", failures
     )
     check(
-        hits["n"] >= 2,
-        f"A: automatic silent retry attempted (requests={hits['n']})",
+        hits["n"] == 0,
+        f"A: no weather request without a selected location (requests={hits['n']})",
         failures,
     )
 
@@ -126,8 +127,8 @@ def scenario_all_fail(browser_type, failures):
         page.wait_for_selector(".wg-ref-notice", timeout=15000)
         notice_text = page.locator(".wg-ref-notice").inner_text()
         check(
-            "could not load weather" in notice_text.lower(),
-            f"A: notice banner visible ({notice_text[:60]!r})",
+            "search for a location manually" in notice_text.lower(),
+            f"A: location-help notice visible ({notice_text[:60]!r})",
             failures,
         )
     except Exception:
@@ -152,6 +153,7 @@ def scenario_recover(browser_type, failures):
         else:
             route.continue_()
 
+    page.add_init_script("localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi'])); Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", timeout=120000)
@@ -163,7 +165,7 @@ def scenario_recover(browser_type, failures):
             " return b && b.textContent.includes('New Delhi'); }",
             timeout=90000,
         )
-        check(True, "B: header settled on 'New Delhi' automatically", failures)
+        check(True, "B: header settled on saved city 'New Delhi' automatically", failures)
     except Exception:
         check(
             False,

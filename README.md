@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/actions/workflow/status/hemanthhemanth1834-bit/WeatherGPT/ci.yml?branch=main&label=CI&logo=github" alt="CI">
-  <img src="https://img.shields.io/github/license/hemanthhemanth1834-bit/WeatherGPT?label=MIT" alt="MIT License">
+  <img src="https://img.shields.io/badge/license-not%20specified-lightgrey" alt="License not specified">
   <img src="https://img.shields.io/github/last-commit/hemanthhemanth1834-bit/WeatherGPT?label=Last%20commit" alt="Last commit">
 </p>
 
@@ -715,7 +715,7 @@ WeatherGPT/
 
 ### SIH Technical Approach
 
-![WeatherGPT technical approach](frontend/public/technical_approach_slide.jpg)
+![WeatherGPT technical approach](docs/assets/technical_approach_slide.jpg)
 
 ### SIH Impact & Benefits
 

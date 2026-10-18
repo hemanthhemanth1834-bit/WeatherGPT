@@ -1,3 +1,5 @@
+> **Historical release snapshot (2026-10-17):** This report covers the earlier `audit/verified-release` branch and baseline commit. Do not use its deployment or test assertions as current status. See `docs/CLEANUP_RELEASE_NOTES.md` and current CI/production checks.
+
 # WeatherGPT Release Report — audit/verified-release
 
 Status is stated as of this run. Nothing below claims a merge, deploy or

@@ -157,7 +157,7 @@ function ExplanationGrid({ weather }) {
     ["LIVE MAP","Real map, stations, radar and satellite layers."],
     ["RISK & EVACUATION","Weather-risk context for planning; official alerts come first."],
     ["SECTOR HUBS","Weather translated for farming, roads, travel, lifestyle and solar."],
-    ["DATA STATUS","LIVE = provider data · DEMO = example · UNAVAILABLE = no usable data."]
+    ["DATA STATUS","LIVE = verified provider data · ESTIMATED = explicitly labeled estimate · UNAVAILABLE = no usable data."]
   ];
   return (
     <section className="wg-ref-section wg-explain-section" aria-label="How WeatherGPT works">

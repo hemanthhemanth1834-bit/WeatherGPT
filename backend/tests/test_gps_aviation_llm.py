@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.services import geo
 from app.services import llm
+from .weather_fixtures import make_test_weather
 
 client = TestClient(app)
 
@@ -152,8 +153,20 @@ def test_llm_uses_mocked_provider(monkeypatch):
     assert "Mocked" in out["explanation"]
 
 
-def test_explain_endpoint_without_keys():
+def test_explain_endpoint_without_keys(monkeypatch):
+    # Exercise the deterministic explainer offline; provider outages must not
+    # make this unit test depend on external weather API availability.
+    import app.main as main_module
+
+    for var in ("OPENAI_API_KEY", "GEMINI_API_KEY", "GROQ_API_KEY",
+                "OPENROUTER_API_KEY", "OLLAMA_HOST", "AI_PROVIDER"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setattr(
+        main_module, "get_weather",
+        lambda lat, lon, place, state: make_test_weather(lat, lon, place, state),
+    )
     body = client.post("/api/assistant/explain",
                        json={"topic": "rain", "location": "Pune"}).json()
     assert body["grounded"] is True
-    assert body["engine"] in ("RULE-BASED (deterministic)",) or body["engine"].startswith("LLM")
+    assert body["engine"] == "RULE-BASED (deterministic)"
+    assert "SIMULATED" in body["explanation"] or "Local estimate" in body["explanation"]

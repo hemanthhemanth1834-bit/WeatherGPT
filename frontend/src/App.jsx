@@ -117,7 +117,7 @@ export default function App() {
         if (!cancelled) setNotice("Starting offline: live data will load when the backend is reachable.");
       }
     })();
-    attemptGps(false);
+    attemptGps(false, saved);
     return () => {
       cancelled = true;
     };
@@ -236,13 +236,13 @@ export default function App() {
   const attemptGps = useCallback(
     (manual, savedFallback) => {
       if (!navigator.geolocation) {
-        if (manual) setNotice("Geolocation is not available in this browser.");
-        else {
-          setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
-          if (manual) setNotice("Location unavailable. Loading the reference default location: New Delhi.");
-          if (!savedFallback || savedFallback.length === 0) {
-            searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
-          }
+        setLocState({ source: "UNKNOWN", status: "UNAVAILABLE" });
+        if (manual) {
+          setNotice("Geolocation is not available in this browser. Search for a location manually.");
+        } else if (savedFallback && savedFallback.length > 0) {
+          searchPlace(savedFallback[0], null, null, null, "SAVED");
+        } else {
+          setNotice("Location unavailable. Search for a location manually.");
         }
         return;
       }
@@ -260,11 +260,10 @@ export default function App() {
         if (locRequestId.current !== requestId) return;
         setLocating(false);
         setLocState({ source: "UNKNOWN", status: "ERROR" });
-        if (manual) setNotice("Location request timed out. Search for a location manually.");
         if (!manual && savedFallback && savedFallback.length > 0) {
           searchPlace(savedFallback[0], null, null, null, "SAVED");
-        } else if (!manual) {
-          searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+        } else {
+          setNotice("Location request timed out. Search for a location manually.");
         }
       }, 12000);
       navigator.geolocation.getCurrentPosition(
@@ -282,9 +281,10 @@ export default function App() {
           } catch {
             if (locRequestId.current !== requestId) return;
             setLocState({ source: "UNKNOWN", status: "ERROR" });
-            if (manual) setNotice("GPS detected, but city lookup failed. Loading the reference default location: New Delhi.");
-            if (!savedFallback || savedFallback.length === 0) {
-              await searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+            if (!manual && savedFallback && savedFallback.length > 0) {
+              await searchPlace(savedFallback[0], null, null, null, "SAVED");
+            } else {
+              setNotice("GPS detected, but city lookup failed. Search for a location manually.");
             }
           } finally {
             if (locRequestId.current === requestId) setLocating(false);
@@ -302,12 +302,12 @@ export default function App() {
             setNotice("Location unavailable. Search for a location manually.");
           } else {
             setLocState({ source: "UNKNOWN", status: "DENIED" });
-            if (manual) setNotice("Location access was denied. Loading the reference default location: New Delhi.");
+            setNotice("Location access was denied. Search for a location manually.");
           }
           if (!manual && savedFallback && savedFallback.length > 0) {
             searchPlace(savedFallback[0], null, null, null, "SAVED");
-          } else if (!manual && (!savedFallback || savedFallback.length === 0)) {
-            searchPlace("New Delhi", null, null, "Delhi NCR", "MANUAL");
+          } else if (!manual && err && err.code !== err.TIMEOUT && err.code !== err.POSITION_UNAVAILABLE) {
+            setNotice("Location access was denied. Search for a location manually.");
           }
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
