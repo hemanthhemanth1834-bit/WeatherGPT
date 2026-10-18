@@ -1,0 +1,96 @@
+/* WeatherGPT visual refresh: sharper hierarchy, calmer glass, clearer live state. */
+.wg-ref-app {
+  --wg-premium-border: rgba(148, 190, 224, .16);
+  --wg-premium-panel: linear-gradient(145deg, rgba(15, 29, 51, .92), rgba(8, 17, 33, .88));
+  --wg-premium-shadow: 0 18px 54px rgba(0, 0, 0, .24);
+  isolation: isolate;
+  background: #060d19;
+}
+.wg-ref-atmosphere { opacity: .46; pointer-events: none; }
+.wg-ref-app::before {
+  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background-image: linear-gradient(rgba(117, 173, 215, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(117, 173, 215, .025) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: linear-gradient(to bottom, black, transparent 86%);
+}
+.wg-ref-header {
+  background: rgba(5, 13, 27, .88) !important;
+  border-bottom: 1px solid rgba(125, 211, 252, .17) !important;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .22);
+  backdrop-filter: blur(22px) saturate(145%);
+}
+.wg-ref-brand-icon {
+  border: 1px solid rgba(125, 211, 252, .3);
+  background: radial-gradient(circle at 30% 15%, rgba(103, 232, 249, .25), transparent 65%), linear-gradient(145deg, #102b45, #0a1427) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.1), 0 0 26px rgba(34, 211, 238, .11);
+}
+.wg-ref-brand-name { letter-spacing: -.045em; }
+.wg-ref-brand-name em { border: 1px solid rgba(45, 212, 191, .28); border-radius: 5px; padding: 2px 5px; background: rgba(45, 212, 191, .08); }
+.wg-ref-location, .wg-ref-weather-pill {
+  border: 1px solid var(--wg-premium-border) !important;
+  background: linear-gradient(135deg, rgba(17, 35, 59, .78), rgba(9, 19, 35, .78)) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.035);
+  transition: border-color .18s ease, transform .18s ease, background .18s ease;
+}
+.wg-ref-location:hover, .wg-ref-weather-pill:hover { border-color: rgba(103, 232, 249, .4) !important; transform: translateY(-1px); }
+.wg-ref-header-actions > button, .wg-ref-icon-btn {
+  border: 1px solid rgba(148, 190, 224, .15) !important;
+  background: rgba(14, 28, 48, .72) !important;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+.wg-ref-header-actions > button:hover, .wg-ref-icon-btn:hover { transform: translateY(-1px); border-color: rgba(103, 232, 249, .42) !important; background: rgba(20, 48, 72, .9) !important; }
+.wg-ref-online { border: 1px solid rgba(52, 211, 153, .19); border-radius: 999px; padding: 6px 10px; background: rgba(6, 78, 59, .16); font-variant-numeric: tabular-nums; }
+.wg-ref-online i { box-shadow: 0 0 10px currentColor; }
+.wg-ref-layout { gap: 0; }
+.wg-ref-sidebar {
+  background: linear-gradient(180deg, rgba(7, 17, 33, .96), rgba(6, 13, 26, .94)) !important;
+  border-right: 1px solid rgba(125, 211, 252, .12);
+  box-shadow: 12px 0 34px rgba(0, 0, 0, .12);
+}
+.wg-ref-sidebar-scroll { padding: 20px 13px 28px; }
+.wg-ref-nav-group { margin-bottom: 23px; }
+.wg-ref-nav-heading { color: #6f89a7 !important; font-size: 10px !important; letter-spacing: .14em; text-transform: uppercase; font-weight: 800; }
+.wg-ref-nav-item {
+  min-height: 39px; margin: 3px 0; border: 1px solid transparent !important; border-radius: 11px !important;
+  color: #aebfd2 !important; transition: background .18s ease, border-color .18s ease, color .18s ease, transform .18s ease !important;
+}
+.wg-ref-nav-item:hover { background: rgba(42, 77, 111, .25) !important; color: #edf8ff !important; transform: translateX(2px) !important; }
+.wg-ref-nav-item.active {
+  color: #e9faff !important;
+  border-color: rgba(56, 189, 248, .25) !important;
+  background: linear-gradient(100deg, rgba(14, 116, 144, .25), rgba(30, 64, 100, .18)) !important;
+  box-shadow: inset 2px 0 #38bdf8, inset 0 1px rgba(255,255,255,.035);
+}
+.wg-ref-nav-item.active .wg-ref-nav-label { font-weight: 750; }
+.wg-ref-content { min-width: 0; background: transparent; }
+.wg-ref-content > * { min-width: 0; }
+.wg-ref-notice { border: 1px solid rgba(251, 191, 36, .32) !important; border-radius: 14px !important; box-shadow: var(--wg-premium-shadow); }
+.wg-ref-theme-float { border: 1px solid rgba(125, 211, 252, .18) !important; background: rgba(7, 18, 34, .9) !important; box-shadow: 0 12px 32px rgba(0,0,0,.26); backdrop-filter: blur(18px); }
+.wg-card, .wg-ref-command-card, .wg-admin-panel, .wg-ai-context-card, .wg-explain-card {
+  border-color: var(--wg-premium-border) !important;
+  background: var(--wg-premium-panel) !important;
+  box-shadow: var(--wg-premium-shadow), inset 0 1px rgba(255,255,255,.025);
+  backdrop-filter: blur(14px) saturate(125%);
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.wg-card:hover, .wg-ref-command-card:hover, .wg-admin-panel:hover, .wg-explain-card:hover { border-color: rgba(103, 232, 249, .25) !important; box-shadow: 0 22px 58px rgba(0,0,0,.28), 0 0 0 1px rgba(56,189,248,.035); }
+.wg-hero-band { border: 1px solid rgba(125, 211, 252, .16); border-radius: 22px; overflow: hidden; box-shadow: 0 22px 60px rgba(0,0,0,.22); }
+.wg-hero-title, .wg-ref-hero-copy h1 { letter-spacing: -.055em; text-wrap: balance; }
+.wg-btn, .wg-ref-action { transition: transform .18s ease, filter .18s ease, box-shadow .18s ease; }
+.wg-btn:hover, .wg-ref-action:hover { transform: translateY(-1px); filter: brightness(1.08); }
+.wg-input, input, select, textarea { accent-color: #38bdf8; }
+.wg-input:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid #67e8f9; outline-offset: 3px; }
+::selection { color: #f0fdff; background: rgba(8, 145, 178, .55); }
+@media (min-width: 821px) {
+  .wg-ref-content { padding-bottom: 72px; }
+  .wg-ref-header { min-height: 76px; }
+}
+@media (max-width: 820px) {
+  .wg-ref-header { background: rgba(5, 13, 27, .96) !important; }
+  .wg-ref-sidebar { box-shadow: 20px 0 60px rgba(0,0,0,.38); }
+  .wg-ref-content { padding-bottom: max(84px, env(safe-area-inset-bottom)); }
+  .wg-card, .wg-ref-command-card, .wg-admin-panel, .wg-ai-context-card, .wg-explain-card { backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wg-ref-app *, .wg-ref-app *::before, .wg-ref-app *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; transition-duration: .01ms !important; }
+}
