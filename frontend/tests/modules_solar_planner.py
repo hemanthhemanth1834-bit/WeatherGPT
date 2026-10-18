@@ -186,6 +186,9 @@ def run(browser_type):
         "requestfailed",
         lambda r: external_bad.append(r.url) if EXTERNAL_NOISE.search(r.url) else None,
     )
+    # These module tests assert computed indicators; seed a legitimate saved
+    # city so the GPS-denied CI/browser context still exercises live-data paths.
+    page.add_init_script("localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi']))")
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", timeout=120000)
     start_location = stable_location(page)
