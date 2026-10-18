@@ -1,5 +1,6 @@
 """Tests for places, flood proxy, solar estimate (offline-safe + live)."""
 from .weather_fixtures import make_test_weather
+from .weather_fixtures import make_test_weather
 import pytest
 from fastapi.testclient import TestClient
 
