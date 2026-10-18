@@ -22,6 +22,7 @@ Run (backend :8000 + `npm run preview` :4173 up):
   python frontend/tests/initial_load_recovery.py
 """
 
+import json
 import os
 import re
 import sys
@@ -158,8 +159,42 @@ def scenario_recover(browser_type, failures):
                 content_type="application/json",
                 body='{"detail":"cold start"}',
             )
-        else:
-            route.continue_()
+            return
+
+        # Keep recovery deterministic: provider access in CI is not the subject
+        # of this test. Return valid weather for the requested city after the
+        # deliberate first failure instead of depending on external Open-Meteo.
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(route.request.url).query)
+        location = query.get("location", ["New Delhi"])[0]
+        is_delhi = location.lower() in {"new delhi", "delhi"}
+        payload = {
+            "location": location,
+            "state": "Delhi" if is_delhi else "Andhra Pradesh",
+            "country": "India",
+            "lat": 28.6139 if is_delhi else 17.0005,
+            "lon": 77.2090 if is_delhi else 81.8040,
+            "current_temp": 29.0,
+            "feels_like": 31.0,
+            "condition": "Clear",
+            "humidity": 50,
+            "wind_speed": 6.0,
+            "wind_direction": "NE",
+            "precipitation": 0.0,
+            "cloud_cover": 20.0,
+            "pressure": 1010.0,
+            "uv_index": 4.0,
+            "visibility": 10.0,
+            "aqi": 42,
+            "aqi_status": "Good",
+            "sunrise": "06:00",
+            "sunset": "18:00",
+            "hourly": [],
+            "daily": [],
+            "data_source": "Deterministic browser-test fixture",
+            "status": "LIVE",
+            "updated_at_ist": "18 Oct 2026, 20:00 IST",
+        }
+        route.fulfill(status=200, content_type="application/json", body=json.dumps(payload))
 
     page.add_init_script("localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi'])); Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
     page.route(WEATHER_ROUTE, handler)
