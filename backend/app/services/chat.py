@@ -336,7 +336,7 @@ def _render_weather(place: str, state: str, data: WeatherData,
     markdown += (f"\n\n_Source: {data.data_source} · {data.status} · "
                  f"Updated {data.updated_at_ist or 'just now'}_")
     if data.status == "LIVE" and data.data_type.lower() == "forecast":
-        markdown += "\n\n_These are live-retrieved model forecast values, not direct station observations. AQI shown above is an estimate; use the Air Quality view for the live AQI feed._"
+        markdown += "\n\n_These are live-retrieved model forecast values, not direct station observations. AQI provenance is shown beside the value; when the live AQI feed is unavailable, the source is labelled as an estimate._"
         if data.uv_index_source.startswith("Estimated") or data.visibility_source.startswith("Estimated"):
             markdown += "\n\n_The selected model omitted UV and/or visibility, so any displayed fallback value is explicitly estimated._"
     return speech, markdown
