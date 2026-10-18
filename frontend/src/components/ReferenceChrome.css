@@ -686,3 +686,103 @@
 .wg-ref-notice button{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;border-radius:.5rem;border:1px solid rgba(245,158,11,.35);background:transparent;color:inherit;cursor:pointer}
 .wg-ref-notice button:hover{background:rgba(245,158,11,.18)}
 @media(max-width:700px){.wg-ref-notice{margin:.5rem .6rem 0}}
+
+
+/* Accessible manual location picker: GPS denial must never strand the user. */
+.wg-location-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(8px);
+}
+.wg-location-picker {
+  width: min(100%, 34rem);
+  max-height: min(84vh, 44rem);
+  overflow: auto;
+  padding: 1.25rem;
+  color: #f8fafc;
+  background: #081226;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 1rem;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.48);
+}
+.wg-location-picker-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.wg-location-picker-head p {
+  margin: 0 0 .35rem;
+  color: #67e8f9;
+  font: 700 .68rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .12em;
+}
+.wg-location-picker-head h2 {
+  margin: 0;
+  font-size: clamp(1.15rem, 4vw, 1.5rem);
+  line-height: 1.25;
+}
+.wg-location-picker-close {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  color: #e2e8f0;
+  background: rgba(148, 163, 184, .12);
+  border: 1px solid rgba(148, 163, 184, .24);
+  border-radius: .7rem;
+  cursor: pointer;
+}
+.wg-location-picker-help,
+.wg-location-picker-status {
+  margin: .8rem 0;
+  color: #cbd5e1;
+  font-size: .88rem;
+  line-height: 1.5;
+}
+.wg-location-picker-form { display: grid; gap: .45rem; margin: 1rem 0; }
+.wg-location-picker-form label { color: #e2e8f0; font-size: .82rem; font-weight: 650; }
+.wg-location-picker-form input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 2.9rem;
+  padding: .7rem .85rem;
+  color: #f8fafc;
+  background: #020617;
+  border: 1px solid rgba(103, 232, 249, .5);
+  border-radius: .65rem;
+  font: inherit;
+}
+.wg-location-picker-form input:focus-visible,
+.wg-location-picker-close:focus-visible,
+.wg-location-picker-results button:focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
+}
+.wg-location-picker-results { display: grid; gap: .45rem; margin-top: .75rem; }
+.wg-location-picker-results button {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  width: 100%;
+  padding: .8rem;
+  text-align: left;
+  color: #f8fafc;
+  background: rgba(30, 41, 59, .72);
+  border: 1px solid rgba(148, 163, 184, .2);
+  border-radius: .7rem;
+  cursor: pointer;
+}
+.wg-location-picker-results button:hover { background: rgba(8, 145, 178, .18); border-color: rgba(103, 232, 249, .5); }
+.wg-location-picker-results button > span { display: grid; min-width: 0; gap: .2rem; }
+.wg-location-picker-results strong { font-size: .9rem; }
+.wg-location-picker-results small { color: #cbd5e1; font-size: .76rem; line-height: 1.35; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) {
+  .wg-location-picker-backdrop { backdrop-filter: none; }
+}
