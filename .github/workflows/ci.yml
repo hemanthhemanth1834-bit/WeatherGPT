@@ -53,6 +53,21 @@ jobs:
           else:
               raise SystemExit("Production deployment did not become healthy within 5 minutes.")
 
+          # A 200 alone is insufficient: validate the health contract before
+          # running the rest of the production smoke battery.
+          if "application/json" not in response.headers.get("content-type", "").lower():
+              raise SystemExit("Production /api/health did not return JSON.")
+          health = response.json()
+          if health.get("status") != "healthy":
+              raise SystemExit(f"Production health status is not healthy: {health!r}")
+          if not isinstance(health.get("service"), str) or not health["service"].strip():
+              raise SystemExit("Production health response is missing a service name.")
+          if not isinstance(health.get("version"), str) or not health["version"].strip():
+              raise SystemExit("Production health response is missing a version.")
+          if not isinstance(health.get("standards"), list):
+              raise SystemExit("Production health response is missing its standards list.")
+          print("Production health contract passed:", health["service"], health["version"])
+
           checks = [
               "/",
               "/api/health",
