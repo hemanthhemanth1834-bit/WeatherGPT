@@ -1,3 +1,4 @@
+@import "./PremiumRefresh.css";
 /* Fixed desktop reference sidebar: it stays pinned while the main page scrolls. */
 @media (min-width: 821px) {
   .wg-ref-layout {
