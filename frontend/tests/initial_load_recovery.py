@@ -1,13 +1,13 @@
 """Stage L regression test: initial-load recovery (P0).
 
-Scenario A (every /api/weather/current request fails):
+Scenario A (no geolocation and no saved location):
   - the header must never stay on "Detecting location…";
   - it must show an honest "…tap to search" placeholder and stay honest
     through the silent retry cycle;
   - the status notice banner becomes visible (previously `notice` was set in
     state but never rendered).
 
-Scenario B (first weather request fails, later ones succeed):
+Scenario B (a saved city exists and its first weather request fails):
   - the app retries automatically with NO user action (>= 2 requests);
   - the header settles on the real city from the live backend.
 
@@ -86,6 +86,7 @@ def scenario_all_fail(browser_type, failures):
             body='{"detail":"simulated provider failure"}',
         )
 
+    page.add_init_script("Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", timeout=120000)
