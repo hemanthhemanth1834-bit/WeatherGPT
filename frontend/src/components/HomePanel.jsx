@@ -248,16 +248,16 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
   const askLocation = weather?.location || "my city";
   const topAlert = alerts?.[0];
   const daily = weather?.daily || [];
-  const maxTemps = daily.map((d) => Number(d.temp_max)).filter(Number.isFinite);
-  const minTemps = daily.map((d) => Number(d.temp_min)).filter(Number.isFinite);
+  const maxTemps = daily.map((d) => d.temp_max).filter((value) => value != null && Number.isFinite(Number(value))).map(Number);
+  const minTemps = daily.map((d) => d.temp_min).filter((value) => value != null && Number.isFinite(Number(value))).map(Number);
   const hourly = weather?.hourly || [];
   const rainProbByDate = useMemo(() => {
     const map = {};
     hourly.forEach((h) => {
       const date = String(h.time || "").slice(0, 10);
+      if (!date || h.rain_prob == null || !Number.isFinite(Number(h.rain_prob))) return;
       const value = Number(h.rain_prob);
-      if (!date || !Number.isFinite(value)) return;
-      map[date] = Math.max(map[date] ?? 0, value);
+      map[date] = Math.max(map[date] ?? value, value);
     });
     return map;
   }, [hourly]);
