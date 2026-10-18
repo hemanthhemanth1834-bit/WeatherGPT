@@ -72,11 +72,6 @@ export default function LiveImagery({
           No imagery available for this layer.
         </div>
       )}
-      {phase === "empty" && (
-        <div className="wg-empty" role="status" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", margin: 0, border: "none" }}>
-          No imagery available for this layer.
-        </div>
-      )}
       {phase === "error" && (
         <div className="wg-empty" role="alert" style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "center", justifyContent: "center", margin: 0, border: "none" }}>
           <span>Imagery unavailable — the provider did not respond. The rest of the page still works.</span>
