@@ -273,6 +273,16 @@ jobs:
       - name: Verify browser preferences persist
         run: python tests/preferences_persistence.py
 
+      - name: Verify manual location search and no-GPS recovery
+        env:
+          WG_UI_URL: http://127.0.0.1:4173/
+          WG_API_URL: http://127.0.0.1:8000/api
+          WG_BROWSERS: chromium
+        run: |
+          python tests/location_search.py
+          python tests/initial_load_recovery.py
+          python tests/responsive_accessibility.py
+
   chat-visibility:
     # P0 regression: assistant messages must render readable, complete and
     # unclipped. Uses a deterministic mocked /api/chat/query (no live provider).
