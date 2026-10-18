@@ -24,8 +24,8 @@ function Bars({ values, color, format, labels = [], ariaLabel = "Climate chart" 
   return (
     <div className="wg-climate-chart" role="img" aria-label={ariaLabel}>
       <div className="wg-climate-chart-head">
-        <span><b>Live data visualization</b><small>Hover points for exact values</small></span>
-        <span className="wg-climate-chart-status">● DATA CONNECTED</span>
+        <span><b>Historical climate visualization</b><small>Archive/reanalysis values; hover for exact values</small></span>
+        <span className="wg-climate-chart-status">● ARCHIVE DATA</span>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
         {[0,1,2,3].map(i => {
@@ -111,9 +111,9 @@ export default function ClimateAnalytics({ onAsk }) {
         <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
           <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.82rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
             <Thermometer size={14} /> Monthly {monthly.year} — {monthly.location}{" "}
-            <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OBSERVED · ERA5</span>
+            <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>ERA5 REANALYSIS</span>
           </h3>
-          <Bars values={monthly.months.map((m) => m.total_rain_mm)} labels={monthly.months.map((m) => m.month)} color="#38bdf8" format={(v) => `${Math.round(v)} mm`} ariaLabel="Monthly observed rainfall chart" />
+          <Bars values={monthly.months.map((m) => m.total_rain_mm)} labels={monthly.months.map((m) => m.month)} color="#38bdf8" format={(v) => `${Math.round(v)} mm`} ariaLabel="Monthly ERA5 reanalysis rainfall chart" />
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.3rem 0.9rem", fontSize: "0.7rem", color: "var(--wg-muted)", marginTop: "0.3rem" }}>
             {monthly.months.map((m) => (
               <span key={m.month} className="wg-mono">{m.month}: {m.mean_max_c}°C · {Math.round(m.total_rain_mm)}mm{m.mean_humidity_pct != null ? ` · ${m.mean_humidity_pct}%` : ""}</span>
@@ -131,8 +131,8 @@ export default function ClimateAnalytics({ onAsk }) {
           {observed && (
             <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
               <h3 style={{ margin: "0 0 0.4rem", fontSize: "0.82rem" }}>
-                Observed recent years — {observed.location} ({observed.period}){" "}
-                <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>OBSERVED · ERA5</span>
+                Historical reanalysis — {observed.location} ({observed.period}){" "}
+                <span className="wg-chip live" style={{ marginLeft: "0.4rem" }}>ERA5 REANALYSIS</span>
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
                 {observed.years.map((y) => (
