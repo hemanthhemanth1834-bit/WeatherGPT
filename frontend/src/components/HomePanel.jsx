@@ -261,11 +261,19 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
     });
     return map;
   }, [hourly]);
-  const rainVals = daily.map((d) => Number.isFinite(Number(d.rain_prob)) ? Number(d.rain_prob) : (rainProbByDate[d.date] ?? 0));
+  const rainVals = daily
+    .map((d) => d.rain_prob ?? rainProbByDate[d.date])
+    .filter((value) => value != null && Number.isFinite(Number(value)))
+    .map(Number);
   const weeklyMax = maxTemps.length ? Math.max(...maxTemps) : null;
   const weeklyMin = minTemps.length ? Math.min(...minTemps) : null;
   const peakRain = rainVals.length ? Math.max(...rainVals) : null;
-  const rainTotal = daily.reduce((sum, d) => sum + (Number(d.rain_sum) || 0), 0);
+  const hasDailyRainForecast = daily.length > 0 && daily.every(
+    (d) => d.rain_sum != null && Number.isFinite(Number(d.rain_sum)),
+  );
+  const rainTotal = hasDailyRainForecast
+    ? daily.reduce((sum, d) => sum + Number(d.rain_sum), 0)
+    : null;
   const trendRange = Math.max(1, (weeklyMax ?? 35) - (weeklyMin ?? 23));
   const regional = useMemo(() => [
     ["Rajahmundry", "East Godavari, Andhra Pradesh"],
@@ -296,7 +304,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
                 <strong className="wg-ref-condition">{weather.condition}</strong>
                 <div className="wg-ref-location">{weather.location}, {weather.state || "India"}</div>
                 <div className="wg-ref-metrics">
-                  <span>🌧 {weather.hourly?.[0]?.rain_prob ?? 0}%<small>Rain Prob</small></span>
+                  <span>🌧 {weather.hourly?.[0]?.rain_prob != null && Number.isFinite(Number(weather.hourly[0].rain_prob)) ? String(weather.hourly[0].rain_prob) + "%" : "—"}<small>Rain Prob</small></span>
                   <span>💨 {weather.wind_speed} km/h<small>Wind</small></span>
                   <span>💧 {weather.humidity}%<small>Humidity</small></span>
                   <span>🍃 {weather.aqi ?? "—"}<small>AQI</small></span>
@@ -339,7 +347,10 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
         <div className="wg-ref-synoptic wg-card">
           <div className="wg-ref-synoptic-head"><span>Day-by-day temperature ranges, rain probability curve, and wind velocity projections for {askLocation}</span><button className="wg-btn-ghost" onClick={() => onAsk(`Give me synoptic trend analysis for ${askLocation}.`)}>Synoptic Trend Analysis →</button></div>
           <div className="wg-ref-synoptic-days">
-            {daily.slice(0, 7).map((d, i) => <button key={i} onClick={() => onTab("dashboard")}><b>{i === 0 ? "TODAY" : d.day || d.date?.slice(5) || `D+${i}`}</b><span>{d.temp_max ?? "—"}° / {d.temp_min ?? "—"}°</span><small>🌧 {rainProbByDate[d.date] ?? d.rain_prob ?? 0}%</small><em>💨 {d.wind_speed ?? d.wind_max ?? "—"}</em></button>)}
+            {daily.slice(0, 7).map((d, i) => {
+              const rainProbability = rainProbByDate[d.date] ?? d.rain_prob;
+              return <button key={i} onClick={() => onTab("dashboard")}><b>{i === 0 ? "TODAY" : d.day || d.date?.slice(5) || "D+" + i}</b><span>{d.temp_max ?? "—"}° / {d.temp_min ?? "—"}°</span><small>🌧 {rainProbability != null && Number.isFinite(Number(rainProbability)) ? String(rainProbability) + "%" : "—"}</small><em>💨 {d.wind_speed ?? d.wind_max ?? "—"}</em></button>;
+            })}
             {!daily.length && <div className="wg-ref-empty">Load a location to populate live synoptic trajectory.</div>}
           </div>
         </div>
@@ -351,8 +362,8 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
           <div className="wg-ref-summary-grid">
             <div><span>Thermal Trajectory</span><b>{maxTemps.length ? `${weeklyMax - (weeklyMin || weeklyMax)}° spread` : "—"}</b><small>Diurnal spread from live NWP</small></div>
             <div><span>Weekly Extremes</span><b>{weeklyMax != null ? `${weeklyMax}° / ${weeklyMin}°` : "—"}</b><small>Peak / minimum</small></div>
-            <div><span>Peak Rain Probability</span><b>{peakRain != null ? `${peakRain}%` : "—"}</b><small>{peakRain >= 60 ? "Elevated storm/rain risk" : "Current forecast signal"}</small></div>
-            <div><span>7-Day Accumulation</span><b>{rainTotal.toFixed(1)} mm</b><small>{rainTotal >= 50 ? "High accumulation watch" : "Forecast accumulation"}</small></div>
+            <div><span>Peak Rain Probability</span><b>{peakRain != null ? String(peakRain) + "%" : "—"}</b><small>{peakRain == null ? "Forecast unavailable" : peakRain >= 60 ? "Elevated storm/rain risk" : "Current forecast signal"}</small></div>
+            <div><span>7-Day Accumulation</span><b>{rainTotal != null ? rainTotal.toFixed(1) + " mm" : "—"}</b><small>{rainTotal == null ? "Forecast unavailable" : rainTotal >= 50 ? "High accumulation watch" : "Forecast accumulation"}</small></div>
           </div>
           <LiveWeatherChart weather={weather} />
           <div className="wg-ref-legend"><span>Hourly live telemetry</span><span>Forecast + recent history</span><span>Hover points for detail</span><b>Open-Meteo · free source · no API key</b></div>
@@ -364,7 +375,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
           <div className="wg-ref-map-head"><span>CLICK TO SELECT</span><span>Click anywhere on the map or tap a station pin to instantly set your active location.</span></div>
           <div className="wg-ref-map-body wg-ref-map-real-body">
             <div className="wg-ref-map-real"><RealIndiaMap weather={weather} onAsk={onAsk} /></div>
-            <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "Location unavailable"}</strong><span>{Number.isFinite(weather?.lat) && Number.isFinite(weather?.lon) ? `${weather.lat.toFixed(1)}°, ${weather.lon.toFixed(1)}°` : "Coordinates unavailable"}</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>Live Open-Meteo telemetry</small></div>
+            <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "Location unavailable"}</strong><span>{Number.isFinite(weather?.lat) && Number.isFinite(weather?.lon) ? `${weather.lat.toFixed(1)}°, ${weather.lon.toFixed(1)}°` : "Coordinates unavailable"}</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>{weather ? "Live Open-Meteo telemetry" : "Waiting for a selected location"}</small></div>
           </div>
           <div className="wg-ref-map-tabs">{["All India","North","South","West","East & NE","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
           <div className="wg-ref-hubs"><b>Quick Hubs:</b>{["New Delhi","Mumbai","Chennai","Bengaluru","Kolkata","Hyderabad","Kochi","Ahmedabad"].map((x) => <button key={x} onClick={() => onAsk(`Weather for ${x}`)}>{x}</button>)}</div>
