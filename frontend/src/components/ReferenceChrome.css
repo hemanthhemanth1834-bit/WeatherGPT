@@ -686,3 +686,32 @@
 .wg-ref-notice button{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;border-radius:.5rem;border:1px solid rgba(245,158,11,.35);background:transparent;color:inherit;cursor:pointer}
 .wg-ref-notice button:hover{background:rgba(245,158,11,.18)}
 @media(max-width:700px){.wg-ref-notice{margin:.5rem .6rem 0}}
+
+
+/* Accessible manual location picker: GPS denial must never strand the user. */
+.wg-location-picker-backdrop{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:1rem;background:rgba(2,6,23,.78);backdrop-filter:blur(8px)}
+.wg-location-picker{width:min(100%,34rem);max-height:min(84vh,44rem);overflow:auto;padding:1.25rem;color:#f8fafc;background:#081226;border:1px solid rgba(148,163,184,.32);border-radius:1rem;box-shadow:0 24px 80px rgba(0,0,0,.48)}
+.wg-location-picker-head{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}
+.wg-location-picker-head p{margin:0 0 .35rem;color:#67e8f9;font:700 .68rem ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.12em}
+.wg-location-picker-head h2{margin:0;font-size:clamp(1.15rem,4vw,1.5rem);line-height:1.25}
+.wg-location-picker-close{display:grid;flex:0 0 auto;width:2.5rem;height:2.5rem;place-items:center;color:#e2e8f0;background:rgba(148,163,184,.12);border:1px solid rgba(148,163,184,.24);border-radius:.7rem;cursor:pointer}
+.wg-location-picker-help,.wg-location-picker-status{margin:.8rem 0;color:#cbd5e1;font-size:.88rem;line-height:1.5}
+.wg-location-search-form label{display:block;margin:1rem 0 .4rem;color:#e2e8f0;font-size:.82rem;font-weight:700}
+.wg-location-search-row{display:flex;align-items:center;gap:.65rem;padding:.45rem .5rem .45rem .8rem;border:1px solid rgba(148,163,184,.35);border-radius:.8rem;background:rgba(15,23,42,.9)}
+.wg-location-search-row>svg{flex:0 0 auto;color:#67e8f9}
+.wg-location-search-row input{min-width:0;flex:1;border:0;outline:none;color:#f8fafc;background:transparent;font:inherit;font-size:.95rem}
+.wg-location-search-row input::placeholder{color:#94a3b8}
+.wg-location-search-row button{flex:0 0 auto;padding:.65rem .85rem;border:0;border-radius:.55rem;background:#0891b2;color:white;font-weight:700;cursor:pointer}
+.wg-location-search-row button:disabled{opacity:.55;cursor:wait}
+.wg-location-results{display:grid;gap:.45rem;margin:.8rem 0 0;padding:0;list-style:none}
+.wg-location-results li button{display:flex;width:100%;align-items:center;gap:.7rem;padding:.8rem;text-align:left;color:#f8fafc;background:rgba(30,41,59,.7);border:1px solid rgba(148,163,184,.2);border-radius:.7rem;cursor:pointer}
+.wg-location-results li button:hover,.wg-location-results li button:focus-visible{background:rgba(8,145,178,.18);border-color:rgba(103,232,249,.6);outline:none}
+.wg-location-results li button>svg{flex:0 0 auto;color:#67e8f9}
+.wg-location-results li button>span:first-of-type{display:grid;min-width:0;flex:1;gap:.2rem}
+.wg-location-results li b{font-size:.92rem}
+.wg-location-results li small{color:#a8b7ca;font-size:.76rem;line-height:1.4}
+.wg-location-picker-foot{margin:1rem 0 0;padding-top:.8rem;border-top:1px solid rgba(148,163,184,.18);color:#94a3b8;font-size:.72rem;line-height:1.5}
+.wg-ref-mobile-location{display:flex;align-items:center;gap:.65rem;width:calc(100% - 1.25rem);margin:.65rem auto;padding:.8rem .9rem;border:1px solid rgba(103,232,249,.3);border-radius:.7rem;background:rgba(8,145,178,.12);color:#e2e8f0;text-align:left;font-weight:700;cursor:pointer}
+.wg-ref-mobile-location svg{flex:0 0 auto;color:#67e8f9}
+.wg-ref-mobile-location span{margin-left:auto;max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#94a3b8;font-size:.75rem;font-weight:500}
+@media(max-width:480px){.wg-location-picker-backdrop{padding:.65rem}.wg-location-picker{padding:1rem;border-radius:.85rem}.wg-location-search-row{gap:.45rem;padding-left:.6rem}.wg-location-search-row button{padding:.65rem .7rem}}

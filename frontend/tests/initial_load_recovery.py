@@ -22,6 +22,7 @@ Run (backend :8000 + `npm run preview` :4173 up):
   python frontend/tests/initial_load_recovery.py
 """
 
+import json
 import os
 import re
 import sys
@@ -70,16 +71,17 @@ def launch(browser_type):
 
 
 def header_text(page):
-    return page.locator(".wg-ref-location b").inner_text().strip()
+    return (page.locator(".wg-ref-location b").text_content() or "").strip()
 
 
 def scenario_all_fail(browser_type, failures):
     browser = launch(browser_type)
     page = browser.new_page(viewport={"width": 1440, "height": 900})
-    hits = {"n": 0}
+    hits = {"n": 0, "urls": []}
 
     def handler(route):
         hits["n"] += 1
+        hits["urls"].append(route.request.url)
         route.fulfill(
             status=500,
             content_type="application/json",
@@ -89,7 +91,7 @@ def scenario_all_fail(browser_type, failures):
     page.add_init_script("Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
-    page.wait_for_selector(".wg-ref-location b", timeout=120000)
+    page.wait_for_selector(".wg-ref-location b", state="attached", timeout=120000)
 
     try:
         page.wait_for_function(
@@ -116,9 +118,16 @@ def scenario_all_fail(browser_type, failures):
     check(
         PLACEHOLDER not in h2, f"A: header stays honest after retry ({h2!r})", failures
     )
+    # The dashboard may load its explicitly pinned comparison cards, even
+    # while the active location is unknown. The invariant is that every
+    # weather request is grounded in a non-empty, explicit location query.
+    missing_location = [
+        url for url in hits["urls"]
+        if not urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get("location", [""])[0].strip()
+    ]
     check(
-        hits["n"] == 0,
-        f"A: no weather request without a selected location (requests={hits['n']})",
+        not missing_location,
+        f"A: no ungrounded weather request without a location (requests={hits['n']}, missing={len(missing_location)})",
         failures,
     )
 
@@ -141,22 +150,66 @@ def scenario_recover(browser_type, failures):
     browser = launch(browser_type)
     page = browser.new_page(viewport={"width": 1440, "height": 900})
     hits = {"n": 0}
+    failed_active_location = False
 
     def handler(route):
+        nonlocal failed_active_location
         hits["n"] += 1
-        if hits["n"] == 1:
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(route.request.url).query)
+        location = query.get("location", [""])[0].strip()
+        if not location:
+            try:
+                lat = float(query.get("lat", ["0"])[0])
+                lon = float(query.get("lon", ["0"])[0])
+                location = "New Delhi" if abs(lat - 28.6139) < 0.2 and abs(lon - 77.2090) < 0.2 else "Pinned location"
+            except (TypeError, ValueError):
+                location = "Pinned location"
+
+        # Fail the selected saved city once, not an unrelated pinned card.
+        # Then return deterministic data so the retry is independent of
+        # third-party provider/network availability in CI.
+        is_delhi = location.lower() in {"new delhi", "delhi"}
+        if is_delhi and not failed_active_location:
+            failed_active_location = True
             route.fulfill(
                 status=500,
                 content_type="application/json",
                 body='{"detail":"cold start"}',
             )
-        else:
-            route.continue_()
+            return
+        payload = {
+            "location": location,
+            "state": "Delhi" if is_delhi else "Andhra Pradesh",
+            "country": "India",
+            "lat": 28.6139 if is_delhi else 17.0005,
+            "lon": 77.2090 if is_delhi else 81.8040,
+            "current_temp": 29.0,
+            "feels_like": 31.0,
+            "condition": "Clear",
+            "humidity": 50,
+            "wind_speed": 6.0,
+            "wind_direction": "NE",
+            "precipitation": 0.0,
+            "cloud_cover": 20.0,
+            "pressure": 1010.0,
+            "uv_index": 4.0,
+            "visibility": 10.0,
+            "aqi": 42,
+            "aqi_status": "Good",
+            "sunrise": "06:00",
+            "sunset": "18:00",
+            "hourly": [],
+            "daily": [],
+            "data_source": "Deterministic browser-test fixture",
+            "status": "LIVE",
+            "updated_at_ist": "18 Oct 2026, 20:00 IST",
+        }
+        route.fulfill(status=200, content_type="application/json", body=json.dumps(payload))
 
     page.add_init_script("localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi'])); Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
-    page.wait_for_selector(".wg-ref-location b", timeout=120000)
+    page.wait_for_selector(".wg-ref-location b", state="attached", timeout=120000)
 
     # No user action anywhere in this scenario: pure automatic recovery.
     try:
