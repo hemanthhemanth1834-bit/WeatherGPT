@@ -80,10 +80,6 @@ export function IndiaSatelliteImagery({ title, description, layerId = "viirs", o
   return (
     <LiveImagery
       title={title || "True-color satellite · India"}
-      description={
-        description ||
-        `Daily true-color view (${def.label}, ${def.resolution}) for cloud context. Observation is from ${date}, not this minute.`
-      }
       src={gibsIndiaWms(def.layer, date)}
       alt={`NASA GIBS ${def.label} satellite over India, ${date}`}
       sourceName="NASA GIBS (U.S. public domain)"
