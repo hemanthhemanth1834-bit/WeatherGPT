@@ -1,11 +1,12 @@
 """Tests for newer engine behavior: cloud cover, cold wave, intents."""
+from .weather_fixtures import make_test_weather
 from app.models import WeatherQueryRequest
 from app.services import alerts, chat
 from app.services import weather as wx
 
 
 def test_cloud_cover_field_defaults_and_parses():
-    assert wx._fallback(10.0, 76.0, "X", "Y").cloud_cover >= 0
+    assert make_test_weather(10.0, 76.0, "X", "Y").cloud_cover >= 0
     sample = {
         "current": {"temperature_2m": 30.0, "relative_humidity_2m": 50,
                     "apparent_temperature": 32.0, "precipitation": 0.0,
@@ -36,7 +37,7 @@ def test_cold_wave_alert(monkeypatch):
 
 
 def _offline_weather(monkeypatch):
-    monkeypatch.setattr(chat, "get_weather", lambda *a: wx._fallback(16.5, 80.6, "Vijayawada", "Andhra Pradesh"))
+    monkeypatch.setattr(chat, "get_weather", lambda *a: make_test_weather(16.5, 80.6, "Vijayawada", "Andhra Pradesh"))
     monkeypatch.setattr(chat, "active_alerts", lambda **k: [])
 
 
