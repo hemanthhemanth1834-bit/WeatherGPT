@@ -584,7 +584,7 @@ Live weather still requires network access when upstream data is needed.
 | **ESTIMATED** | Model/application-derived |
 | **STATIC** | Reference/demo dataset |
 | **DEMO** | Illustrative scenario/geometry |
-| **SIMULATED** | Fallback simulation |
+| **UNAVAILABLE** | No usable upstream data; no synthetic current-weather values returned |
 | **NOT CONFIGURED** | Adapter exists but real feed/runtime is absent |
 
 > **An adapter existing in the repository does not make its output LIVE.**
@@ -651,7 +651,7 @@ WeatherGPT is designed around imperfect upstream services.
 - timestamps
 - rate limiting
 - explicit unavailable states
-- labelled fallback behavior
+- explicit unavailable responses when the forecast provider fails
 
 <pre>
 Provider available
@@ -660,7 +660,7 @@ Provider available
 
 Provider unavailable
       ↓
-Unavailable / labelled fallback
+Explicit unavailable response
 
 Never
       ↓
@@ -679,7 +679,7 @@ Silent fabricated "live" data
 - rate limiting
 - structured API responses
 - provenance metadata
-- controlled fallback behavior
+- fail-closed provider handling
 
 Never commit real API keys to source files, README, <code>.env.example</code>, screenshots or Git history.
 
