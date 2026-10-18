@@ -1,4 +1,5 @@
 """Unit tests for the chat engine's offline logic (no network required)."""
+from .weather_fixtures import make_test_weather
 from app.models import WeatherQueryRequest
 from app.services import chat
 from app.services import weather
@@ -31,7 +32,7 @@ def test_weather_mapping_pure_helpers():
 
 
 def test_render_uses_tool_numbers_not_invention():
-    data = weather._fallback(16.5, 80.6, "Vijayawada", "Andhra Pradesh")
+    data = make_test_weather(16.5, 80.6, "Vijayawada", "Andhra Pradesh")
     speech, markdown = chat._render_weather("Vijayawada", "Andhra Pradesh", data, "en")
     assert "27.0" in speech
     assert "Open-Meteo" not in markdown  # fallback labels its own source
