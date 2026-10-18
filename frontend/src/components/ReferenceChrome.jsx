@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Live3DIcon from "./Live3DIcon";
 import { recordEvent } from "../services/privacyAnalytics";
+import { searchLocations } from "../services/api";
 
 const THEME_KEY = "weathergpt.theme";
 const FONT_KEY = "weathergpt.fontLarge";
@@ -72,7 +73,7 @@ const LOC_PLACEHOLDER = {
   IDLE: "Choose a location",
 };
 
-export default function ReferenceChrome({ children, tab, onTab, weather, alertCount = 0, language = "en", onLanguageChange, locStatus = "IDLE", online = null, notice = "", onDismissNotice }) {
+export default function ReferenceChrome({ children, tab, onTab, weather, alertCount = 0, language = "en", onLanguageChange, onLocationSelect, locStatus = "IDLE", online = null, notice = "", onDismissNotice }) {
   const temp = weather?.current_temp ?? null;
   const loadingLoc = locStatus === "DETECTING" || locStatus === "IDLE";
   const condition =
@@ -80,6 +81,11 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
   const location = weather?.location || LOC_PLACEHOLDER[locStatus] || "Detecting location…";
   const state = weather?.state || "—";
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [locationPickerOpen, setLocationPickerOpen] = useState(false);
+  const [locationQuery, setLocationQuery] = useState("");
+  const [locationResults, setLocationResults] = useState([]);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationSearchMessage, setLocationSearchMessage] = useState("");
   const [installPrompt, setInstallPrompt] = useState(null);
   const [theme, setTheme] = useState(() => readLocalPreference(THEME_KEY, THEMES, "auto"));
   const [fontLarge, setFontLarge] = useState(() => {
@@ -91,6 +97,54 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
   });
   const themeLabel = { auto: "Auto", midnight: "Midnight", "high-contrast": "High Contrast" }[theme] || "Auto";
   const cycleTheme = () => setTheme((current) => THEMES[(THEMES.indexOf(current) + 1) % THEMES.length]);
+
+  useEffect(() => {
+    if (!locationPickerOpen) return undefined;
+    const query = locationQuery.trim();
+    if (query.length < 2) return undefined;
+    let active = true;
+    const timer = setTimeout(async () => {
+      setLocationLoading(true);
+      try {
+        const results = await searchLocations(query, 8);
+        if (!active) return;
+        const safeResults = Array.isArray(results) ? results : [];
+        setLocationResults(safeResults);
+        if (safeResults.length === 0) {
+          setLocationSearchMessage("No matching places found. Try another city or district.");
+        }
+      } catch {
+        if (active) {
+          setLocationResults([]);
+          setLocationSearchMessage("Location search is temporarily unavailable. Please try again.");
+        }
+      } finally {
+        if (active) setLocationLoading(false);
+      }
+    }, 250);
+    return () => {
+      active = false;
+      clearTimeout(timer);
+    };
+  }, [locationPickerOpen, locationQuery]);
+
+  useEffect(() => {
+    if (!locationPickerOpen) return undefined;
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setLocationPickerOpen(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [locationPickerOpen]);
+
+  const chooseLocation = (result) => {
+    if (!result?.name) return;
+    setLocationPickerOpen(false);
+    setLocationQuery("");
+    setLocationResults([]);
+    setLocationSearchMessage("");
+    onLocationSelect?.(result.name, result.lat ?? null, result.lon ?? null, result.state ?? null, "MANUAL");
+  };
 
   useEffect(() => {
     const handler = (event) => { event.preventDefault(); setInstallPrompt(event); };
@@ -135,9 +189,10 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
           <div><div className="wg-ref-brand-name">WeatherGPT <em>PRO AI</em></div><p>AI Meteorology &amp; Disaster Intelligence Platform</p></div>
         </div>
 
-        <button type="button" className="wg-ref-location" onClick={() => go("map")}>
+        <button type="button" className="wg-ref-location" onClick={() => setLocationPickerOpen(true)} aria-haspopup="dialog" aria-label={`Change location. Current: ${weather?.location || "none selected"}`}>
           <Live3DIcon kind="map" size="xs" label="Live location" /><span className="wg-ref-location-text"><b>{location}</b><small>({state})</small></span><em>CHANGE</em>
         </button>
+        <button type="button" className="wg-ref-mobile-location" onClick={() => setLocationPickerOpen(true)} aria-haspopup="dialog" aria-label="Choose location" title="Search for a city or district"><MapPin size={18} /></button>
 
         <div className="wg-ref-header-actions">
           <button className="wg-ref-weather-pill" onClick={cycleTheme} aria-label={`Cycle visual theme (current: ${themeLabel})`} title={`Visual theme: ${themeLabel} — click to cycle`}>
@@ -156,6 +211,28 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
         </div>
       </div>
     </header>
+
+    {locationPickerOpen && <div className="wg-location-picker-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setLocationPickerOpen(false); }}>
+      <section className="wg-location-picker" role="dialog" aria-modal="true" aria-labelledby="wg-location-picker-title">
+        <div className="wg-location-picker-head">
+          <div><p>WEATHERGPT · LOCATION</p><h2 id="wg-location-picker-title">Choose your location</h2></div>
+          <button type="button" className="wg-location-picker-close" aria-label="Close location search" onClick={() => setLocationPickerOpen(false)}><X size={18} /></button>
+        </div>
+        <p className="wg-location-picker-help">Search a city, town, or district. This works even when GPS permission is denied.</p>
+        <form className="wg-location-picker-form" onSubmit={(event) => { event.preventDefault(); if (locationResults[0]) chooseLocation(locationResults[0]); }}>
+          <label htmlFor="wg-location-search">City, town, or district</label>
+          <input id="wg-location-search" type="search" autoFocus autoComplete="off" placeholder="e.g. Rajahmundry, Vijayawada…" value={locationQuery} onChange={(event) => { const value = event.target.value; setLocationQuery(value); setLocationSearchMessage(""); if (value.trim().length < 2) { setLocationResults([]); setLocationLoading(false); } }} />
+        </form>
+        {locationLoading && <p className="wg-location-picker-status" role="status">Searching live location results…</p>}
+        {!locationLoading && locationQuery.trim().length < 2 && <p className="wg-location-picker-status">Type at least 2 characters to search.</p>}
+        {locationSearchMessage && <p className="wg-location-picker-status" role="status">{locationSearchMessage}</p>}
+        {locationResults.length > 0 && <div className="wg-location-picker-results" role="listbox" aria-label="Location search results">
+          {locationResults.map((result) => <button type="button" role="option" aria-selected="false" key={`${result.name}-${result.lat}-${result.lon}`} onClick={() => chooseLocation(result)}>
+            <MapPin size={17} aria-hidden="true" /><span><strong>{result.name}</strong><small>{result.display_name || [result.region, result.state, result.country].filter(Boolean).join(", ")}</small></span>
+          </button>)}
+        </div>}
+      </section>
+    </div>}
 
     {notice ? <div className="wg-ref-notice" role="status" aria-live="polite">
       <span>{notice}</span>
