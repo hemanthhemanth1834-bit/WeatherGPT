@@ -4,7 +4,7 @@ This file tracks the repository cleanup performed on branch `cleanup/remove-unwa
 
 ## Changes in this branch
 
-- Removed the obsolete cyclone-track API client, demo panel, map overlay, checkbox, legend, and illustrative-track labels. Genuine alerts and computed weather-risk indicators remain.
+- Removed the obsolete cyclone-track API client, demo panel, 2D map overlay, 3D globe markers, checkbox, legend, and illustrative-track labels. Genuine alerts and computed weather-risk indicators remain.
 - Replaced fabricated weather fallback series and hard-coded values with an explicit HTTP 503 response when the upstream forecast is unavailable. No fake values or current timestamp are returned from this fallback path.
 - Removed misleading New Delhi display defaults from the home hero and active-station panel.
 - Corrected AQI provenance wording and explicitly documented that the cyclone risk category is a wind/rain heuristic, not cyclone detection, tracking, or an official warning.
