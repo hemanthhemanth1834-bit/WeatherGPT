@@ -283,9 +283,9 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
             <h1>Weather Intelligence &amp; <span>Planetary Risk</span></h1>
             <p>Weather forecasts, recent radar and satellite imagery, model guidance and computed risk indicators — with source, freshness and fallback labels so you can judge the evidence.</p>
             <div className="wg-ref-hero-actions">
-              <button className="wg-btn" onClick={() => onTab("deep_cast")}>☁ AI Weather Deep-Cast</button>
+              <button className="wg-btn" onClick={() => onTab("deep_cast")}>☁ Model Deep-Cast</button>
               <button className="wg-btn-ghost" onClick={() => onTab("evacuation")}>🚨 Disaster &amp; Evacuation Hub</button>
-              <button className="wg-btn-ghost" onClick={() => onAsk(`What should I know about weather and risks in ${askLocation} today?`)}>✦ Ask WeatherGPT Copilot</button>
+              <button className="wg-btn-ghost" onClick={() => onAsk(`What should I know about weather and risks in ${askLocation} today?`)}>✦ Ask WeatherGPT Assistant</button>
             </div>
           </div>
           <div className="wg-ref-live-card wg-card">
@@ -315,7 +315,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
 
       {topAlert && <button className="wg-ref-alertbar" onClick={() => onTab("alerts")}><span>⚠ COMPUTED RISK</span><strong>{topAlert.headline}</strong><em>{topAlert.severity}</em><b>Review evidence →</b></button>}
 
-      <Section eyebrow="AI INTELLIGENCE" title="Deep-Cast & Disaster Engines">
+      <Section eyebrow="MODEL GUIDANCE & RISK" title="Forecast and Decision-Support Tools">
         <div className="wg-ref-feature-grid">
           <FeatureCard icon="✦" title="AI Deep-Cast Ensemble" text="Combines available numerical weather-model signals into an interpretable forecast view. Model availability and provenance are shown by the module." meta="MODEL GUIDANCE" action="Explore Soundings" onClick={() => onTab("deep_cast")} />
           <FeatureCard icon="⌁" title="Evacuation Routing" text="Uses weather and geographic context to support route planning. It should be checked against current official emergency instructions and local road conditions." meta="DECISION SUPPORT" action="Launch Evacuation Map" onClick={() => onTab("evacuation")} />
@@ -325,7 +325,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
       </Section>
 
       <Section eyebrow="PRIORITY OBSERVATION NETWORK" title="Pinned Weather Dashboard">
-        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 3 STATIONS</b> · Live concurrent telemetry across your designated priority observation stations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">57s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setManageStations(true)}>Select &amp; Manage</button></span></div>
+        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 3 LOCATIONS</b> · Model-based forecasts for reference locations, not physical station observations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">57s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setManageStations(true)}>Select &amp; Manage</button></span></div>
         <div className="wg-ref-station-grid">
           {regional.slice(0, stationCount).map(([name, stationPlace], i) => {
             const stationWeather = i === 0 && weather ? weather : regionalWeather[name] || null;
