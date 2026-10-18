@@ -10,6 +10,19 @@ import {
 import Live3DIcon from "./Live3DIcon";
 import { recordEvent } from "../services/privacyAnalytics";
 
+const THEME_KEY = "weathergpt.theme";
+const FONT_KEY = "weathergpt.fontLarge";
+const THEMES = ["auto", "midnight", "high-contrast"];
+
+function readLocalPreference(key, allowed, fallback) {
+  try {
+    const value = localStorage.getItem(key);
+    return allowed.includes(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 // Account controls are removed from the platform navigation.
 const GROUPS = [
   ["Core Meteorology", [
@@ -68,12 +81,40 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
   const state = weather?.state || "—";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [theme, setTheme] = useState(() => readLocalPreference(THEME_KEY, THEMES, "auto"));
+  const [fontLarge, setFontLarge] = useState(() => {
+    try {
+      return localStorage.getItem(FONT_KEY) === "true";
+    } catch {
+      return false;
+    }
+  });
+  const themeLabel = { auto: "Auto", midnight: "Midnight", "high-contrast": "High Contrast" }[theme] || "Auto";
+  const cycleTheme = () => setTheme((current) => THEMES[(THEMES.indexOf(current) + 1) % THEMES.length]);
 
   useEffect(() => {
     const handler = (event) => { event.preventDefault(); setInstallPrompt(event); };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.wgTheme = theme;
+    try {
+      localStorage.setItem(THEME_KEY, theme);
+    } catch {
+      /* Theme remains active for this session when storage is unavailable. */
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("wg-font-large", fontLarge);
+    try {
+      localStorage.setItem(FONT_KEY, String(fontLarge));
+    } catch {
+      /* Font scale remains active for this session when storage is unavailable. */
+    }
+  }, [fontLarge]);
 
   const go = (id) => { setMobileOpen(false); recordEvent("navigation", { target: id }); onTab(id); };
   const installApp = async () => {
@@ -99,11 +140,11 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
         </button>
 
         <div className="wg-ref-header-actions">
-          <button className="wg-ref-weather-pill" onClick={() => go("home")} title="Change Weather Animated Theme & Ambience">
-            <span className="wg-ref-mini-weather"><Live3DIcon kind="rain" size="xs" label="Live weather" /></span><span><b>{temp == null ? "—" : `${temp}°C`} <Sparkles size={11} /></b><small>Theme: Auto</small></span>
+          <button className="wg-ref-weather-pill" onClick={cycleTheme} aria-label={`Cycle visual theme (current: ${themeLabel})`} title={`Visual theme: ${themeLabel} — click to cycle`}>
+            <span className="wg-ref-mini-weather"><Live3DIcon kind="rain" size="xs" label="Live weather" /></span><span><b>{temp == null ? "—" : `${temp}°C`} <Sparkles size={11} /></b><small>Theme: {themeLabel}</small></span>
           </button>
           <button type="button" aria-label="Open station comparison" title="Open Dual Station Weather Comparison Matrix" onClick={() => go("compare")}><ArrowRightLeft size={16}/></button>
-          <button type="button" aria-label="Toggle larger font size" title="Font Scale: 112%" onClick={() => document.documentElement.classList.toggle("wg-font-large")}><Type size={14}/><span>A+</span></button>
+          <button type="button" aria-label="Toggle larger font size" aria-pressed={fontLarge} title={fontLarge ? "Font scale: 112% (on)" : "Font scale: 100% (off)"} onClick={() => setFontLarge((value) => !value)}><Type size={14}/><span>A+</span></button>
           <span className="wg-ref-online" role="status" aria-live="polite" title={online === false ? "Weather engine: last request failed or timed out" : online ? "Weather engine reachable" : "Contacting the weather engine…"}><i className={online === false ? "off" : ""} />{online === null ? "Connecting…" : online ? "Online" : "Offline"}</span>
           <button type="button" className="wg-ref-icon-btn" aria-label={alertCount > 0 ? `Open alerts and early warnings (${alertCount} active)` : "Open alerts and early warnings"} title="Open Smart Weather Alerts & Early Warning Center" onClick={() => go("alerts")}><Bell size={16}/>{alertCount > 0 && <b>{alertCount}</b>}</button>
           <button className="wg-ref-icon-btn" aria-label="Open platform settings and status" title="Open WeatherGPT Platform Settings" onClick={() => go("capabilities")}><Settings size={16}/></button>
@@ -138,7 +179,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
       <div className="wg-ref-content">{children}</div>
     </div>
 
-    <div className="wg-ref-theme-float" onClick={() => go("home")}><span className="wg-ref-pulse" /><Sparkles size={14}/><span>Theme: <b>Auto ({condition})</b></span><span>⌃</span></div>
+    <button type="button" className="wg-ref-theme-float" onClick={cycleTheme} aria-label={`Cycle visual theme (current: ${themeLabel})`} title={`Visual theme: ${themeLabel} — click to cycle`}><span className="wg-ref-pulse" /><Sparkles size={14}/><span>Theme: <b>{themeLabel}{theme === "auto" ? ` (${condition})` : ""}</b></span><span aria-hidden="true">⌃</span></button>
 
     <nav className="wg-ref-mobile-nav">
       {[["home", Sun, "Home"],["chat", Bot, "AI Chat"],["compare", ArrowRightLeft, "Compare"],["alerts", Bell, "Alerts"],["capabilities", Settings, "Settings"],["capabilities", Layers, "Modules"]].map(([id, Icon, label]) =>

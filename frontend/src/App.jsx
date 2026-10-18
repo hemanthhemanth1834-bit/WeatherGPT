@@ -26,6 +26,17 @@ const ReferenceModulePanel = lazy(() => import("./components/ReferenceModulePane
 
 
 const SAVED_KEY = "weathergpt.savedPlaces";
+const LANGUAGE_KEY = "weathergpt.language";
+const SUPPORTED_LANGUAGES = new Set(["auto", "en", "hi", "ta", "te", "ml", "kn", "bn", "mr", "gu", "pa", "or"]);
+
+function loadLanguage() {
+  try {
+    const value = localStorage.getItem(LANGUAGE_KEY);
+    return SUPPORTED_LANGUAGES.has(value) ? value : "auto";
+  } catch {
+    return "auto";
+  }
+}
 
 function loadSaved() {
   try {
@@ -54,7 +65,7 @@ function OpeningMessage() {
 export default function App() {
   const [tab, setTab] = useState("home");
   const [persona, setPersona] = useState("general");
-  const [language, setLanguage] = useState("auto");
+  const [language, setLanguage] = useState(loadLanguage);
   const [place, setPlace] = useState("");
   const [weather, setWeather] = useState(null);
   const [alerts, setAlerts] = useState([]);
@@ -74,6 +85,14 @@ export default function App() {
   const searchSeq = React.useRef(0);
   const retryTimer = React.useRef(null);
   const hasWeatherRef = React.useRef(false);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LANGUAGE_KEY, language);
+    } catch {
+      /* Storage may be disabled; language selection still works for this session. */
+    }
+  }, [language]);
 
   const remember = useCallback((name) => {
     const clean = (name || "").trim();

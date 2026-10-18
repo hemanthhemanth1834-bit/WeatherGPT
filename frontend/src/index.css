@@ -715,3 +715,42 @@ button, input, select, a { min-height: 0; }
   }
   .wg-skel{animation:none}
 }
+
+
+/* User-selectable visual themes. Auto retains the default weather command-center palette. */
+:root[data-wg-theme="midnight"] {
+  --wg-bg: #02040b;
+  --wg-bg-2: #070b18;
+  --wg-surface: rgba(8, 14, 30, 0.82);
+  --wg-surface-elevated: rgba(13, 21, 42, 0.92);
+  --wg-glass: rgba(8, 14, 30, 0.82);
+  --wg-glass-2: rgba(5, 10, 23, 0.94);
+  --wg-line: rgba(167, 139, 250, 0.24);
+  --wg-line-soft: rgba(167, 139, 250, 0.14);
+  --wg-accent: #a78bfa;
+  --wg-accent-deep: #6d28d9;
+  --wg-teal: #67e8f9;
+  --wg-info: #a78bfa;
+  --wg-cold: #c4b5fd;
+  --wg-shadow-glow: 0 18px 44px -20px rgba(139, 92, 246, 0.42);
+}
+
+:root[data-wg-theme="high-contrast"] {
+  color-scheme: dark;
+  --wg-bg: #000000;
+  --wg-bg-2: #050505;
+  --wg-surface: rgba(0, 0, 0, 0.98);
+  --wg-surface-elevated: rgba(8, 8, 8, 0.99);
+  --wg-glass: rgba(0, 0, 0, 0.97);
+  --wg-glass-2: rgba(5, 5, 5, 0.99);
+  --wg-line: rgba(255, 255, 255, 0.52);
+  --wg-line-soft: rgba(255, 255, 255, 0.32);
+  --wg-text-primary: #ffffff;
+  --wg-text-secondary: #ffffff;
+  --wg-text-muted: #f3f4f6;
+  --wg-ink: #ffffff;
+  --wg-muted: #f3f4f6;
+  --wg-faint: #d1d5db;
+  --wg-accent: #7dd3fc;
+  --wg-accent-deep: #0284c7;
+}

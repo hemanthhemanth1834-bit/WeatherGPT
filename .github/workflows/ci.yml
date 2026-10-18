@@ -255,6 +255,9 @@ jobs:
                       browser.close()
           PY
 
+      - name: Verify browser preferences persist
+        run: python frontend/tests/preferences_persistence.py
+
   chat-visibility:
     # P0 regression: assistant messages must render readable, complete and
     # unclipped. Uses a deterministic mocked /api/chat/query (no live provider).
