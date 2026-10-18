@@ -177,22 +177,25 @@ def test_gdacs_endpoint_live():
 
 def test_gfs_model_label():
     needs_network()
-    blend = client.get("/api/weather/current", params={"location": "Pune"}).json()
-    gfs = client.get("/api/weather/current",
-                     params={"location": "Pune", "model": "gfs"}).json()
+    blend_response = client.get("/api/weather/current", params={"location": "Pune"})
+    if blend_response.status_code == 503:
+        assert "unavailable" in blend_response.json()["detail"].lower()
+        return
+    assert blend_response.status_code == 200
+    blend = blend_response.json()
+    gfs_response = client.get("/api/weather/current",
+                              params={"location": "Pune", "model": "gfs"})
+    if gfs_response.status_code == 503:
+        assert "unavailable" in gfs_response.json()["detail"].lower()
+        return
+    assert gfs_response.status_code == 200
+    gfs = gfs_response.json()
 
-    # Validate the honest provenance contract for both live and upstream-outage paths.
+    # A provider outage is explicitly unavailable; successful values keep their model provenance.
     assert blend["nwp_model"]
-    assert gfs["nwp_model"]
-    if "Unavailable" in blend["nwp_model"]:
-        assert "local estimate" in blend["nwp_model"].lower()
-    else:
-        assert "blend" in blend["nwp_model"].lower() or "Open-Meteo" in blend["nwp_model"]
-
-    if "GFS" in gfs["nwp_model"]:
-        assert isinstance(gfs["current_temp"], (int, float))
-    else:
-        assert "unavailable" in gfs["nwp_model"].lower() or "local estimate" in gfs["nwp_model"].lower()
+    assert "blend" in blend["nwp_model"].lower() or "Open-Meteo" in blend["nwp_model"]
+    assert "GFS" in gfs["nwp_model"]
+    assert isinstance(gfs["current_temp"], (int, float))
 
 
 def test_earthquakes_live():
