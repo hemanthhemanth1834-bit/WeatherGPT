@@ -72,7 +72,14 @@ def test_solar_formula_pure():
     assert "formula" in clear
 
 
-def test_solar_endpoint():
+def test_solar_endpoint(monkeypatch):
+    # The endpoint's estimate math is tested with a deterministic fixture;
+    # live provider availability is covered separately by provider smoke tests.
+    from app import main as main_module
+    monkeypatch.setattr(
+        main_module, "get_weather",
+        lambda lat, lon, place, state: make_test_weather(lat, lon, place, state),
+    )
     body = client.get("/api/solar/estimate", params={"location": "Pune"}).json()
     assert body["status"] == "ESTIMATED"
     assert body["daily_kwh"] >= 0
