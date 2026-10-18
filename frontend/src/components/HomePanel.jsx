@@ -194,7 +194,7 @@ function StationCard({ name, place, weather, active, onClick }) {
         <>
           <span className="wg-ref-station-weather"><WxIcon icon={weather.icon} size={38} /><b>{weather.current_temp}°</b><span>{weather.condition}</span></span>
           <span className="wg-ref-station-feels">Feels {weather.feels_like ?? "—"}° · H: {weather.daily?.[0]?.temp_max ?? "—"}° • L: {weather.daily?.[0]?.temp_min ?? "—"}°</span>
-          <span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}%</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"} • {weather.aqi_status || "Poor"}</span>
+          <span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob != null && Number.isFinite(Number(weather.hourly[0].rain_prob)) ? `${weather.hourly[0].rain_prob}%` : weather.rain_prob != null && Number.isFinite(Number(weather.rain_prob)) ? `${weather.rain_prob}%` : "—"}</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"} • {weather.aqi_status || "Status unavailable"}</span>
           <span className="wg-ref-station-feels">{weather.data_source || "Source unavailable"} · {weather.status || "STATUS UNKNOWN"}</span>
         </>
       ) : (
@@ -333,14 +333,14 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
       </Section>
 
       <Section eyebrow="PRIORITY OBSERVATION NETWORK" title="Pinned Weather Dashboard">
-        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 3 LOCATIONS</b> · Model-based forecasts for reference locations, not physical station observations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">57s</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setManageStations(true)}>Select &amp; Manage</button></span></div>
+        <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 3 LOCATIONS</b> · Model-based forecasts for reference locations, not physical station observations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">60s interval</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setManageStations(true)}>Select &amp; Manage</button></span></div>
         <div className="wg-ref-station-grid">
           {regional.slice(0, stationCount).map(([name, stationPlace], i) => {
-            const stationWeather = i === 0 && weather ? weather : regionalWeather[name] || null;
-            return <StationCard key={name} name={name} place={stationPlace} weather={stationWeather} active={i === 0 && !!stationWeather} onClick={() => onTab("dashboard")} />;
+            const stationWeather = weather?.location?.toLowerCase() === name.toLowerCase() && weather ? weather : regionalWeather[name] || null;
+            return <StationCard key={name} name={name} place={stationPlace} weather={stationWeather} active={weather?.location?.toLowerCase() === name.toLowerCase() && !!stationWeather} onClick={() => onTab("dashboard")} />;
           })}
         </div>
-        {stationCount < 4 && <button className="wg-ref-pin-another wg-card" onClick={() => setStationCount(3)}>＋ <span><b>Pin Another Station</b><small>Monitor up to 3 Telugu-region stations ({stationCount} active)</small></span><em>＋ Browse Indian Observatories</em></button>}
+        {stationCount < 3 && <button className="wg-ref-pin-another wg-card" onClick={() => setStationCount((n) => Math.min(3, n + 1))}>＋ <span><b>Add Pinned Location</b><small>Monitor up to 3 Telugu-region locations ({stationCount} shown)</small></span><em>＋ Browse Indian Observatories</em></button>}
       </Section>
 
       <Section eyebrow="SYNOPTIC ANALYSIS" title="7-Day Synoptic Weather Trajectory" action="Full Meteorology" onClick={() => onTab("dashboard")}>
@@ -375,7 +375,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
           <div className="wg-ref-map-head"><span>CLICK TO SELECT</span><span>Click anywhere on the map or tap a station pin to instantly set your active location.</span></div>
           <div className="wg-ref-map-body wg-ref-map-real-body">
             <div className="wg-ref-map-real"><RealIndiaMap weather={weather} onAsk={onAsk} /></div>
-            <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "Location unavailable"}</strong><span>{Number.isFinite(weather?.lat) && Number.isFinite(weather?.lon) ? `${weather.lat.toFixed(1)}°, ${weather.lon.toFixed(1)}°` : "Coordinates unavailable"}</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>{weather ? "Live Open-Meteo telemetry" : "Waiting for a selected location"}</small></div>
+            <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "Location unavailable"}</strong><span>{Number.isFinite(weather?.lat) && Number.isFinite(weather?.lon) ? `${weather.lat.toFixed(1)}°, ${weather.lon.toFixed(1)}°` : "Coordinates unavailable"}</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>{weather?.status === "LIVE" ? "Live provider data" : weather?.status ? `${weather.status} weather data` : "Waiting for provider data"}</small></div>
           </div>
           <div className="wg-ref-map-tabs">{["All India","North","South","West","East & NE","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
           <div className="wg-ref-hubs"><b>Quick Hubs:</b>{["New Delhi","Mumbai","Chennai","Bengaluru","Kolkata","Hyderabad","Kochi","Ahmedabad"].map((x) => <button key={x} onClick={() => onAsk(`Weather for ${x}`)}>{x}</button>)}</div>
@@ -415,7 +415,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
       </div>
       {manageStations && <div role="dialog" aria-modal="true" style={{position:"fixed",inset:0,zIndex:120,background:"rgba(2,6,23,.72)",backdropFilter:"blur(8px)",display:"grid",placeItems:"center",padding:"1rem"}} onClick={()=>setManageStations(false)}>
         <div className="wg-card" style={{width:"min(34rem,100%)",padding:"1rem",background:"#0b1328"}} onClick={e=>e.stopPropagation()}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:".5rem"}}><div><b>Station Management</b><small style={{display:"block",color:"var(--wg-muted)"}}>Choose up to 4 priority observation stations.</small></div><button className="wg-btn-ghost" onClick={()=>setManageStations(false)}>✕</button></div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:".5rem"}}><div><b>Station Management</b><small style={{display:"block",color:"var(--wg-muted)"}}>Choose up to 3 pinned reference locations.</small></div><button className="wg-btn-ghost" onClick={()=>setManageStations(false)}>✕</button></div>
           <div style={{display:"grid",gap:".4rem",marginTop:".8rem"}}>
             {regional.map(([name,stationPlace],i)=><label key={name} style={{display:"flex",alignItems:"center",gap:".6rem",padding:".55rem .65rem",border:"1px solid var(--wg-line)",borderRadius:".7rem"}}><input type="checkbox" checked={i < stationCount} onChange={()=>setStationCount(n=>i<n?Math.max(1,n-1):Math.min(3,n+1))}/><span><b>{name}</b><small style={{display:"block",color:"var(--wg-muted)"}}>{stationPlace}</small></span></label>)}
           </div>
