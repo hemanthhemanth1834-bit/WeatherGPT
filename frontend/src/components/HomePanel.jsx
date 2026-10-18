@@ -276,7 +276,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
   return (
     <section className="wg-ref-home" aria-label="WeatherGPT Intelligence Hub">
       <div className="wg-ref-hero">
-        <div className="wg-ref-hero-location">WeatherGPT Intelligence Hub <span>{weather?.location || "New Delhi"}, {weather?.state || "Delhi NCR"}</span></div>
+        <div className="wg-ref-hero-location">WeatherGPT Intelligence Hub <span>{weather?.location || "Location unavailable"}, {weather?.state || "Choose a location"}</span></div>
         <div className="wg-ref-hero-grid">
           <div className="wg-ref-hero-copy">
             <span className={`wg-chip ${weather?.status === "LIVE" ? "live" : "estimated"}`}>● WEATHER DATA · {weather?.status || "UNAVAILABLE"}</span>
@@ -364,7 +364,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
           <div className="wg-ref-map-head"><span>CLICK TO SELECT</span><span>Click anywhere on the map or tap a station pin to instantly set your active location.</span></div>
           <div className="wg-ref-map-body wg-ref-map-real-body">
             <div className="wg-ref-map-real"><RealIndiaMap weather={weather} onAsk={onAsk} /></div>
-            <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "New Delhi"}</strong><span>{weather?.lat?.toFixed?.(1) || "20.6"}°N, {weather?.lon?.toFixed?.(1) || "79.0"}°E</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>Live Open-Meteo telemetry</small></div>
+            <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "Location unavailable"}</strong><span>{Number.isFinite(weather?.lat) && Number.isFinite(weather?.lon) ? `${weather.lat.toFixed(1)}°, ${weather.lon.toFixed(1)}°` : "Coordinates unavailable"}</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>Live Open-Meteo telemetry</small></div>
           </div>
           <div className="wg-ref-map-tabs">{["All India","North","South","West","East & NE","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
           <div className="wg-ref-hubs"><b>Quick Hubs:</b>{["New Delhi","Mumbai","Chennai","Bengaluru","Kolkata","Hyderabad","Kochi","Ahmedabad"].map((x) => <button key={x} onClick={() => onAsk(`Weather for ${x}`)}>{x}</button>)}</div>
