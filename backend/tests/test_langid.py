@@ -1,4 +1,5 @@
 """Tests for the deterministic language analyzer (offline)."""
+from .weather_fixtures import make_test_weather
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -62,7 +63,7 @@ def test_analyze_endpoint():
 def test_chat_uses_romanized_language():
     from app.models import WeatherQueryRequest
     from app.services import chat, weather
-    fake = weather._fallback(28.0, 77.0, "Delhi", "Delhi")
+    fake = make_test_weather(28.0, 77.0, "Delhi", "Delhi")
     import unittest.mock as mock
     with mock.patch.object(chat, "get_weather", return_value=fake):
         response = chat.answer(WeatherQueryRequest(query="Dilli mein baarish hogi kya?",
