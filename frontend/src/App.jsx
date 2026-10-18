@@ -64,10 +64,16 @@ export default function App() {
   const [notice, setNotice] = useState("");
   const [micTick, setMicTick] = useState(0);
   const [locating, setLocating] = useState(false);
+  // Weather-engine reachability for the header pill: null = unknown yet,
+  // true = last request got an HTTP answer, false = network failure/abort.
+  const [online, setOnline] = useState(null);
   // LocationState: { source: GPS|MANUAL|SAVED|UNKNOWN, status: DETECTING|LIVE|MANUAL|LAST_KNOWN|DENIED|UNAVAILABLE|ERROR|IDLE }
   const [locState, setLocState] = useState({ source: "UNKNOWN", status: "IDLE" });
   const locRequestId = React.useRef(0);
   const initDone = React.useRef(false);
+  const searchSeq = React.useRef(0);
+  const retryTimer = React.useRef(null);
+  const hasWeatherRef = React.useRef(false);
 
   const remember = useCallback((name) => {
     const clean = (name || "").trim();
@@ -103,7 +109,10 @@ export default function App() {
     (async () => {
       try {
         const al = await fetchActiveAlerts();
-        if (!cancelled) setAlerts(al);
+        if (!cancelled) {
+          setAlerts(al);
+          setOnline(true);
+        }
       } catch {
         if (!cancelled) setNotice("Starting offline: live data will load when the backend is reachable.");
       }
@@ -178,23 +187,47 @@ export default function App() {
   );
 
   const searchPlace = useCallback(
-    async (name, lat = null, lon = null, state = null, source = "MANUAL") => {
+    async (name, lat = null, lon = null, state = null, source = "MANUAL", opts = {}) => {
       const target = (name || "").trim();
       if (!target) return;
       const requestId = locRequestId.current;
+      const seq = ++searchSeq.current;
+      const isCurrent = () => searchSeq.current === seq && locRequestId.current === requestId;
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
       setBusy(true);
       try {
         const data = await fetchCurrentWeather(target, lat, lon, "auto", state);
-        if (locRequestId.current !== requestId) return;
+        if (!isCurrent()) return;
+        hasWeatherRef.current = true;
+        setOnline(true);
+        setNotice("");
         setWeather(data);
         setPlace(data.location);
         setLocState({ source, status: source === "GPS" ? "LIVE" : source === "SAVED" ? "LAST_KNOWN" : "MANUAL" });
         remember(data.location);
-      } catch {
-        if (locRequestId.current !== requestId) return;
+      } catch (err) {
+        if (!isCurrent()) return;
+        // Backend answered with an HTTP error => reachable; network failure
+        // or the client's intended 20 s abort => not reachable.
+        setOnline(err?.status != null);
         setNotice(`Could not load weather for "${target}". Try again shortly.`);
+        // Honest header state: never keep claiming "Detecting location…"
+        // once nothing is loaded. An older loaded city keeps its own label.
+        if (!hasWeatherRef.current) setLocState({ source, status: "ERROR" });
+        // One bounded silent retry so a transient cold-start failure (the
+        // client aborts at 20 s by design, api.js) recovers on its own.
+        if (opts.autoRetry !== false) {
+          retryTimer.current = setTimeout(() => {
+            retryTimer.current = null;
+            if (!isCurrent()) return;
+            searchPlace(target, lat, lon, state, source, { autoRetry: false });
+          }, 5000);
+        }
       } finally {
-        if (locRequestId.current === requestId) setBusy(false);
+        if (isCurrent()) setBusy(false);
       }
     },
     [remember]
@@ -302,11 +335,11 @@ export default function App() {
 
 
   return (
-    <ReferenceChrome tab={tab} onTab={goTab} weather={weather} alertCount={alerts.length} language={language === "auto" ? "en" : language} onLanguageChange={setLanguage}>
+    <ReferenceChrome tab={tab} onTab={goTab} weather={weather} alertCount={alerts.length} language={language === "auto" ? "en" : language} onLanguageChange={setLanguage} locStatus={locState.status} online={online} notice={notice} onDismissNotice={() => setNotice("")}>
       <main id="main-content" className="wg-wrap wg-reference-main">
         {tab === "chat" && <WeatherChat messages={messages} busy={busy} language={language} persona={persona} onAsk={ask} onTab={goTab} micTick={micTick} />}
         <Suspense fallback={<div role="status" style={{ display: "flex", justifyContent: "center", padding: "4rem" }}><div className="wg-spin" aria-label="Loading panel" /></div>}>
-          {tab === "home" && <HomePanel weather={weather} busy={busy} detecting={locating} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} onRefresh={searchPlace} />}
+          {tab === "home" && <HomePanel weather={weather} busy={busy} detecting={locating} locStatus={locState.status} alertCount={alerts.length} alerts={alerts} onAsk={askFromTab} onTab={setTab} onRefresh={searchPlace} />}
           {tab === "dashboard" && <WeatherDashboard weather={weather} busy={busy} onAsk={askFromTab} />}
           {tab === "map" && <GISMap weather={weather} onAsk={(loc) => askFromTab(`Weather and hazards for ${loc}`)} />}
           {tab === "earth" && <Earth3D weather={weather} />}

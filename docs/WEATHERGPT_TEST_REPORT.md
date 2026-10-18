@@ -222,7 +222,7 @@ the changes below are readiness waits, pre-warming and noise attribution only.
   the UI client aborts every request at 20 s by design (`api.js`), so
   cold-queue conditions are absorbed before the UI is judged (a warm assess
   measured 14.9 s; a failed warm-up still fails the UI check honestly).
-- Final rerun on `5e900dc` (readiness fix in): - Final rerun on `5e900dc`: **chromium 43/44** — both compare checks now PASS
+- Final rerun on `5e900dc`: **chromium 43/44** — both compare checks now PASS
   (readiness fix verified end-to-end); the single failure was
   `no console errors (1)`, the external-noise class proven by the
   URL-attributed probes (this suite now attributes it identically; harness
@@ -260,3 +260,98 @@ the changes below are readiness waits, pre-warming and noise attribution only.
 - Geolocation watchdog probe: Firefox settles `New Delhi` in 26.9 s, Chromium
   0.7 s, 0 console errors both (pre-fix Firefox stayed on the placeholder
   past 120 s).
+
+## Stage L — premium upgrade pass (2026-10-18)
+
+Branch `feat/premium-weather-upgrade` (built on `main` `ca4b85d`); local
+preview serving the rebuilt bundle `index-C4cxwFp9.js`; backend
+`127.0.0.1:8000` healthy (`2.0.0-sih`). Assertions were never weakened; every
+claim below comes from an executed check in this session. No production
+deployment was performed for this branch (authorization not requested).
+
+### L1 — initial-load recovery (code + deterministic regression test)
+
+- `App.jsx`: stale-response guard (`searchSeq`/`locRequestId`), one silent
+  ~5 s auto-retry after a failed weather fetch (`autoRetry` flag — never
+  loops), honest failure notice, real `online` state from fetch outcomes
+  (`api.js` now attaches `error.status`).
+- `ReferenceChrome.jsx`: honest header placeholders by `locStatus`
+  ('Location lookup failed — tap to search' / 'Location access denied — tap
+  to search' / 'Location unavailable — tap to search'); Online pill states
+  Connecting… / Online / Offline (amber when offline); the legacy `notice`
+  state — previously set in `App.jsx` but never rendered anywhere — now
+  renders as a dismissible banner (`.wg-ref-notice`, `role="status"`).
+- `frontend/tests/initial_load_recovery.py` (new; deterministic route
+  interception on `/api/weather/current`), chromium AND firefox:
+  - Scenario A (every weather request → HTTP 500): header shows the honest
+    placeholder and keeps it after the retry; the silent retry is proven by
+    the request count (13); the banner shows exactly 'Could not load weather
+    for "New Delhi". Try again shortly.' — on both engines.
+  - Scenario B (first request fails, rest pass): the header settles on
+    'New Delhi' with no user action (13–16 requests observed across runs);
+    the notice clears.
+  - Result: **14/14 PASS (7 per browser), 0 failures** — verified on both the
+    L1 build (`index-CkZfgCoq.js`) and the L4 build (`index-C4cxwFp9.js`).
+
+### L2 — current-state screenshot capture
+
+- `frontend/tests/capture_screenshots.py` (new) captured 28 PNGs into
+  `docs/visual-references/screenshots/`: 17 local routes + the map tab (via
+  the header location button — no sidebar entry) + local error state + 3
+  mobile (home / drawer / nav) + 3 production + 3 benchmark-site. Desktop
+  1440×900 full-page, mobile 390×844. Captured on the pre-L4 bundle; labelled
+  current-state evidence, not target designs.
+- Capture-time defect found and fixed: the mobile drawer close button was
+  pointer-intercepted by the fixed header (`.wg-ref-mobile-drawer` z-index 80
+  < header 100 in `index.css`) → z-index 110. Verified by pointer tests:
+  open state `class="wg-ref-mobile-drawer open"` / `aria-hidden=false` →
+  close-button click clears both → overlay strip tap (real coordinate,
+  x=350 of a 390 px viewport) also closes. (An earlier overlay assertion
+  failed only because Playwright clicks the overlay's center point, which is
+  covered by the open 288 px drawer — geometry, not behavior.)
+
+### L3 — 22-category visual reference library
+
+- `docs/visual-references/sources.json`: 97 curated web sources across
+  categories 01–21 (category 22 is the screenshot set), each with kind
+  (inspiration / official-provider / official-data / benchmark /
+  stock-reference), conservative license wording, attribution, purpose and
+  target component — URLs from live web search results, never invented.
+- `frontend/tests/build_reference_manifest.py` (new) HTTP-verifies every URL
+  (HEAD→GET with browser UA; 2xx/3xx = verified; raw status recorded
+  otherwise) and generates `manifest.json` + `REFERENCE_AUDIT.md`.
+- Final manifest: **126 entries = 97 web sources (85 verified) + 28
+  screenshots + 1 download**. The 12 unverified links carry their raw
+  bot-block / rate-limit statuses in the audit (Behance 403 ×3, Figma 405,
+  DeepWiki 429 ×2, climate-data 499, and four more 403s) — never claimed as
+  verified. References are explicitly marked as not production assets.
+- `downloads/gibs-viirs-truecolor-2026-10-16.jpg`: 316,149 bytes, HTTP 200
+  `image/jpeg` (GIBS WMS `VIIRS_SNPP_CorrectedReflectance_TrueColor`,
+  BBOX=-60,-120,60,60; JPEG magic checked) with `downloads/DOWNLOADS.md`
+  documenting layer, date, query, result and NASA public-domain license
+  guidance.
+
+### L4 — first UI/UX increments (from capture review)
+
+- `index.css`: mobile drawer z-index 80→110 (close button reachable —
+  verified above).
+- `ReferenceChrome.jsx`: theme-float condition no longer claims "Loading live
+  weather…" indefinitely — shows 'Weather unavailable' once the location
+  state is an honest failure (not DETECTING/IDLE).
+- `HomePanel.jsx` + `App.jsx`: the empty-state line is state-driven —
+  detecting / busy / 'Weather unavailable for this location — use CHANGE
+  above to pick a place.' (ERROR | DENIED | UNAVAILABLE) / 'Search a place
+  above to start.'
+- Rebuild after L4: entry bundle `index-C4cxwFp9.js` (63.04 kB) with chunk
+  split (react 181.7 kB, three 564.8 kB, maps 148.8 kB, markdown 161.7 kB);
+  lint warnings only (pre-existing), build success.
+
+### Local infra notes
+
+- Windows runs; system Chrome via `WG_CHROME_PATH` + bundled Playwright
+  Firefox; the sandbox periodically reaps background shells, so the backend
+  (`python run.py`, port 8000) and preview
+  (`npm run preview -- --host 127.0.0.1 --port 4173`) were restarted as
+  needed; all test evidence above was captured with both serving.
+- Production remains `7314b36` serving `index-CCJoY2cE.js`; this branch is
+  not deployed.

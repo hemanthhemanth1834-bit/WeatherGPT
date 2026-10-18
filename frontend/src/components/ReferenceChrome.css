@@ -202,6 +202,7 @@
 .wg-ref-live-card{animation:wgLiveCardIn .85s .12s var(--wg-motion-ease) both}
 .wg-chip.live{animation:wgLiveChip 1.7s ease-in-out infinite}
 .wg-ref-online i{animation:wgLiveDot 1.25s ease-in-out infinite}
+.wg-ref-online i.off{animation:none;background:#f59e0b}
 .wg-ref-nav-group{animation:wgNavIn .5s var(--wg-motion-ease) both}
 .wg-ref-nav-group:nth-child(2){animation-delay:.08s}
 .wg-ref-nav-group:nth-child(3){animation-delay:.16s}
@@ -679,3 +680,9 @@
 
 
 .wg-skip-link{position:fixed;left:1rem;top:-5rem;z-index:9999;padding:.7rem 1rem;border-radius:.7rem;background:#eaf1fb;color:#07101f;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.35);transition:top .15s ease}.wg-skip-link:focus{top:1rem;outline:3px solid var(--wg-accent);outline-offset:3px}
+
+/* Stage L: visible status notice (previously the App's notice state was never rendered). */
+.wg-ref-notice{position:relative;z-index:40;display:flex;align-items:center;justify-content:space-between;gap:1rem;margin:.6rem 1rem 0;padding:.65rem .9rem;border:1px solid rgba(245,158,11,.35);border-radius:.8rem;background:rgba(245,158,11,.12);color:#fde68a;font-size:.78rem;font-weight:600}
+.wg-ref-notice button{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;border-radius:.5rem;border:1px solid rgba(245,158,11,.35);background:transparent;color:inherit;cursor:pointer}
+.wg-ref-notice button:hover{background:rgba(245,158,11,.18)}
+@media(max-width:700px){.wg-ref-notice{margin:.5rem .6rem 0}}
