@@ -90,7 +90,7 @@ def scenario_all_fail(browser_type, failures):
     page.add_init_script("Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
-    page.wait_for_selector(".wg-ref-location b", timeout=120000)
+    page.wait_for_selector(".wg-ref-location b", state="attached", timeout=120000)
 
     try:
         page.wait_for_function(
@@ -164,7 +164,7 @@ def scenario_recover(browser_type, failures):
     page.add_init_script("localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi'])); Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
-    page.wait_for_selector(".wg-ref-location b", timeout=120000)
+    page.wait_for_selector(".wg-ref-location b", state="attached", timeout=120000)
 
     # No user action anywhere in this scenario: pure automatic recovery.
     try:
