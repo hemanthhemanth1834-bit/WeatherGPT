@@ -84,7 +84,7 @@ def extract_place_meta(text: str, fallback: Optional[str] = None) -> Tuple[str, 
         if phrase in lowered:
             if fallback and fallback.strip().lower() not in ("", "your location", "auto"):
                 return fallback.strip().title(), False
-            return "New Delhi", False
+            return "", False
     for key in sorted(geo.GAZETTEER, key=len, reverse=True):
         if re.search(r"\b" + re.escape(key) + r"\b", lowered):
             return key.title(), True
@@ -101,7 +101,7 @@ def extract_place_meta(text: str, fallback: Optional[str] = None) -> Tuple[str, 
             return candidate.title(), True
     if fallback and fallback.strip().lower() not in ("", "your location", "auto"):
         return fallback.strip().title(), False
-    return "New Delhi", False
+    return "", False
 
 
 def extract_place(text: str, fallback: Optional[str] = None) -> str:
@@ -450,6 +450,14 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         )
 
     place, explicit = extract_place_meta(text, request.location_name)
+    if not place:
+        message = "Please choose a location or enter a city name before requesting location-specific weather."
+        return ChatResponse(
+            query=text, detected_language=lang, persona=persona,
+            speech_text=message, markdown_response=message,
+            quick_suggestions=["Search for a city", "Enable location access"],
+            explicit_location=False, location_resolved=False,
+        )
     lat, lon, proper, state, place_resolved = geo.resolve(place)
     data = get_weather(lat, lon, proper, state)
 
