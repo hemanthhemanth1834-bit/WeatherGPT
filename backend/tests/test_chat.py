@@ -1,6 +1,5 @@
 """Unit tests for the chat engine's offline logic (no network required)."""
 from .weather_fixtures import make_test_weather
-from .weather_fixtures import make_test_weather
 from app.models import WeatherQueryRequest
 from app.services import chat
 from app.services import weather
