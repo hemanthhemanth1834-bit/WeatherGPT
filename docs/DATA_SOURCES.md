@@ -20,7 +20,7 @@ Provider statuses are runtime-dependent; use `/api/providers/health?live=true` f
 | OpenStreetMap | basemap tiles | Runtime-dependent | Free (ODbL) | Tile fair-use policy |
 | Web Speech API | STT/TTS 11 languages | Runtime-dependent | Browser-native | Chrome/Edge best; mic permission |
 | WRF feed | — | NOT CONFIGURED | would need feed | Optional local-file adapter (`wrf_adapter.py`, OFF); GFS is the production alternative |
-| IMD district-nowcast RSS | official district warning feed | LIVE when upstream responds | Public RSS, no key | Official warning text; do not imply protected IMD API access |
+| IMD district-nowcast RSS | official district warning feed | Runtime-dependent | Public RSS, no key | Official warning text; do not imply protected IMD API access |
 | MOSDAC / ISRO | — | NOT CONFIGURED | auth required | Portal reachable, no open data API |
 | IMD protected API | — | NOT CONFIGURED | account required | RSS is the live keyless path; protected API is not claimed |
 | INCOIS feed | — | NOT CONFIGURED | no open API found | Portal reachable only |
