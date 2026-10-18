@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { fetchActiveAlerts, fetchCycloneTrack, fetchDisasters, fetchEarthquakes, fetchEmergencyPlaces, fetchFloodRisk, fetchRiskAssessment, fetchWildfires } from "../services/api";
+import { fetchActiveAlerts, fetchDisasters, fetchEarthquakes, fetchEmergencyPlaces, fetchFloodRisk, fetchRiskAssessment, fetchWildfires } from "../services/api";
 import BlueprintBuilder from "./BlueprintBuilder";
 import EmergencyContacts from "./EmergencyContacts";
 import { LocationRadarImagery } from "./LocationImagery";
@@ -24,8 +24,6 @@ function matchesCategory(alert, cat) {
 export default function SevereWeatherPanel({ weather, onAsk }) {
   const [alerts, setAlerts] = useState([]);
   const [alertsFailed, setAlertsFailed] = useState(false);
-  const [track, setTrack] = useState(null);
-  const [trackFailed, setTrackFailed] = useState(false);
   const [cat, setCat] = useState("Cyclone");
   const [error, setError] = useState("");
   const [showContacts, setShowContacts] = useState(false);
@@ -39,9 +37,8 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [al, tr, gd, qk, fr] = await Promise.allSettled([
+      const [al, gd, qk, fr] = await Promise.allSettled([
         fetchActiveAlerts(),
-        fetchCycloneTrack(),
         fetchDisasters("world"),
         fetchEarthquakes(4.5, 7),
         fetchWildfires(12),
@@ -49,8 +46,6 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
       if (!cancelled) {
         setAlerts(al.status === "fulfilled" && Array.isArray(al.value) ? al.value : []);
         setAlertsFailed(al.status !== "fulfilled");
-        setTrack(tr.status === "fulfilled" ? tr.value : null);
-        setTrackFailed(tr.status !== "fulfilled");
         setGlobal(gd.status === "fulfilled" ? gd.value : null);
         setQuakes(qk.status === "fulfilled" ? qk.value : { error: true });
         setFires(fr.status === "fulfilled" ? fr.value : { error: true });
@@ -90,9 +85,8 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
           <div>
             <h2 style={{ margin: 0, fontSize: "1.15rem" }}>🌀 Severe-weather desk</h2>
             <p style={{ margin: "0.25rem 0 0", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
-              <span className="wg-chip demo">TRACK: DEMO DATA</span>{" "}
-              <span className="wg-chip estimated">ALERTS: COMPUTED</span>{" "}
-              Illustrative cyclone geometry and telemetry-derived warnings — never official bulletins.
+              <span className="wg-chip estimated">RISK: COMPUTED</span>{" "}
+              Alerts depend on upstream availability; follow official IMD/NDMA bulletins for warnings.
             </p>
           </div>
           <button className="wg-btn" onClick={() => setShowContacts(true)}>📞 Emergency contacts</button>
@@ -251,26 +245,6 @@ export default function SevereWeatherPanel({ weather, onAsk }) {
       </div>
 
       <div className="wg-grid-panels">
-        <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
-          <div className="wg-section-title">Cyclone status · Bay of Bengal (DEMO)</div>
-          <p style={{ fontSize: "0.85rem", lineHeight: 1.65 }}>
-            {trackFailed ? (
-              <>Track feed unavailable right now — this panel is demonstration geometry only and never shows live cyclone positions.</>
-            ) : (
-              <>
-                System: <strong>{track?.system_name || "Illustrative low-pressure track"}</strong>
-                <br />Basin: {track?.basin || "Bay of Bengal"} · plotted {track?.features?.[1]?.properties?.time || "recently"}
-                <br />Movement: north-westward along the plotted line; forecast points are illustrative, not predicted landfall.
-              </>
-            )}
-          </p>
-          <p className="wg-mono" style={{ fontSize: "0.68rem", color: "var(--wg-muted)" }}>
-            {track?.disclaimer || "Demonstration geometry for map display."}
-          </p>
-          <button className="wg-btn-ghost" onClick={() => onAsk("Is there a cyclone threat for Odisha right now?")}>
-            Ask about cyclone risk →
-          </button>
-        </div>
         <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
           <div className="wg-section-title">Browse by hazard</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", marginTop: "0.6rem" }} role="group" aria-label="Hazard category">
