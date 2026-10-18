@@ -93,8 +93,9 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
         # Only a high modelled hourly amount or substantial daily accumulation
         # qualifies for this computed heavy-rain risk category.
         heavy_rain = (sample["precip"] >= 10.0 or sample["rain_sum"] >= 35.0)
-        storm = (sample["code"] in (80, 81, 82, 95, 96, 99)
-                 or (sample["rain_prob"] > 60 and sample["wind_max"] > 25))
+        # WMO 80–82 are rain showers, not thunderstorms. Do not infer a
+        # thunderstorm from rain probability and wind alone.
+        storm = sample["code"] in (95, 96, 99)
         heat = sample["temp"] >= 40.0 or sample["temp_max"] >= 41.5
         cold = sample["temp"] <= 7.0 or sample["temp_min"] <= 5.0
         coastal_wind = (station["coastal"]
