@@ -41,9 +41,10 @@ Frontend (`frontend/src/`): `App.jsx`, `main.jsx`, `index.css`,
 `AlertCenter`, `ClimateAnalytics`, `CityComparison`, `AgriAdvisor`,
 `AviationMarine`, `ModernWeatherCard`, `WxIcon` (Lucide). Kept: `SourceBadge`, `RiskPanel`, `AboutDeveloper`,
 `NwpSatellitePanel`. Removed dead/unused: `App.css`, template art
-(`hero.png`, `react.svg`, `vite.svg`), third-party logo `favicon.svg`
-(replaced with an original mark), unused sprite `icons.svg`, unused
-dependencies (`chart.js`, `react-chartjs-2`, `canvas-confetti`).
+(`hero.png`, `react.svg`, `vite.svg`), and unused sprite `icons.svg`.
+The original WeatherGPT SVG mark is stored as `frontend/public/favicon.svg`
+and is shared by the browser tab and PWA manifest. Unused dependencies
+(`chart.js`, `react-chartjs-2`, `canvas-confetti`) were removed.
 
 ## 4. What was NOT copied
 
