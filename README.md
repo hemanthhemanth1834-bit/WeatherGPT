@@ -52,7 +52,7 @@ WeatherGPT is an AI-assisted weather intelligence platform built for India. It c
 | Local AI | Optional local model | Ollama |
 | Realtime | Optional MQTT/WIS2 | Mosquitto |
 
-Open-Meteo currently documents a free weather API and 30+ models, including ECMWF, NOAA and DWD model families. citeturn0search7turn0search6
+Open-Meteo documents a free weather API and model families including ECMWF, NOAA and DWD. Sources: [Open-Meteo API](https://open-meteo.com/en/docs) · [Models](https://open-meteo.com/en/docs#models)
 
 ---
 
@@ -62,7 +62,7 @@ Open-Meteo currently documents a free weather API and 30+ models, including ECMW
 
 **https://weathergpt-kappa-pink.vercel.app/**
 
-The existing deployment is provided for demonstration access. **This README rewrite does not trigger a new Vercel deployment.**
+The application is deployed at the URL above. Deployment status and provider availability can change; verify the current release and runtime health before relying on it.
 
 ### Example: natural-language weather
 
@@ -98,32 +98,33 @@ Where a provider exposes a direct image endpoint, this README uses provider-rend
 
 ### NASA GIBS — Earth observation
 
-<img src="https://gibs.earthdata.nasa.gov/wmts/epsg4326/best/MODIS_Terra_CorrectedReflectance_TrueColor/default/2026-10-03/250m/3/3/4.jpg" alt="NASA GIBS MODIS Terra Earth observation" width="100%">
+NASA GIBS imagery is time- and layer-dependent. Open the [NASA GIBS browser](https://worldview.earthdata.nasa.gov/) or [GIBS service](https://gibs.earthdata.nasa.gov/) to view available imagery; no fixed-date image is embedded here.
 
-NASA GIBS provides global satellite imagery through public WMTS/WMS services. citeturn0search1turn1search4
+NASA GIBS provides global satellite imagery through public [WMTS/WMS services](https://nasa-gibs.github.io/gibs-api-docs/).
 
 **Source:** https://gibs.earthdata.nasa.gov/
 
 ### RainViewer — radar
 
-<img src="https://tilecache.rainviewer.com/v2/radar/838abf7afc16/512/4/20.59/78.96/2/1_0.png" alt="RainViewer radar over India" width="100%">
+RainViewer radar frames are time-dependent. Use the [Weather Maps API metadata](https://api.rainviewer.com/public/weather-maps.json) to discover available frames; no fixed-frame tile is embedded here.
 
-RainViewer documents recent radar imagery through its public Weather Maps API, including recent past frames at approximately 10-minute intervals. The current free API does not provide future nowcast frames; WeatherGPT therefore labels radar as recent historical imagery only. citeturn1search1turn0search10
+RainViewer documents recent radar imagery through its public [Weather Maps API](https://www.rainviewer.com/api/weather-maps-api.html). The app labels radar as recent-history imagery, not a guaranteed future nowcast.
 
 **Live metadata:** https://api.rainviewer.com/public/weather-maps.json
 
 > Provider image URLs can rotate as upstream data changes. WeatherGPT requests current metadata at runtime instead of treating a permanent screenshot as live.
 
-### Live source badges
+### Provider links and runtime status
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Open--Meteo-LIVE-0B7A75" alt="Open-Meteo LIVE">
-  <img src="https://img.shields.io/badge/NASA%20GIBS-LIVE%20EO-0B5FFF" alt="NASA GIBS LIVE">
-  <img src="https://img.shields.io/badge/RainViewer-LIVE%20RADAR-3A7BD5" alt="RainViewer LIVE">
-  <img src="https://img.shields.io/badge/USGS-LIVE%20EVENTS-333333" alt="USGS LIVE">
-  <img src="https://img.shields.io/badge/NOAA-LIVE%20AVIATION-005B96" alt="NOAA LIVE">
-  <img src="https://img.shields.io/badge/IMD-OFFICIAL-8B0000" alt="IMD OFFICIAL">
-</p>
+These links identify configured providers; they do **not** guarantee current availability. Check the application's provider-health view or `/api/providers/health?live=true` for runtime results.
+
+- [Open-Meteo](https://open-meteo.com/)
+- [NASA GIBS](https://gibs.earthdata.nasa.gov/)
+- [RainViewer](https://www.rainviewer.com/api/weather-maps-api.html)
+- [USGS Earthquake Hazards](https://earthquake.usgs.gov/earthquakes/feed/)
+- [NOAA Aviation Weather](https://aviationweather.gov/)
+- [IMD](https://mausam.imd.gov.in/)
+
 
 ---
 
@@ -198,7 +199,7 @@ WeatherGPT explanation
 - saved places
 - city comparison
 
-Open-Meteo supports free forecast/historical workflows and direct model selection. citeturn0search7turn0search4
+Open-Meteo supports free forecast/historical workflows and direct model selection.
 
 ---
 
@@ -211,7 +212,7 @@ Open-Meteo supports free forecast/historical workflows and direct model selectio
 | ECMWF | <code>model=ecmwf</code> | ECMWF IFS |
 | ICON | <code>model=icon</code> | DWD ICON |
 
-Open-Meteo documents GFS, ECMWF IFS and DWD ICON access and model-specific variables. citeturn0search4turn0search8turn0search11
+Open-Meteo documents GFS, ECMWF IFS and DWD ICON access and model-specific variables.
 
 ### Model comparison
 
@@ -292,11 +293,11 @@ The language layer resolves language, intent and location before calling weather
 
 ### Radar
 
-RainViewer supplies recent precipitation radar imagery through its public Weather Maps API. The documented API provides recent-past frames; availability and timestamps must be checked at runtime. citeturn0search0turn0search10
+RainViewer supplies recent precipitation radar imagery through its public Weather Maps API. The documented API provides recent-past frames; availability and timestamps must be checked at runtime.
 
 ### Satellite
 
-NASA GIBS provides global Earth-observation imagery through WMTS/WMS and related services. citeturn0search1turn1search0
+NASA GIBS provides global Earth-observation imagery through WMTS/WMS and related services.
 
 ### Provenance rule
 
@@ -308,7 +309,7 @@ A viewer URL, image tile, static asset and application-proxied dataset are **not
 
 ### USGS earthquakes
 
-USGS provides FDSN event queries and real-time GeoJSON feeds for earthquake applications. citeturn4search1turn4search6
+USGS provides FDSN event queries and real-time GeoJSON feeds for earthquake applications.
 
 ### Natural events
 
@@ -345,7 +346,7 @@ The UI can expose:
 - timestamp
 - official-source state
 
-The official IMD API portal provides authorized access to observations, forecasts, warnings and bulletins. citeturn0search4
+The official IMD API portal provides authorized access to observations, forecasts, warnings and bulletins.
 
 **Protected/authenticated IMD data is never claimed as available without authorization.**
 
@@ -388,7 +389,7 @@ Typical products:
 - aviation observations
 - airport/station context
 
-The current NOAA API documents worldwide METAR/TAF coverage and machine-readable formats such as JSON and GeoJSON. citeturn4search0
+The current NOAA API documents worldwide METAR/TAF coverage and machine-readable formats such as JSON and GeoJSON.
 
 > Not a certified flight-planning system.
 
@@ -718,7 +719,7 @@ WeatherGPT/
 
 ### SIH Impact & Benefits
 
-![WeatherGPT impact and benefits](frontend/public/impact_and_benefits_slide.png)
+![WeatherGPT impact and benefits](impact_and_benefits_slide.png)
 
 Project-specific presentation visuals are separated from live provider imagery.
 
