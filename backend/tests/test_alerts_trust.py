@@ -21,6 +21,16 @@ def _sample(**overrides):
     return sample
 
 
+def test_incomplete_provider_payload_is_unavailable(monkeypatch):
+    class Response:
+        status_code = 200
+        def json(self):
+            return {"current": {"temperature_2m": 30}, "daily": {}}
+
+    monkeypatch.setattr(alerts, "http_get", lambda *args, **kwargs: Response())
+    assert alerts._sample(19.0, 72.0) == {"available": False}
+
+
 def test_provider_failure_does_not_create_synthetic_alert(monkeypatch):
     monkeypatch.setattr(alerts, "_sample", lambda *_: {"available": False})
     assert alerts.active_alerts(district="Mumbai") == []
