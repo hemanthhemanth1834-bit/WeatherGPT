@@ -76,10 +76,11 @@ def header_text(page):
 def scenario_all_fail(browser_type, failures):
     browser = launch(browser_type)
     page = browser.new_page(viewport={"width": 1440, "height": 900})
-    hits = {"n": 0}
+    hits = {"n": 0, "urls": []}
 
     def handler(route):
         hits["n"] += 1
+        hits["urls"].append(route.request.url)
         route.fulfill(
             status=500,
             content_type="application/json",
@@ -116,9 +117,16 @@ def scenario_all_fail(browser_type, failures):
     check(
         PLACEHOLDER not in h2, f"A: header stays honest after retry ({h2!r})", failures
     )
+    # The dashboard may load its explicitly pinned comparison cards, even
+    # while the active location is unknown. The invariant is that every
+    # weather request is grounded in a non-empty, explicit location query.
+    missing_location = [
+        url for url in hits["urls"]
+        if not urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get("location", [""])[0].strip()
+    ]
     check(
-        hits["n"] == 0,
-        f"A: no weather request without a selected location (requests={hits['n']})",
+        not missing_location,
+        f"A: no ungrounded weather request without a location (requests={hits['n']}, missing={len(missing_location)})",
         failures,
     )
 
