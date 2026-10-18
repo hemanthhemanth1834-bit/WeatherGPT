@@ -1,3 +1,5 @@
+> **Historical report (2026-10-18):** This document preserves evidence from its original tested revision. Its findings and test results are not a claim about the current cleanup branch or production deployment. Check the latest CI run and `docs/CLEANUP_RELEASE_NOTES.md` for current status.
+
 # WeatherGPT Test Report — audit/verified-release
 
 All results below were produced by running the commands on this machine against

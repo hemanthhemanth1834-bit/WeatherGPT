@@ -102,7 +102,7 @@ def assess_risk(weather: WeatherData) -> Dict[str, Any]:
     else:
         thunderstorm = "LOW"
 
-    # Cyclone risk is MODEL-DEPENDENT: only elevated when extreme wind + extreme rain coincide
+    # Computed wind/rain heuristic only; this is not cyclone detection, tracking, or an official warning.
     if wind == "EXTREME" and rainfall in ("HIGH", "EXTREME"):
         cyclone = "HIGH"
     elif wind in ("HIGH", "EXTREME") or rainfall == "EXTREME":
@@ -140,6 +140,7 @@ def assess_risk(weather: WeatherData) -> Dict[str, Any]:
         "data_type": "ESTIMATED",
         "disclaimer": (
             "Deterministic estimate from forecast values using documented thresholds. "
+            "Cyclone category is only a wind/rain heuristic; it does not detect or track cyclones. "
             "Not scientifically validated and not an official warning. "
             "Always follow IMD / NDMA / local authority instructions."
         ),

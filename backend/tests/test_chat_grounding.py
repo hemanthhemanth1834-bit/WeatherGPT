@@ -17,9 +17,9 @@ def test_deictic_phrase_uses_fallback_without_explicit_flag():
     assert explicit is False
 
 
-def test_deictic_phrase_without_fallback_defaults_to_delhi_not_explicit():
+def test_deictic_phrase_without_fallback_does_not_invent_default_city():
     place, explicit = extract_place_meta("Is it raining at my location?")
-    assert place == "New Delhi"
+    assert place == ""
     assert explicit is False
 
 

@@ -1,3 +1,5 @@
+> **Historical report (2026-10-18):** This document preserves evidence from its original tested revision. Its findings and test results are not a claim about the current cleanup branch or production deployment. Check the latest CI run and `docs/CLEANUP_RELEASE_NOTES.md` for current status.
+
 # WeatherGPT Security Audit (this release)
 
 Re-run of the security posture for the `audit/verified-release` change set.

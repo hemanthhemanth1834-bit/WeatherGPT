@@ -1,4 +1,5 @@
 """Unit tests for the chat engine's offline logic (no network required)."""
+from .weather_fixtures import make_test_weather
 from app.models import WeatherQueryRequest
 from app.services import chat
 from app.services import weather
@@ -31,7 +32,7 @@ def test_weather_mapping_pure_helpers():
 
 
 def test_render_uses_tool_numbers_not_invention():
-    data = weather._fallback(16.5, 80.6, "Vijayawada", "Andhra Pradesh")
+    data = make_test_weather(16.5, 80.6, "Vijayawada", "Andhra Pradesh")
     speech, markdown = chat._render_weather("Vijayawada", "Andhra Pradesh", data, "en")
     assert "27.0" in speech
     assert "Open-Meteo" not in markdown  # fallback labels its own source
@@ -56,7 +57,7 @@ def test_aqi_intent_labels_source(monkeypatch):
         lambda *a: {"standard": "US AQI (EPA)", "us_aqi": 88, "band": "Moderate",
                     "pm2_5": 30.0, "pm10": 55.0, "dominant_pollutant": "pm2_5"},
     )
-    response = chat.answer(WeatherQueryRequest(query="What is the AQI and air quality?"))
+    response = chat.answer(WeatherQueryRequest(query="What is the AQI and air quality?", location_name="Pune"))
     assert "Air quality (LIVE" in response.markdown_response
     assert "88" in response.markdown_response
 
@@ -67,5 +68,5 @@ def test_quake_fire_intents_offline_safe(monkeypatch):
     monkeypatch.setattr(chat, "get_weather", lambda *a: fake)
     monkeypatch.setattr("app.services.disasters.earthquakes",
                         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("down")))
-    response = chat.answer(WeatherQueryRequest(query="Any earthquakes lately?"))
+    response = chat.answer(WeatherQueryRequest(query="Any earthquakes lately?", location_name="Pune"))
     assert "USGS feed unreachable" in response.markdown_response

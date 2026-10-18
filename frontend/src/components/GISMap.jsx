@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { fetchActiveAlerts, fetchCycloneTrack, fetchEarthquakes, fetchWildfires } from "../services/api";
+import { fetchActiveAlerts, fetchEarthquakes, fetchWildfires } from "../services/api";
 import { getRadarFrames, radarTileUrl } from "../services/radar";
 
 function dot(color, glyph) {
@@ -36,13 +36,12 @@ export default function GISMap({ weather, onAsk }) {
   const overlaysRef = useRef(null);
   const askRef = useRef(onAsk);
   const [alerts, setAlerts] = useState([]);
-  const [track, setTrack] = useState(null);
   const [quakes, setQuakes] = useState([]);
   const [fires, setFires] = useState([]);
   const [frames, setFrames] = useState([]);
   const [frameIdx, setFrameIdx] = useState(0);
   const [playing, setPlaying] = useState(false);
-  const [layers, setLayers] = useState({ radar: true, alerts: true, track: true, quakes: true, fires: false });
+  const [layers, setLayers] = useState({ radar: true, alerts: true, quakes: true, fires: false });
   const [focus, setFocus] = useState(null);
   const [problem, setProblem] = useState("");
   const timer = useRef(null);
@@ -77,18 +76,16 @@ export default function GISMap({ weather, onAsk }) {
   useEffect(() => {
     (async () => {
       try {
-        const [al, tr, qk, fr] = await Promise.all([
+        const [al, qk, fr] = await Promise.all([
           fetchActiveAlerts(),
-          fetchCycloneTrack(),
           fetchEarthquakes(5, 7).catch(() => null),
           fetchWildfires(25).catch(() => null),
         ]);
         setAlerts(al);
-        setTrack(tr);
         setQuakes(qk?.events || []);
         setFires((fr?.events || []).filter((e) => e.lat != null));
       } catch {
-        setProblem("Alert/track overlays failed to load — the base map still works.");
+        setProblem("Alert overlays failed to load — the base map still works.");
       }
       try {
         // Shared cached client: one metadata request per session window.
@@ -134,17 +131,6 @@ export default function GISMap({ weather, onAsk }) {
     if (!group) return;
     group.clearLayers();
 
-    const line = track?.features?.find((f) => f.geometry?.type === "LineString")?.geometry.coordinates.map(([lon, lat]) => [lat, lon]) || [];
-    const point = track?.features?.find((f) => f.geometry?.type === "Point");
-
-    if (layers.track && line.length > 0) {
-      L.polyline(line, { color: "#ef4444", weight: 3, dashArray: "6 8" }).addTo(group);
-    }
-    if (layers.track && point) {
-      L.marker([point.geometry.coordinates[1], point.geometry.coordinates[0]], { icon: dot("#ef4444", "🌀") })
-        .bindPopup("<strong>Illustrative storm position (DEMO)</strong><br>Not a live cyclone bulletin.")
-        .addTo(group);
-    }
     if (weather) {
       const marker = L.marker([weather.lat, weather.lon], { icon: pin("#38bdf8") }).addTo(group);
       marker.bindPopup(`<strong>${weather.location}</strong><br>${weather.current_temp}°C · ${weather.condition}<br><button data-wg-ask="1">Ask WeatherGPT →</button>`);
@@ -187,7 +173,7 @@ export default function GISMap({ weather, onAsk }) {
         circle.addTo(group);
       });
     }
-  }, [alerts, track, quakes, fires, weather, layers]);
+  }, [alerts, quakes, fires, weather, layers]);
 
   const frame = frames[frameIdx];
 
@@ -196,8 +182,8 @@ export default function GISMap({ weather, onAsk }) {
       <div className="wg-card" style={{ padding: "0.8rem 1rem", display: "flex", flexDirection: "column", gap: "0.6rem" }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", alignItems: "center" }}>
           <span className="wg-chip estimated" title="Recent-past composite frames, typically ~10 minutes delayed — not a live feed">RADAR · RECENT HISTORY{frame ? ` · ${stampLabel(frame.time)}` : ""}</span>
-          <span className="wg-chip demo">DEMO: zones + illustrative track</span>
-          {["radar", "alerts", "track", "quakes", "fires"].map((key) => (
+          
+          {["radar", "alerts", "quakes", "fires"].map((key) => (
             <label key={key} style={{ display: "inline-flex", gap: "0.3rem", alignItems: "center", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
               <input type="checkbox" className="wg-check" checked={layers[key]} onChange={(e) => setLayers({ ...layers, [key]: e.target.checked })} />
               {key}
@@ -224,7 +210,6 @@ export default function GISMap({ weather, onAsk }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", alignItems: "center", fontSize: "0.68rem", color: "var(--wg-muted)" }} aria-label="Legend">
           <strong>Legend:</strong>
           <span><span aria-hidden="true">🟦→🟥</span> rain intensity</span>
-          <span style={{ color: "#ef4444" }}>━ ━</span><span>DEMO track</span>
           <span style={{ color: "#f97316" }}>◯</span><span>alert zone</span>
           <span>📍 selected place</span>
           <span>🟣 quake (USGS)</span>
@@ -237,7 +222,7 @@ export default function GISMap({ weather, onAsk }) {
         <div ref={mapNode} style={{ height: "100%", width: "100%" }} aria-label="Interactive weather map" />
       </div>
       <p style={{ fontSize: "0.72rem", color: "var(--wg-muted)", margin: 0 }}>
-        Basemap © OpenStreetMap contributors · Radar © RainViewer (past 2-hour frames) · Zones and track are application illustrations, not official warnings.
+        Basemap © OpenStreetMap contributors · Radar © RainViewer (past 2-hour frames) · Alert circles are visual approximations, not official warning boundaries.
       </p>
     </section>
   );

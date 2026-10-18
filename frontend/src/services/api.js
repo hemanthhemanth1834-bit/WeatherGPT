@@ -51,8 +51,6 @@ export const fetchActiveAlerts = (severity = null) =>
 export const fetchIndiaAlerts = (state = null) =>
   get(state ? `/alerts/india?state=${encodeURIComponent(state)}` : "/alerts/india");
 
-export const fetchCycloneTrack = () => get("/alerts/cyclone-track");
-
 export const fetchCropAdvisory = (crop = "paddy", district = "Nagpur", state = "Maharashtra") =>
   get(`/advisory/crop?crop=${encodeURIComponent(crop)}&district=${encodeURIComponent(district)}&state=${encodeURIComponent(state)}`);
 

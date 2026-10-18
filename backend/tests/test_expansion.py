@@ -1,4 +1,5 @@
 """Tests for places, flood proxy, solar estimate (offline-safe + live)."""
+from .weather_fixtures import make_test_weather
 import pytest
 from fastapi.testclient import TestClient
 
@@ -80,12 +81,12 @@ def test_solar_endpoint():
 def test_flood_shelter_solar_chat_intents():
     from app.models import WeatherQueryRequest
     from app.services import chat, weather
-    fake = weather._fallback(28.0, 77.0, "Delhi", "Delhi")
+    fake = make_test_weather(28.0, 77.0, "Delhi", "Delhi")
     import unittest.mock as mock
     with mock.patch.object(chat, "get_weather", return_value=fake):
         flood_resp = chat.answer(WeatherQueryRequest(query="Is there flood risk here?",
-                                                     language="en"))
+                                                     language="en", location_name="Delhi"))
         assert "Flood proxy" in flood_resp.markdown_response
         solar_resp = chat.answer(WeatherQueryRequest(query="Rooftop solar potential?",
-                                                     language="en"))
+                                                     language="en", location_name="Delhi"))
         assert "ESTIMATED" in solar_resp.markdown_response

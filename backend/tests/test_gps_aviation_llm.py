@@ -58,18 +58,27 @@ def test_reverse_failure_never_raises(monkeypatch):
 
 
 def test_weather_state_override():
-    body = client.get("/api/weather/current",
-                      params={"location": "Testville", "lat": 18.5,
-                              "lon": 73.8, "state": "Test State"}).json()
+    response = client.get("/api/weather/current",
+                          params={"location": "Testville", "lat": 18.5,
+                                  "lon": 73.8, "state": "Test State"})
+    if response.status_code == 503:
+        assert "unavailable" in response.json()["detail"].lower()
+        return
+    assert response.status_code == 200
+    body = response.json()
     assert body["location"] == "Testville"
     assert body["state"] == "Test State"
-    assert body["status"] in ("LIVE", "SIMULATED")
+    assert body["status"] == "LIVE"
 
 
 def test_no_hardcoded_default_blocks_empty_query():
-    body = client.get("/api/weather/current", params={"location": ""}).json()
-    assert body["status"] in ("LIVE", "SIMULATED")
-    assert body["location"]
+    response = client.get("/api/weather/current", params={"location": ""})
+    if response.status_code == 503:
+        assert "unavailable" in response.json()["detail"].lower()
+        return
+    assert response.status_code == 200
+    assert response.json()["status"] == "LIVE"
+    assert response.json()["location"]
 
 
 def test_live_aviation_endpoint():

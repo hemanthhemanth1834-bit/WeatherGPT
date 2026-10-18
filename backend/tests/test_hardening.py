@@ -1,5 +1,6 @@
 """Hardening regression tests: retries, fallbacks, validation, rate limits,
 hallucination prevention. Offline-safe except where marked."""
+from .weather_fixtures import make_test_weather
 import pytest
 from fastapi.testclient import TestClient
 
@@ -112,7 +113,7 @@ def test_rate_limit_blocks_when_tiny(monkeypatch):
 
 def test_no_hallucinated_numbers(monkeypatch):
     """Every temperature figure in the reply must come from the tool payload."""
-    data = weather._fallback(16.5, 80.6, "Vijayawada", "Andhra Pradesh")
+    data = make_test_weather(16.5, 80.6, "Vijayawada", "Andhra Pradesh")
     monkeypatch.setattr(chat, "get_weather", lambda *a: data)
     response = chat.answer(WeatherQueryRequest(query="weather in Vijayawada",
                                                language="en"))

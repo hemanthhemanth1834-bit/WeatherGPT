@@ -2,12 +2,12 @@ import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { feature } from "topojson-client";
-import { fetchActiveAlerts, fetchCycloneTrack, fetchEarthquakes, fetchWildfires } from "../services/api";
+import { fetchActiveAlerts, fetchEarthquakes, fetchWildfires } from "../services/api";
 
 /* 3D Earth command view. Original implementation (three.js, lazy chunk).
    Coastlines: Natural Earth 110m via world-atlas (public domain), fetched at
    runtime; falls back to a labelled wireframe globe when offline. Markers
-   come only from live feeds (alerts, cyclone DEMO track, quakes, fires).
+   come from provider feeds and computed alert data (alerts, quakes, fires).
    Quality scales down on small screens / reduced motion / no WebGL. */
 const LAND_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json";
 const R = 1;
@@ -154,7 +154,7 @@ export default function Earth3D({ weather }) {
       sun.position.copy(subsolar());
       scene.add(sun, new THREE.AmbientLight(0x8fb4dd, 0.55));
 
-      // Live markers: user place, alerts, cyclone DEMO, quakes, fires.
+      // Markers: selected place, computed alerts, USGS quakes, and EONET events.
       const pickables = [];
       const addMarker = (lat, lon, color, size, info) => {
         if (lat == null || lon == null) return;
@@ -170,9 +170,8 @@ export default function Earth3D({ weather }) {
       };
 
       try {
-        const [alerts, track, quakes, fires] = await Promise.all([
+        const [alerts, quakes, fires] = await Promise.all([
           fetchActiveAlerts().catch(() => []),
-          fetchCycloneTrack().catch(() => null),
           fetchEarthquakes(5, 7).catch(() => null),
           fetchWildfires(25).catch(() => null),
         ]);
@@ -180,9 +179,6 @@ export default function Earth3D({ weather }) {
         alerts.slice(0, 12).forEach((a) =>
           addMarker(a.lat, a.lon, a.severity === "Red" ? 0xef4444 : a.severity === "Orange" ? 0xf97316 : 0xeab308, 0.016,
             { title: a.headline, sub: `${a.severity} · computed, unofficial` }));
-        const line = track?.features?.find((f) => f.geometry?.type === "LineString");
-        (line?.geometry.coordinates || []).forEach(([lo, la]) =>
-          addMarker(la, lo, 0xef4444, 0.011, { title: "Illustrative cyclone point (DEMO)", sub: "Not a live bulletin" }));
         (quakes?.events || []).forEach((q) => {
           addMarker(q.lat, q.lon, 0xc084fc, 0.008 + Math.min(0.02, (q.magnitude || 0) * 0.003),
             { title: `M${q.magnitude} — ${q.place}`, sub: "USGS, official third-party" });
@@ -274,7 +270,7 @@ export default function Earth3D({ weather }) {
         </div>
       )}
       <p style={{ fontSize: "0.7rem", color: "var(--wg-muted)", margin: "0.5rem 0 0" }}>
-        Coastlines: Natural Earth (public domain). Markers: Open-Meteo alerts feed (computed), illustrative cyclone line (DEMO), USGS quakes and NASA EONET fires (official third-party). Tracker-free; data fetched live in your browser.
+        Coastlines: Natural Earth (public domain). Markers: computed weather alerts, USGS quakes and NASA EONET events. Data fetched in your browser when providers respond.
       </p>
     </div>
   );

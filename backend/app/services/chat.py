@@ -84,7 +84,7 @@ def extract_place_meta(text: str, fallback: Optional[str] = None) -> Tuple[str, 
         if phrase in lowered:
             if fallback and fallback.strip().lower() not in ("", "your location", "auto"):
                 return fallback.strip().title(), False
-            return "New Delhi", False
+            return "", False
     for key in sorted(geo.GAZETTEER, key=len, reverse=True):
         if re.search(r"\b" + re.escape(key) + r"\b", lowered):
             return key.title(), True
@@ -101,7 +101,7 @@ def extract_place_meta(text: str, fallback: Optional[str] = None) -> Tuple[str, 
             return candidate.title(), True
     if fallback and fallback.strip().lower() not in ("", "your location", "auto"):
         return fallback.strip().title(), False
-    return "New Delhi", False
+    return "", False
 
 
 def extract_place(text: str, fallback: Optional[str] = None) -> str:
@@ -336,7 +336,7 @@ def _render_weather(place: str, state: str, data: WeatherData,
     markdown += (f"\n\n_Source: {data.data_source} · {data.status} · "
                  f"Updated {data.updated_at_ist or 'just now'}_")
     if data.status == "LIVE" and data.data_type.lower() == "forecast":
-        markdown += "\n\n_These are live-retrieved model forecast values, not direct station observations. AQI shown above is an estimate; use the Air Quality view for the live AQI feed._"
+        markdown += "\n\n_These are live-retrieved model forecast values, not direct station observations. AQI provenance is shown beside the value; when the live AQI feed is unavailable, the source is labelled as an estimate._"
         if data.uv_index_source.startswith("Estimated") or data.visibility_source.startswith("Estimated"):
             markdown += "\n\n_The selected model omitted UV and/or visibility, so any displayed fallback value is explicitly estimated._"
     return speech, markdown
@@ -450,6 +450,14 @@ def answer(request: WeatherQueryRequest) -> ChatResponse:
         )
 
     place, explicit = extract_place_meta(text, request.location_name)
+    if not place:
+        message = "Please choose a location or enter a city name before requesting location-specific weather."
+        return ChatResponse(
+            query=text, detected_language=lang, persona=persona,
+            speech_text=message, markdown_response=message,
+            quick_suggestions=["Search for a city", "Enable location access"],
+            explicit_location=False, location_resolved=False,
+        )
     lat, lon, proper, state, place_resolved = geo.resolve(place)
     data = get_weather(lat, lon, proper, state)
 
