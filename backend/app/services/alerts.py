@@ -3,8 +3,8 @@
 Method: sample live Open-Meteo telemetry at a set of reference stations
 and raise CAP-styled alerts when documented thresholds are crossed.
 These are application-generated estimates and are NEVER official
-government bulletins. A clearly illustrative synoptic note is included
-when no station crosses a threshold, so the feed is never empty.
+government bulletins. The feed stays empty when no threshold is crossed
+or the upstream provider data is unavailable.
 """
 import datetime
 from typing import List, Optional
@@ -205,25 +205,3 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
     if severity and severity.lower() != "all":
         alerts = [a for a in alerts if a.severity.lower() == severity.lower()]
     return alerts
-
-
-def cyclone_track() -> dict:
-    """Illustrative cyclone-track GeoJSON (DEMO — not a live bulletin)."""
-    now = datetime.datetime.now().strftime("%d %b %H:%M IST")
-    return {
-        "type": "FeatureCollection",
-        "status": "DEMO",
-        "system_name": "Illustrative Bay of Bengal low-pressure track",
-        "basin": "Bay of Bengal",
-        "disclaimer": "Demonstration geometry for the GIS map; not a live cyclone bulletin.",
-        "features": [
-            {"type": "Feature",
-             "geometry": {"type": "LineString",
-                          "coordinates": [[89.5, 14.2], [88.2, 16.0], [86.9, 17.8],
-                                          [85.8, 19.8], [84.9, 21.5], [84.2, 23.0]]},
-             "properties": {"stroke": "#EF4444", "stroke-width": 4}},
-            {"type": "Feature",
-             "geometry": {"type": "Point", "coordinates": [85.8, 19.8]},
-             "properties": {"name": "Illustrative centre", "time": now}},
-        ],
-    }

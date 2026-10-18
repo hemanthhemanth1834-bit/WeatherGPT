@@ -292,7 +292,7 @@ The language layer resolves language, intent and location before calling weather
 
 ### Radar
 
-RainViewer supplies recent precipitation radar imagery through its public Weather Maps API. The documented API provides recent radar frames at 10-minute intervals over the recent two-hour window. citeturn0search0turn0search10
+RainViewer supplies recent precipitation radar imagery through its public Weather Maps API. The documented API provides recent-past frames; availability and timestamps must be checked at runtime. citeturn0search0turn0search10
 
 ### Satellite
 
@@ -488,21 +488,21 @@ The interface remains understandable when motion is reduced.
 
 | Capability | Free / alternative source | Status |
 |---|---|---|
-| Forecast | Open-Meteo | LIVE |
-| GFS | Open-Meteo | LIVE |
-| ECMWF IFS | Open-Meteo | LIVE |
-| DWD ICON | Open-Meteo | LIVE |
-| Air Quality | Open-Meteo | LIVE |
-| Marine | Open-Meteo | LIVE |
-| Historical / ERA5 | Open-Meteo | LIVE |
-| Radar | RainViewer | LIVE |
-| Satellite | NASA GIBS | LIVE/reference |
-| Earthquakes | USGS | LIVE |
-| Natural events | NASA EONET | LIVE |
-| Global disasters | GDACS | LIVE |
+| Forecast | Open-Meteo | Verify at runtime |
+| GFS | Open-Meteo | Verify at runtime |
+| ECMWF IFS | Open-Meteo | Verify at runtime |
+| DWD ICON | Open-Meteo | Verify at runtime |
+| Air Quality | Open-Meteo | Verify at runtime |
+| Marine | Open-Meteo | Verify at runtime |
+| Historical / ERA5 | Open-Meteo | Archive; verify at runtime |
+| Radar | RainViewer | Recent past; verify at runtime |
+| Satellite | NASA GIBS | Dated imagery; verify product date |
+| Earthquakes | USGS | Verify at runtime |
+| Natural events | NASA EONET | Verify at runtime |
+| Global disasters | GDACS | Verify at runtime |
 | Aviation | NOAA Aviation Weather | LIVE when upstream responds |
-| Maps | OpenStreetMap | LIVE |
-| Reverse geocode | BigDataCloud | FREE/FAIR-USE |
+| Maps | OpenStreetMap | Tiles loaded at runtime |
+| Reverse geocode | BigDataCloud | Free tier; usage limits apply |
 | India warnings | IMD RSS | LIVE when upstream responds |
 | Local AI | Ollama | OPTIONAL |
 | MQTT/WIS2 | Mosquitto | OPTIONAL |
