@@ -85,8 +85,8 @@ def test_flood_shelter_solar_chat_intents():
     import unittest.mock as mock
     with mock.patch.object(chat, "get_weather", return_value=fake):
         flood_resp = chat.answer(WeatherQueryRequest(query="Is there flood risk here?",
-                                                     language="en"))
+                                                     language="en", location_name="Delhi"))
         assert "Flood proxy" in flood_resp.markdown_response
         solar_resp = chat.answer(WeatherQueryRequest(query="Rooftop solar potential?",
-                                                     language="en"))
+                                                     language="en", location_name="Delhi"))
         assert "ESTIMATED" in solar_resp.markdown_response
