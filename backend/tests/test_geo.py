@@ -10,6 +10,19 @@ def test_gazetteer_hit():
     assert abs(lon - 80.6480) < 0.001
 
 
+def test_rajahmundry_and_ap_locations_resolve_offline(monkeypatch):
+    """Common Andhra Pradesh locations remain searchable when live geocoding is unavailable."""
+    monkeypatch.setattr(geo, "_geocode_live", lambda query: None)
+    lat, lon, name, state = geo.geocode("Rajahmundry")
+    assert name == "Rajahmundry"
+    assert state == "Andhra Pradesh"
+    assert abs(lat - 17.0005) < 0.01
+    assert abs(lon - 81.8040) < 0.01
+    results = geo.autocomplete("raja", limit=8)
+    assert any(item["name"] == "Rajahmundry" for item in results)
+    assert any(item["name"] == "Rajamahendravaram" for item in results)
+
+
 def test_case_and_punctuation_tolerant():
     lat, lon, name, state = geo.geocode("  NEW-DELHI ")
     assert name == "New Delhi"
