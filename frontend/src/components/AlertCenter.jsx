@@ -129,7 +129,7 @@ export default function AlertCenter({ onAsk }) {
         <div>
           <h2 style={{ margin: 0, fontSize: "1.15rem" }}>Early-warning feed</h2>
           <p style={{ margin: "0.25rem 0 0", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
-            Computed from live telemetry against documented thresholds — <strong>not official IMD bulletins</strong>.
+            Application-generated estimates from available Open-Meteo model data — <strong>not official IMD bulletins</strong>. An empty feed is not a safety guarantee.
           </p>
         </div>
         <div role="group" aria-label="Alert scope" style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
@@ -240,7 +240,7 @@ export default function AlertCenter({ onAsk }) {
         ))}
       </div>
       {!busy && !error && alerts.length === 0 && (
-        <div className="wg-alert info" role="status">No alerts at this severity right now.</div>
+        <div className="wg-alert info" role="status">No computed alerts met this filter, or the required source data was unavailable. This is not a safety clearance — verify current official bulletins.</div>
       )}
     </section>
   );
