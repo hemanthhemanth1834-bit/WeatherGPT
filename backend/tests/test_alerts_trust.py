@@ -49,6 +49,15 @@ def test_heavy_rain_is_explicitly_labelled_as_computed_estimate(monkeypatch):
     assert heavy[0].certainty == "Likely"
 
 
+
+def test_rain_showers_are_not_labelled_as_thunderstorms(monkeypatch):
+    monkeypatch.setattr(
+        alerts, "_sample",
+        lambda *_: _sample(code=80, rain_prob=90, wind_max=40.0, precip=0.0, rain_sum=0.0),
+    )
+    results = alerts.active_alerts(district="Mumbai")
+    assert not any(a.event == "Modelled Thunderstorm Risk" for a in results)
+
 def test_alert_timestamps_are_explicitly_india_standard_time():
     stamp = alerts._stamp(0)
     assert stamp.endswith(" IST")
