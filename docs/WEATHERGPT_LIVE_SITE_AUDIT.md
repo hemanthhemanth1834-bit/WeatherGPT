@@ -1,3 +1,5 @@
+> **Historical audit snapshot (2026-10-18):** This report records findings from the pre-cleanup revision. Do not treat its findings as current release status; see `docs/CLEANUP_RELEASE_NOTES.md` and the current CI/deployment checks.
+
 # WeatherGPT Live Site Audit
 
 Machine-run audit of the production site (baseline deployment `7097846696`,
