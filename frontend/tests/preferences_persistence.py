@@ -20,7 +20,7 @@ def main():
 
     with sync_playwright() as p:
         browser = p.chromium.launch()
-        page = browser.new_page(viewport={"width": 1280, "height": 800})
+        page = browser.new_page(viewport={"width": 1440, "height": 900})
         page.goto(UI_URL, wait_until="domcontentloaded", timeout=120000)
         page.wait_for_selector("main", timeout=120000)
         page.wait_for_function("() => document.documentElement.dataset.wgTheme")
