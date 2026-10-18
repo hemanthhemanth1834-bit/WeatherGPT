@@ -29,7 +29,7 @@ def test_cold_wave_alert(monkeypatch):
     def freezing(_lat, _lon):
         return {"temp": 4.0, "temp_max": 9.0, "temp_min": 3.0, "precip": 0.0,
                 "rain_sum": 0.0, "rain_prob": 5, "wind": 8.0, "wind_max": 12.0,
-                "code": 1, "humidity": 70}
+                "code": 1, "humidity": 70, "available": True}
     monkeypatch.setattr(alerts, "_sample", freezing)
     found = alerts.active_alerts(state=None, district="Ludhiana")
     assert any(a.event == "Cold Wave" for a in found)
