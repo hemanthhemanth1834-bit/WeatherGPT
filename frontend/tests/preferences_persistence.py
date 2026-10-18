@@ -54,6 +54,7 @@ def main():
 
         language = page.locator(".wg-ref-language select")
         language.select_option("te")
+        page.wait_for_function("() => localStorage.getItem('weathergpt.language') === 'te'")
         page.reload(wait_until="domcontentloaded", timeout=120000)
         page.wait_for_selector("main", timeout=120000)
         page.wait_for_function("() => document.querySelector('.wg-ref-language select')?.value === 'te'")
