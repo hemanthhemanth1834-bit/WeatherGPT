@@ -1,4 +1,5 @@
 """Tests for live free providers + engines. Live calls skip gracefully offline."""
+from .weather_fixtures import make_test_weather
 import pytest
 from fastapi.testclient import TestClient
 
@@ -62,10 +63,10 @@ def test_travel_safety_contract():
 
 
 def test_travel_scoring_pure():
-    data = weather._fallback(28.6, 77.2, "Delhi", "Delhi")
+    data = make_test_weather(28.6, 77.2, "Delhi", "Delhi")
     out = tv.travel_safety(data)
     assert out["safety"] in ("LOW", "MODERATE", "HIGH")
-    stormy = weather._fallback(19.0, 72.8, "Mumbai", "Maharashtra")
+    stormy = make_test_weather(19.0, 72.8, "Mumbai", "Maharashtra")
     stormy.precipitation = 30.0
     stormy.visibility = 1.0
     out2 = tv.travel_safety(stormy)
