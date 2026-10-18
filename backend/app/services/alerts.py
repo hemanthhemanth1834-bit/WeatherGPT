@@ -46,6 +46,19 @@ def _sample(lat: float, lon: float) -> dict:
             data = response.json()
             current = data.get("current", {})
             daily = data.get("daily", {})
+            required_current = (
+                "temperature_2m", "relative_humidity_2m", "precipitation",
+                "weather_code", "wind_speed_10m",
+            )
+            required_daily = (
+                "temperature_2m_max", "temperature_2m_min", "precipitation_sum",
+                "precipitation_probability_max", "wind_speed_10m_max",
+            )
+            if (not isinstance(current, dict) or not isinstance(daily, dict)
+                    or any(current.get(key) is None for key in required_current)
+                    or any(not isinstance(daily.get(key), list) or not daily[key]
+                           or daily[key][0] is None for key in required_daily)):
+                return {"available": False}
             first = lambda key, default: (daily.get(key, [default]) or [default])[0]
             return {
                 "temp": float(current.get("temperature_2m", 28.0)),
