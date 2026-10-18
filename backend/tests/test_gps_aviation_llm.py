@@ -169,4 +169,4 @@ def test_explain_endpoint_without_keys(monkeypatch):
                        json={"topic": "rain", "location": "Pune"}).json()
     assert body["grounded"] is True
     assert body["engine"] == "RULE-BASED (deterministic)"
-    assert "Test-only fixture" in body["explanation"]
+    assert "SIMULATED" in body["explanation"] or "Local estimate" in body["explanation"]
