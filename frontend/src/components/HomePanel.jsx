@@ -118,19 +118,19 @@ function LiveRadarPreview({ weather }) {
 function LiveIntelligenceStrip({ weather, onTab }) {
   const location = weather?.location || "your location";
   const cards = [
-    ["LIVE NWP", "GFS · ECMWF · ICON", "Compare live model signals and see temperature/rain spread.", "nwp"],
-    ["EARTH OBSERVATION", "NASA GIBS + MODIS", "Live satellite imagery for India with public-source provenance.", "satellite"],
-    ["RADAR", "RainViewer", "Recent precipitation radar centered on your selected location.", "map"],
-    ["FREE-FIRST", "NO PAID KEY", "Open weather, disaster, GIS and aviation sources are connected.", "capabilities"],
+    ["MODEL GUIDANCE", "GFS · ECMWF · ICON", "Compare configured model guidance; check the NWP panel for actual provider status.", "nwp"],
+    ["EARTH OBSERVATION", "NASA GIBS / MODIS", "Satellite products can be delayed; each layer should show its product date and status.", "satellite"],
+    ["RECENT RADAR", "RainViewer", "Recent-past radar frames only. Do not interpret this layer as a guaranteed future nowcast.", "map"],
+    ["FREE-FIRST SOURCES", "Public data feeds", "Review provider status, attribution and fallback information in Data Status.", "capabilities"],
   ];
   return (
     <section className="wg-card" style={{marginTop:"1rem",padding:"1rem",overflow:"hidden",position:"relative"}}>
       <div style={{position:"absolute",inset:0,pointerEvents:"none",background:"radial-gradient(circle at 10% 0%, rgba(34,211,238,.12), transparent 32%), radial-gradient(circle at 90% 20%, rgba(99,102,241,.10), transparent 35%)"}} />
       <div style={{position:"relative",display:"flex",justifyContent:"space-between",gap:"1rem",alignItems:"end",flexWrap:"wrap",marginBottom:".75rem"}}>
         <div>
-          <span className="wg-chip live">NEW · LIVE INTELLIGENCE</span>
+          <span className="wg-chip estimated">DATA SOURCES &amp; PROVENANCE</span>
           <h2 style={{margin:".4rem 0 .2rem"}}>WeatherGPT Intelligence Layer</h2>
-          <p style={{margin:0,color:"var(--wg-muted)"}}>Connected live data for {location} — models, radar, satellite and free-source provenance.</p>
+          <p style={{margin:0,color:"var(--wg-muted)"}}>Available weather, model, radar and satellite products for {location}. Freshness and availability vary by provider and layer.</p>
         </div>
         <button className="wg-btn-ghost" onClick={() => onTab("capabilities")}>Open live sources →</button>
       </div>
@@ -140,7 +140,7 @@ function LiveIntelligenceStrip({ weather, onTab }) {
             <small style={{display:"block",color:"var(--wg-muted)"}}>{label}</small>
             <strong style={{display:"block",margin:".2rem 0"}}>{source}</strong>
             <span style={{display:"block",color:"var(--wg-muted)",fontSize:".82rem",lineHeight:1.45}}>{description}</span>
-            <span className="wg-chip live" style={{marginTop:".55rem"}}>LIVE</span>
+            <span className="wg-chip static" style={{marginTop:".55rem"}}>VIEW SOURCE STATUS</span>
           </button>
         ))}
       </div>
@@ -195,7 +195,7 @@ function StationCard({ name, place, weather, active, onClick }) {
           <span className="wg-ref-station-weather"><WxIcon icon={weather.icon} size={38} /><b>{weather.current_temp}°</b><span>{weather.condition}</span></span>
           <span className="wg-ref-station-feels">Feels {weather.feels_like ?? "—"}° · H: {weather.daily?.[0]?.temp_max ?? "—"}° • L: {weather.daily?.[0]?.temp_min ?? "—"}°</span>
           <span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}%</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"} • {weather.aqi_status || "Poor"}</span>
-          <span className="wg-ref-station-warning">[DEMO SCENARIO] Cyclone &amp; Monsoon Flash Flood Warning</span>
+          <span className="wg-ref-station-source">{weather.data_source || "Source unavailable"} · {weather.status || "STATUS UNKNOWN"}</span>
         </>
       ) : (
         <span className="wg-ref-station-weather muted">Select/search this place for live telemetry</span>
@@ -279,9 +279,9 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
         <div className="wg-ref-hero-location">WeatherGPT Intelligence Hub <span>{weather?.location || "New Delhi"}, {weather?.state || "Delhi NCR"}</span></div>
         <div className="wg-ref-hero-grid">
           <div className="wg-ref-hero-copy">
-            <span className="wg-chip live">● LIVE · INDIA WEATHER INTELLIGENCE</span>
-            <h1>AI Weather &amp; <span>Planetary Disaster Intelligence</span></h1>
-            <p>Autonomous multi-model meteorological consensus, early warning disaster blueprints, dynamic live-traffic evacuation routing, and hyperlocal sectoral advisories.</p>
+            <span className={`wg-chip ${weather?.status === "LIVE" ? "live" : "estimated"}`}>● WEATHER DATA · {weather?.status || "UNAVAILABLE"}</span>
+            <h1>Weather Intelligence &amp; <span>Planetary Risk</span></h1>
+            <p>Weather forecasts, recent radar and satellite imagery, model guidance and computed risk indicators — with source, freshness and fallback labels so you can judge the evidence.</p>
             <div className="wg-ref-hero-actions">
               <button className="wg-btn" onClick={() => onTab("deep_cast")}>☁ AI Weather Deep-Cast</button>
               <button className="wg-btn-ghost" onClick={() => onTab("evacuation")}>🚨 Disaster &amp; Evacuation Hub</button>
@@ -289,7 +289,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
             </div>
           </div>
           <div className="wg-ref-live-card wg-card">
-            <div className="wg-ref-live-head"><span>⌖ CURRENT WEATHER</span><span className="wg-chip live">LIVE</span></div>
+            <div className="wg-ref-live-head"><span>⌖ CURRENT WEATHER</span><span className={`wg-chip ${weather?.status === "LIVE" ? "live" : "estimated"}`}>{weather?.status || "UNAVAILABLE"}</span></div>
             {weather ? (
               <>
                 <div className="wg-ref-temp-row"><Live3DIcon kind={weather?.condition?.toLowerCase?.().includes("rain") ? "rain" : "weather"} size="lg" /><WxIcon icon={weather.icon} size={48} /><div><b>{weather.current_temp}°</b><span>Feels like {weather.feels_like}°C</span></div></div>
@@ -300,9 +300,9 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
                   <span>💨 {weather.wind_speed} km/h<small>Wind</small></span>
                   <span>💧 {weather.humidity}%<small>Humidity</small></span>
                   <span>🍃 {weather.aqi ?? "—"}<small>AQI</small></span>
-                  <span>◉ 4<small>Models</small></span>
+                  <span>◉ NWP<small>Model guidance</small></span>
                 </div>
-                <div className="wg-ref-source">SOURCE {weather.data_source} · {weather.status} · UPDATED {agoLabel(weather.updated_at_ist) || "now"}</div>
+                <div className="wg-ref-source">SOURCE {weather.data_source || "UNAVAILABLE"} · {weather.status || "UNKNOWN"} · UPDATED {agoLabel(weather.updated_at_ist) || "timestamp unavailable"} · AQI SOURCE {weather.aqi_source || "UNAVAILABLE"}</div>
               </>
             ) : <div className="wg-ref-empty">{detecting ? "Detecting your location…" : busy ? "Loading live weather…" : (locStatus === "ERROR" || locStatus === "DENIED" || locStatus === "UNAVAILABLE") ? "Weather unavailable for this location — use CHANGE above to pick a place." : "Search a place above to start."}</div>}
           </div>
@@ -313,7 +313,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
 
       <LiveIntelligenceStrip weather={weather} onTab={onTab} />
 
-      {topAlert && <button className="wg-ref-alertbar" onClick={() => onTab("alerts")}><span>⚠ ACTIVE ALERT</span><strong>{topAlert.headline}</strong><em>{topAlert.severity}</em><b>View alerts →</b></button>}
+      {topAlert && <button className="wg-ref-alertbar" onClick={() => onTab("alerts")}><span>⚠ COMPUTED RISK</span><strong>{topAlert.headline}</strong><em>{topAlert.severity}</em><b>Review evidence →</b></button>}
 
       <Section eyebrow="AI INTELLIGENCE" title="Deep-Cast & Disaster Engines">
         <div className="wg-ref-feature-grid">
