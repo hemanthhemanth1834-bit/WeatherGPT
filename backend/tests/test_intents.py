@@ -43,13 +43,13 @@ def _offline_weather(monkeypatch):
 
 def test_climate_intent_appends_reference(monkeypatch):
     _offline_weather(monkeypatch)
-    response = chat.answer(WeatherQueryRequest(query="Explain the monsoon trend and climate history"))
+    response = chat.answer(WeatherQueryRequest(query="Explain the monsoon trend and climate history", location_name="Vijayawada"))
     assert "Climate reference" in response.markdown_response
 
 
 def test_travel_intent_includes_risk(monkeypatch):
     _offline_weather(monkeypatch)
-    response = chat.answer(WeatherQueryRequest(query="Is it safe to travel tomorrow?"))
+    response = chat.answer(WeatherQueryRequest(query="Is it safe to travel tomorrow?", location_name="Vijayawada"))
     assert "Travel read" in response.markdown_response
     assert "ESTIMATED" in response.markdown_response
 
@@ -61,5 +61,5 @@ def test_disaster_persona_pulls_alerts(monkeypatch):
         seen.update(kwargs)
         return []
     monkeypatch.setattr(chat, "active_alerts", fake_alerts)
-    chat.answer(WeatherQueryRequest(query="Brief me", persona="disaster_manager"))
+    chat.answer(WeatherQueryRequest(query="Brief me", persona="disaster_manager", location_name="Vijayawada"))
     assert seen, "disaster_manager persona should trigger an alert lookup"
