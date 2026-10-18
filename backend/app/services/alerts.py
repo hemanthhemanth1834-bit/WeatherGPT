@@ -103,9 +103,10 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
         tag = f"{station['district'][:3].upper()}-{datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=5, minutes=30))).strftime('%d%H')}"
 
         # Probability and humidity alone indicate possible rain, not heavy rainfall.
-        # Only a high modelled hourly amount or substantial daily accumulation
-        # qualifies for this computed heavy-rain risk category.
-        heavy_rain = (sample["precip"] >= 10.0 or sample["rain_sum"] >= 35.0)
+        # Use conservative India rainfall screening thresholds: >=20 mm in the
+        # current hour is an intense spell; >=64.5 mm daily is the IMD heavy-rain
+        # category. These remain app-computed estimates, never official warnings.
+        heavy_rain = (sample["precip"] >= 20.0 or sample["rain_sum"] >= 64.5)
         # WMO 80–82 are rain showers, not thunderstorms. Do not infer a
         # thunderstorm from rain probability and wind alone.
         storm = sample["code"] in (95, 96, 99)
@@ -115,7 +116,7 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
                         and (sample["wind"] > 22.0 or sample["wind_max"] > 32.0))
 
         if heavy_rain:
-            extreme = sample["precip"] > 25.0 or sample["rain_sum"] > 70.0
+            extreme = sample["precip"] >= 30.0 or sample["rain_sum"] >= 115.6
             level = "Red" if extreme else "Orange"
             alerts.append(CAPAlert(
                 id=f"WG-HR-{tag}",
