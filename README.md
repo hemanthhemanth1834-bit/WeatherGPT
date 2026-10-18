@@ -831,6 +831,7 @@ The live CI badge at the top reflects GitHub Actions workflow state.
 | <code>docs/WEATHERGPT_TEST_REPORT.md</code> | Test evidence |
 | <code>docs/WEATHERGPT_LIVE_SITE_AUDIT.md</code> | Live-site audit |
 | <code>docs/WEATHERGPT_DATA_SOURCE_REGISTER.md</code> | Per-source register + licensing |
+| <code>docs/FREE_SOURCE_POLICY.md</code> | Free-provider terms, attribution, freshness and safety rules |
 | <code>docs/WEATHERGPT_REMAINING_WORK.md</code> | Remaining-work register |
 
 ---

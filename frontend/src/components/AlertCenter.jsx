@@ -129,7 +129,7 @@ export default function AlertCenter({ onAsk }) {
         <div>
           <h2 style={{ margin: 0, fontSize: "1.15rem" }}>Early-warning feed</h2>
           <p style={{ margin: "0.25rem 0 0", fontSize: "0.78rem", color: "var(--wg-muted)" }}>
-            Computed from live telemetry against documented thresholds — <strong>not official IMD bulletins</strong>.
+            Application-generated estimates from available Open-Meteo model data — <strong>not official IMD bulletins</strong>. An empty feed is not a safety guarantee.
           </p>
         </div>
         <div role="group" aria-label="Alert scope" style={{ display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
@@ -218,7 +218,7 @@ export default function AlertCenter({ onAsk }) {
                 {readIds.has(a.id) ? "✓ Read" : "Mark read"}
               </button>
               <button className="wg-btn-ghost" onClick={() => setCapFor(capFor?.id === a.id ? null : a)}>
-                {capFor?.id === a.id ? "Hide CAP" : "View CAP"}
+                {capFor?.id === a.id ? "Hide details" : "View details"}
               </button>
               <button className="wg-btn" onClick={() => onAsk(`Emergency response protocol for ${a.event} in ${a.district}`)}>
                 AI action plan →
@@ -227,12 +227,19 @@ export default function AlertCenter({ onAsk }) {
             {capFor?.id === a.id && (
               <pre className="wg-mono" style={{ fontSize: "0.66rem", background: "rgba(0,0,0,.35)", padding: "0.6rem", borderRadius: "0.6rem", overflowX: "auto", margin: 0 }}>
 {JSON.stringify({
-  identifier: a.id, sender: a.sender_name, sent: a.effective,
-  status: "Actual", msgType: "Alert", scope: "Public",
-  info: [{ event: a.event, urgency: a.urgency, severity: a.severity,
-           certainty: a.certainty, effective: a.effective, expires: a.expires,
-           areaDesc: a.area_desc, instruction: a.instruction,
-           note: "COMPUTED by WeatherGPT from live telemetry — UNOFFICIAL, not an IMD bulletin." }],
+  format: "WeatherGPT computed estimate (not a CAP message)",
+  identifier: a.id,
+  source: a.sender_name,
+  generated_at: a.effective,
+  valid_until: a.expires,
+  event: a.event,
+  severity: a.severity,
+  urgency: a.urgency,
+  certainty: a.certainty,
+  area: a.area_desc,
+  location: { district: a.district, state: a.state, latitude: a.lat, longitude: a.lon },
+  recommended_action: a.instruction,
+  disclaimer: "Unofficial application-generated estimate. Verify official bulletins before making safety decisions.",
 }, null, 2)}
               </pre>
             )}
@@ -240,7 +247,7 @@ export default function AlertCenter({ onAsk }) {
         ))}
       </div>
       {!busy && !error && alerts.length === 0 && (
-        <div className="wg-alert info" role="status">No alerts at this severity right now.</div>
+        <div className="wg-alert info" role="status">No computed alerts met this filter, or the required source data was unavailable. This is not a safety clearance — verify current official bulletins.</div>
       )}
     </section>
   );
