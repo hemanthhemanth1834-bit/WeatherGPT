@@ -17,7 +17,12 @@ async function request(path, options) {
       headers: { "Content-Type": "application/json", ...(options?.headers || {}) },
     });
     if (!response.ok) {
-      throw new Error(`Request failed (${response.status})`);
+      // Attach the HTTP status so callers can distinguish "backend answered
+      // with an error" (reachable) from a network failure/abort (not
+      // reachable) without parsing the message.
+      const error = new Error(`Request failed (${response.status})`);
+      error.status = response.status;
+      throw error;
     }
     return await response.json();
   } finally {

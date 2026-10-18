@@ -205,7 +205,7 @@ function StationCard({ name, place, weather, active, onClick }) {
   );
 }
 
-export default function HomePanel({ weather, busy, detecting, alertCount, alerts, onAsk, onTab, onRefresh }) {
+export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE", alertCount, alerts, onAsk, onTab, onRefresh }) {
   const [risk, setRisk] = useState(null);
   const [auto, setAuto] = useState(false);
   const [stationCount, setStationCount] = useState(3);
@@ -304,7 +304,7 @@ export default function HomePanel({ weather, busy, detecting, alertCount, alerts
                 </div>
                 <div className="wg-ref-source">SOURCE {weather.data_source} · {weather.status} · UPDATED {agoLabel(weather.updated_at_ist) || "now"}</div>
               </>
-            ) : <div className="wg-ref-empty">{detecting ? "Detecting your location…" : busy ? "Loading live weather…" : "Search a place above to start."}</div>}
+            ) : <div className="wg-ref-empty">{detecting ? "Detecting your location…" : busy ? "Loading live weather…" : (locStatus === "ERROR" || locStatus === "DENIED" || locStatus === "UNAVAILABLE") ? "Weather unavailable for this location — use CHANGE above to pick a place." : "Search a place above to start."}</div>}
           </div>
         </div>
       </div>

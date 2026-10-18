@@ -169,6 +169,59 @@ clean on the new build; suites re-run on chromium + firefox.
 4. **Cloud verification**: PR-head preview re-swept (13 widths clean; prod
    still banded until merge).
 
+## Stage L — premium upgrade pass (visual intelligence + reliability)
+
+Brief: the professional upgrade (premium UI/UX, honest states, visual reference
+library) executed in verified increments on top of stages A–K. Free/open
+sources only; no invented imagery, licenses or claims; nothing deployed to
+production without authorization.
+
+Priority list (P0 → P2):
+
+1. **P0 `L1` initial-load recovery** — bounded silent auto-retry (one attempt,
+   ~5 s) after a failed weather fetch + honest header placeholder text when no
+   city is loaded ("Location lookup failed / access denied / unavailable — tap
+   to search" instead of an endless "Detecting location…"); the Online pill
+   reflects real weather-engine reachability instead of a hardcoded label.
+   Regression test `frontend/tests/initial_load_recovery.py` (deterministic
+   route interception: fail-first-request → assert honest state → assert the
+   auto-retry recovers with no user action; all-requests-fail → assert the
+   honest state stays bounded — no infinite "Detecting").
+2. **P0 `L2` reference capture** — actual screenshots of the live app (every
+   major route + mobile widths) and the benchmark site into
+   `docs/visual-references/screenshots/` — labelled as current-state evidence,
+   never presented as target designs.
+3. **P1 `L3` reference library** — all 22 requested categories in
+   `docs/visual-references/manifest.json` + `REFERENCE_AUDIT.md` (URL, license,
+   attribution, purpose, target component, verified flag = link actually
+   fetched). Downloads only where the license permits redistribution.
+4. **P1 `L4` UI/UX increments guided by the references** — dashboard
+   hierarchy, loading/empty/error states, chart legend/unit consistency,
+   location-search presentation — small verified steps, no feature removal.
+5. **P1 `L5` preferences & diagnostics honesty** — theme/font/units/language
+   preference persistence verified; provider diagnostics stay truthful; no
+   fake controls.
+6. **P2 `L6` candidate adds from the brief** (saved-location compare, rainfall
+   intelligence, history explorer, exports, onboarding) — implemented only
+   where a real free data source already exists; otherwise recorded in
+   `WEATHERGPT_REMAINING_WORK.md` with a concrete plan and priority.
+
+Rules: asserts are never weakened; every increment lands with probe or suite
+evidence; existing features and unrelated user work are preserved.
+
+**Status (2026-10-18):** L1 DONE — implemented in `App.jsx`/`ReferenceChrome.jsx`
+(one silent ~5 s retry, honest placeholders, real Online pill, the previously
+unrendered notice state now shows as a dismissible banner) and verified by
+`frontend/tests/initial_load_recovery.py` (7/7 per browser, chromium+firefox,
+on both the L1 and L4 builds). L2 DONE — 28 current-state PNGs in
+`docs/visual-references/screenshots/`. L3 DONE — `sources.json` (97 sources,
+21 categories), `manifest.json` + `REFERENCE_AUDIT.md` (126 entries; 85/97 web
+links HTTP-verified, honest raw statuses for the rest), one permitted NASA
+GIBS download + `DOWNLOADS.md`. L4 STARTED — first increments landed (mobile
+drawer z-index fix, honest theme-float condition, state-driven HomePanel
+empty-state); broader dashboard/chart increments continue in later passes.
+L5/L6 remain open (`WEATHERGPT_REMAINING_WORK.md`).
+
 ## Definition of Done checklist
 
 - [ ] All Stage D/E fixes verified by probe or suite assertion.

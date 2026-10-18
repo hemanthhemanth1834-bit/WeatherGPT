@@ -48,10 +48,22 @@ function NavButton({ id, Icon, label, active, onTab }) {
   </button>;
 }
 
-export default function ReferenceChrome({ children, tab, onTab, weather, alertCount = 0, language = "en", onLanguageChange }) {
+// Honest placeholders while no city is loaded yet (stage L): the header must
+// never claim "Detecting location…" once the lookup has failed.
+const LOC_PLACEHOLDER = {
+  DETECTING: "Detecting location…",
+  ERROR: "Location lookup failed — tap to search",
+  DENIED: "Location access denied — tap to search",
+  UNAVAILABLE: "Location unavailable — tap to search",
+  IDLE: "Choose a location",
+};
+
+export default function ReferenceChrome({ children, tab, onTab, weather, alertCount = 0, language = "en", onLanguageChange, locStatus = "IDLE", online = null, notice = "", onDismissNotice }) {
   const temp = weather?.current_temp ?? null;
-  const condition = weather?.condition || "Loading live weather…";
-  const location = weather?.location || "Detecting location…";
+  const loadingLoc = locStatus === "DETECTING" || locStatus === "IDLE";
+  const condition =
+    weather?.condition || (loadingLoc ? "Loading live weather…" : "Weather unavailable");
+  const location = weather?.location || LOC_PLACEHOLDER[locStatus] || "Detecting location…";
   const state = weather?.state || "—";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -91,7 +103,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
           </button>
           <button type="button" aria-label="Open station comparison" title="Open Dual Station Weather Comparison Matrix" onClick={() => go("compare")}><ArrowRightLeft size={16}/></button>
           <button type="button" aria-label="Toggle larger font size" title="Font Scale: 112%" onClick={() => document.documentElement.classList.toggle("wg-font-large")}><Type size={14}/><span>A+</span></button>
-          <span className="wg-ref-online" role="status" aria-live="polite"><i />Online</span>
+          <span className="wg-ref-online" role="status" aria-live="polite" title={online === false ? "Weather engine: last request failed or timed out" : online ? "Weather engine reachable" : "Contacting the weather engine…"}><i className={online === false ? "off" : ""} />{online === null ? "Connecting…" : online ? "Online" : "Offline"}</span>
           <button type="button" className="wg-ref-icon-btn" aria-label={alertCount > 0 ? `Open alerts and early warnings (${alertCount} active)` : "Open alerts and early warnings"} title="Open Smart Weather Alerts & Early Warning Center" onClick={() => go("alerts")}><Bell size={16}/>{alertCount > 0 && <b>{alertCount}</b>}</button>
           <button className="wg-ref-icon-btn" aria-label="Open platform settings and status" title="Open WeatherGPT Platform Settings" onClick={() => go("capabilities")}><Settings size={16}/></button>
           <button type="button" className="wg-ref-install" onClick={installApp} title={installPrompt ? "Install WeatherGPT" : "Install WeatherGPT PWA when supported"}><Download size={14}/>Install App</button>
@@ -102,6 +114,11 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
         </div>
       </div>
     </header>
+
+    {notice ? <div className="wg-ref-notice" role="status" aria-live="polite">
+      <span>{notice}</span>
+      <button type="button" aria-label="Dismiss notice" onClick={() => onDismissNotice?.()}><X size={14} /></button>
+    </div> : null}
 
     {mobileOpen && <div className="wg-ref-mobile-overlay" onClick={() => setMobileOpen(false)} />}
     <aside className={`wg-ref-mobile-drawer ${mobileOpen ? "open" : ""}`} aria-hidden={!mobileOpen}>
