@@ -70,7 +70,7 @@ def launch(browser_type):
 
 
 def header_text(page):
-    return page.locator(".wg-ref-location b").inner_text().strip()
+    return (page.locator(".wg-ref-location b").text_content() or "").strip()
 
 
 def scenario_all_fail(browser_type, failures):
