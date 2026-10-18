@@ -123,6 +123,7 @@ def test_live_model_with_missing_optional_fields_stays_live_and_labels_estimates
     assert result.uv_index_source.startswith("Estimated")
     assert result.visibility_source.startswith("Estimated")
 
+
 def test_unavailable_weather_fails_closed_without_synthetic_values():
     from fastapi import HTTPException
 
