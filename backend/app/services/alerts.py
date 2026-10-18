@@ -30,7 +30,7 @@ SEVERITY_COLORS = {"Red": "#EF4444", "Orange": "#F97316", "Yellow": "#EAB308"}
 
 
 def _sample(lat: float, lon: float) -> dict:
-    """Read one station's live telemetry; neutral values on failure."""
+    """Read one station's model-derived weather data; failures are unavailable, not calm weather."""
     try:
         url = (
             "https://api.open-meteo.com/v1/forecast"
@@ -58,15 +58,17 @@ def _sample(lat: float, lon: float) -> dict:
                 "wind_max": float(first("wind_speed_10m_max", 18.0)),
                 "code": int(current.get("weather_code", 1)),
                 "humidity": int(current.get("relative_humidity_2m", 60)),
+                "available": True,
+                "current_time": str(current.get("time", "")),
             }
     except Exception:
         pass
-    return {"temp": 28.0, "temp_max": 32.0, "temp_min": 22.0, "precip": 0.0, "rain_sum": 0.0,
-            "rain_prob": 10, "wind": 12.0, "wind_max": 18.0, "code": 1, "humidity": 60}
+    return {"available": False}
 
 
 def _stamp(hours_ahead: int) -> str:
-    moment = datetime.datetime.now() + datetime.timedelta(hours=hours_ahead)
+    ist = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+    moment = datetime.datetime.now(ist) + datetime.timedelta(hours=hours_ahead)
     return moment.strftime("%Y-%m-%d %H:%M IST")
 
 
@@ -82,10 +84,15 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
         if district and district.lower() not in station["district"].lower():
             continue
         sample = _sample(station["lat"], station["lon"])
-        tag = f"{station['district'][:3].upper()}-{datetime.datetime.now().strftime('%d%H')}"
+        # Never derive a warning from fallback/default numbers after a provider failure.
+        if not sample.get("available"):
+            continue
+        tag = f"{station['district'][:3].upper()}-{datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=5, minutes=30))).strftime('%d%H')}"
 
-        heavy_rain = (sample["precip"] > 10.0 or sample["rain_sum"] > 35.0
-                      or (sample["rain_prob"] >= 75 and sample["humidity"] > 80))
+        # Probability and humidity alone indicate possible rain, not heavy rainfall.
+        # Only a high modelled hourly amount or substantial daily accumulation
+        # qualifies for this computed heavy-rain risk category.
+        heavy_rain = (sample["precip"] >= 10.0 or sample["rain_sum"] >= 35.0)
         storm = (sample["code"] in (80, 81, 82, 95, 96, 99)
                  or (sample["rain_prob"] > 60 and sample["wind_max"] > 25))
         heat = sample["temp"] >= 40.0 or sample["temp_max"] >= 41.5
@@ -98,29 +105,33 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
             level = "Red" if extreme else "Orange"
             alerts.append(CAPAlert(
                 id=f"WG-HR-{tag}",
-                headline=f"{level.upper()} ALERT: Heavy rain and flood risk near {station['district']}",
-                event="Heavy Rain / Flash Flood", severity=level,
-                urgency="Immediate", certainty="Observed" if sample["precip"] > 0 else "Likely",
+                headline=f"COMPUTED {level.upper()} HEAVY-RAIN RISK near {station['district']}",
+                event="Modelled Heavy Rain Risk", severity=level,
+                urgency="Expected", certainty="Likely",
                 area_desc=f"{station['district']} district and nearby low-lying areas, {station['state']}",
                 district=station["district"], state=station["state"],
                 lat=station["lat"], lon=station["lon"],
                 effective=now, expires=_stamp(24),
-                instruction=(f"Recorded {sample['precip']} mm/hr with {sample['rain_prob']}% rain "
-                             "probability. Avoid flooded underpasses and riverbanks; follow official bulletins."),
+                instruction=(f"Open-Meteo model indicates {sample['precip']} mm current-hour precipitation "
+                             f"and {sample['rain_sum']} mm daily accumulation, with {sample['rain_prob']}% "
+                             "maximum daily rain probability. This is a computed estimate, not an official warning. "
+                             "Avoid flooded underpasses if flooding occurs and check official bulletins."),
+                sender_name="WeatherGPT computed estimate (Open-Meteo; not an official bulletin)",
                 color=SEVERITY_COLORS[level],
             ))
         elif storm:
             alerts.append(CAPAlert(
                 id=f"WG-TS-{tag}",
-                headline=f"ORANGE ALERT: Thunderstorm and lightning risk near {station['district']}",
-                event="Thunderstorm / Lightning", severity="Orange",
-                urgency="Immediate", certainty="Observed",
+                headline=f"COMPUTED ORANGE THUNDERSTORM RISK near {station['district']}",
+                event="Modelled Thunderstorm Risk", severity="Orange",
+                urgency="Expected", certainty="Likely",
                 area_desc=f"{station['district']}, {station['state']} and adjoining blocks",
                 district=station["district"], state=station["state"],
                 lat=station["lat"], lon=station["lon"],
                 effective=now, expires=_stamp(24),
-                instruction=(f"Convective activity with gusts near {sample['wind_max']} km/h. "
-                             "Leave open fields; shelter in sturdy buildings; follow official bulletins."),
+                instruction=(f"Forecast thunderstorm signal with winds up to {sample['wind_max']} km/h. "
+                             "This is a model-based estimate, not an official warning. Follow official bulletins."),
+                sender_name="WeatherGPT computed estimate (Open-Meteo; not an official bulletin)",
                 color=SEVERITY_COLORS["Orange"],
             ))
         elif heat:
@@ -128,61 +139,53 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
             level = "Red" if severe else "Orange"
             alerts.append(CAPAlert(
                 id=f"WG-HW-{tag}",
-                headline=f"{level.upper()} ALERT: Heat stress near {station['district']}",
+                headline=f"COMPUTED {level.upper()} HEAT-RISK ESTIMATE near {station['district']}",
                 event="Heat Wave", severity=level,
-                urgency="Expected", certainty="Observed" if sample["temp"] >= 40 else "Likely",
+                urgency="Expected", certainty="Likely",
                 area_desc=f"{station['district']} and surrounding blocks, {station['state']}",
                 district=station["district"], state=station["state"],
                 lat=station["lat"], lon=station["lon"],
                 effective=now, expires=_stamp(36),
-                instruction=(f"Temperature {sample['temp']}°C (day max {sample['temp_max']}°C). "
+                instruction=(f"Modelled temperature {sample['temp']}°C (forecast daily max {sample['temp_max']}°C). "
                              "Hydrate often and avoid midday sun; follow official health advisories."),
+                sender_name="WeatherGPT computed estimate (Open-Meteo; not an official bulletin)",
                 color=SEVERITY_COLORS[level],
             ))
         elif cold:
             alerts.append(CAPAlert(
                 id=f"WG-CW2-{tag}",
-                headline=(f"YELLOW ALERT: Cold-wave conditions near {station['district']} "
+                headline=(f"COMPUTED YELLOW COLD-RISK ESTIMATE near {station['district']} "
                           f"({sample['temp']}°C)"),
                 event="Cold Wave", severity="Yellow",
-                urgency="Expected", certainty="Observed" if sample["temp"] <= 7 else "Likely",
+                urgency="Expected", certainty="Likely",
                 area_desc=f"{station['district']} and surrounding blocks, {station['state']}",
                 district=station["district"], state=station["state"],
                 lat=station["lat"], lon=station["lon"],
                 effective=now, expires=_stamp(36),
-                instruction=(f"Minimum near {sample['temp_min']}°C. Layer clothing, protect crops and "
-                             "livestock from frost, and follow official cold-wave advisories."),
+                instruction=(f"Modelled daily minimum near {sample['temp_min']}°C. Layer clothing and "
+                             "follow official cold-wave advisories; this is not an official warning."),
+                sender_name="WeatherGPT computed estimate (Open-Meteo; not an official bulletin)",
                 color="#38BDF8",
             ))
         elif coastal_wind:
             alerts.append(CAPAlert(
                 id=f"WG-CW-{tag}",
-                headline=(f"YELLOW ALERT: Strong coastal winds near {station['district']} "
+                headline=(f"COMPUTED YELLOW COASTAL-WIND RISK near {station['district']} "
                           f"({sample['wind']} km/h)"),
                 event="Coastal Wind / Sea Surge", severity="Yellow",
-                urgency="Immediate", certainty="Observed",
+                urgency="Expected", certainty="Likely",
                 area_desc=f"Coast adjoining {station['district']}, {station['state']}",
                 district=station["district"], state=station["state"],
                 lat=station["lat"], lon=station["lon"],
                 effective=now, expires=_stamp(24),
-                instruction=(f"Winds {sample['wind']} km/h gusting to {sample['wind_max']} km/h. "
-                             "Small craft should stay near harbour; follow official marine bulletins."),
+                instruction=(f"Modelled winds {sample['wind']} km/h with forecast maximum {sample['wind_max']} km/h. "
+                             "Check official marine bulletins before making safety decisions."),
+                sender_name="WeatherGPT computed estimate (Open-Meteo; not an official bulletin)",
                 color=SEVERITY_COLORS["Yellow"],
             ))
 
-    if not alerts:
-        alerts.append(CAPAlert(
-            id=f"WG-SYN-{datetime.datetime.now().strftime('%d%H')}",
-            headline="ORANGE WATCH: Low-pressure activity over the north Bay of Bengal (illustrative)",
-            event="Synoptic Watch", severity="Orange",
-            urgency="Expected", certainty="Likely",
-            area_desc="Odisha and West Bengal coasts and adjoining sea areas",
-            district="Puri", state="Odisha", lat=19.8135, lon=85.8312,
-            effective=now, expires=_stamp(36),
-            instruction=("Illustrative synoptic note generated when no station crosses a "
-                         "threshold. Fishermen should check official bulletins before sailing."),
-            color=SEVERITY_COLORS["Orange"],
-        ))
+    # An empty list is preferable to inventing a warning when no station crosses
+    # a threshold or every provider request fails.
 
     if severity and severity.lower() != "all":
         alerts = [a for a in alerts if a.severity.lower() == severity.lower()]
