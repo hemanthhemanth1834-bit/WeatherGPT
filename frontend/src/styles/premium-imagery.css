@@ -24,6 +24,8 @@
 .wg-ref-map-card{background-image:linear-gradient(135deg,rgba(4,13,30,.94),rgba(6,24,48,.82)),url("/imagery/radar-field.svg");background-size:cover;background-position:center}
 .wg-ref-emergency{border:1px solid rgba(251,146,60,.2);background:linear-gradient(110deg,rgba(124,45,18,.18),rgba(7,16,35,.9)),url("/imagery/radar-field.svg") center/cover}
 .wg-ref-feature{min-height:9rem}
+figure[data-testid="live-imagery"]{background-image:linear-gradient(180deg,rgba(2,8,23,.15),rgba(2,8,23,.48)),url("/imagery/satellite-clouds.svg");background-position:center;background-size:cover}
+figure[data-testid="live-imagery"] img{display:block;position:relative;z-index:1}
 .wg-ref-feature-copy{min-width:0}
 .wg-ref-feature strong,.wg-ref-feature span{overflow-wrap:anywhere}
 .wg-ref-station{background-image:linear-gradient(145deg,rgba(15,23,42,.86),rgba(2,8,23,.8)),url("/imagery/climate-contours.svg");background-size:cover;background-position:center}
