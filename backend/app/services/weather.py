@@ -1,8 +1,8 @@
 """Live weather retrieval (Open-Meteo) with caching. Original implementation.
 
 Every payload carries source transparency fields. If the upstream API is
-unreachable, a clearly labelled SIMULATED estimate is returned instead of
-an error, so the UI never crashes — but it is never presented as observed.
+unreachable, the API returns an explicit unavailable response rather than
+fabricating current conditions, forecast series, or timestamps.
 """
 import datetime
 from typing import List
