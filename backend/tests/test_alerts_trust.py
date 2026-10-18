@@ -48,7 +48,7 @@ def test_rain_probability_and_humidity_alone_do_not_raise_heavy_rain_alert(monke
 def test_heavy_rain_is_explicitly_labelled_as_computed_estimate(monkeypatch):
     monkeypatch.setattr(
         alerts, "_sample",
-        lambda *_: _sample(precip=12.0, rain_sum=40.0, rain_prob=90, humidity=90),
+        lambda *_: _sample(precip=22.0, rain_sum=70.0, rain_prob=90, humidity=90),
     )
     results = alerts.active_alerts(district="Mumbai")
     heavy = [a for a in results if a.event == "Modelled Heavy Rain Risk"]
@@ -58,6 +58,24 @@ def test_heavy_rain_is_explicitly_labelled_as_computed_estimate(monkeypatch):
     assert heavy[0].urgency == "Expected"
     assert heavy[0].certainty == "Likely"
 
+
+
+def test_moderate_daily_rainfall_does_not_trigger_heavy_rain_category(monkeypatch):
+    monkeypatch.setattr(
+        alerts, "_sample",
+        lambda *_: _sample(precip=0.0, rain_sum=35.0, rain_prob=100, humidity=95),
+    )
+    results = alerts.active_alerts(district="Mumbai")
+    assert not any(a.event == "Modelled Heavy Rain Risk" for a in results)
+
+
+def test_imd_heavy_rainfall_threshold_is_used_for_daily_accumulation(monkeypatch):
+    monkeypatch.setattr(
+        alerts, "_sample",
+        lambda *_: _sample(precip=0.0, rain_sum=64.5, rain_prob=95, humidity=90),
+    )
+    results = alerts.active_alerts(district="Mumbai")
+    assert any(a.event == "Modelled Heavy Rain Risk" for a in results)
 
 
 def test_rain_showers_are_not_labelled_as_thunderstorms(monkeypatch):
