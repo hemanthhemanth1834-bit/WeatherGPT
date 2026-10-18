@@ -57,7 +57,7 @@ def test_aqi_intent_labels_source(monkeypatch):
         lambda *a: {"standard": "US AQI (EPA)", "us_aqi": 88, "band": "Moderate",
                     "pm2_5": 30.0, "pm10": 55.0, "dominant_pollutant": "pm2_5"},
     )
-    response = chat.answer(WeatherQueryRequest(query="What is the AQI and air quality?"))
+    response = chat.answer(WeatherQueryRequest(query="What is the AQI and air quality?", location_name="Pune"))
     assert "Air quality (LIVE" in response.markdown_response
     assert "88" in response.markdown_response
 
@@ -68,5 +68,5 @@ def test_quake_fire_intents_offline_safe(monkeypatch):
     monkeypatch.setattr(chat, "get_weather", lambda *a: fake)
     monkeypatch.setattr("app.services.disasters.earthquakes",
                         lambda *a, **k: (_ for _ in ()).throw(RuntimeError("down")))
-    response = chat.answer(WeatherQueryRequest(query="Any earthquakes lately?"))
+    response = chat.answer(WeatherQueryRequest(query="Any earthquakes lately?", location_name="Pune"))
     assert "USGS feed unreachable" in response.markdown_response
