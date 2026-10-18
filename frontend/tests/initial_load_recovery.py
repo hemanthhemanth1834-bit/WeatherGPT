@@ -4,8 +4,9 @@ Scenario A (no geolocation and no saved location):
   - the header must never stay on "Detecting location…";
   - it must show an honest "…tap to search" placeholder and stay honest
     through the silent retry cycle;
-  - the status notice banner becomes visible (previously `notice` was set in
-    state but never rendered).
+  - no hard-coded city becomes the active location; independent reference
+    cards may fetch their own weather without selecting the main location;
+  - the status notice banner becomes visible.
 
 Scenario B (a saved city exists and its first weather request fails):
   - the app retries automatically with NO user action (>= 2 requests);
@@ -117,8 +118,9 @@ def scenario_all_fail(browser_type, failures):
         PLACEHOLDER not in h2, f"A: header stays honest after retry ({h2!r})", failures
     )
     check(
-        hits["n"] == 0,
-        f"A: no weather request without a selected location (requests={hits['n']})",
+        any(marker in h2.lower() for marker in HONEST_MARKERS)
+        and "new delhi" not in h2.lower(),
+        f"A: no hard-coded active location is selected (header={h2!r}; independent dashboard requests={hits['n']})",
         failures,
     )
 
