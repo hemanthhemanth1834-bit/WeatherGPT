@@ -89,3 +89,20 @@ def test_rain_showers_are_not_labelled_as_thunderstorms(monkeypatch):
 def test_alert_timestamps_are_explicitly_india_standard_time():
     stamp = alerts._stamp(0)
     assert stamp.endswith(" IST")
+
+def _concurrent_sample(barrier, sample):
+    barrier.wait()
+    return sample
+
+
+def test_all_station_samples_are_fetched_concurrently(monkeypatch):
+    import threading
+
+    # Five calls must reach the barrier together. Sequential fan-out times out.
+    barrier = threading.Barrier(5, timeout=3)
+    sample = _sample()
+    monkeypatch.setattr(
+        alerts, "_sample", lambda *_: _concurrent_sample(barrier, sample)
+    )
+    assert alerts.active_alerts() == []
+
