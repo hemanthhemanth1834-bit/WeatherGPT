@@ -1,3 +1,5 @@
+> **Historical completion report (2026-10-17):** This report records the `feat/platform-upgrade` build at that time. Bundles, browser results, and New Delhi fallback behavior may no longer match the current release. See `docs/CLEANUP_RELEASE_NOTES.md` and current CI/production checks.
+
 # WeatherGPT — Completion Report
 
 - Repository: `hemanthhemanth1834-bit/WeatherGPT`

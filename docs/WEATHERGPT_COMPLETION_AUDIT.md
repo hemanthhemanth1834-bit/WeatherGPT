@@ -1,3 +1,5 @@
+> **Historical audit snapshot (2026-10-17):** This report describes the `feat/platform-upgrade` branch and its then-current build. Its New Delhi fallback and deployment assertions are historical, not current release guidance. See `docs/CLEANUP_RELEASE_NOTES.md` and current CI/production checks.
+
 # WeatherGPT — Completion Audit
 
 - Repository: `hemanthhemanth1834-bit/WeatherGPT`
