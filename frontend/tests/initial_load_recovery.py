@@ -150,23 +150,33 @@ def scenario_recover(browser_type, failures):
     browser = launch(browser_type)
     page = browser.new_page(viewport={"width": 1440, "height": 900})
     hits = {"n": 0}
+    failed_active_location = False
 
     def handler(route):
+        nonlocal failed_active_location
         hits["n"] += 1
-        if hits["n"] == 1:
+        query = urllib.parse.parse_qs(urllib.parse.urlparse(route.request.url).query)
+        location = query.get("location", [""])[0].strip()
+        if not location:
+            try:
+                lat = float(query.get("lat", ["0"])[0])
+                lon = float(query.get("lon", ["0"])[0])
+                location = "New Delhi" if abs(lat - 28.6139) < 0.2 and abs(lon - 77.2090) < 0.2 else "Pinned location"
+            except (TypeError, ValueError):
+                location = "Pinned location"
+
+        # Fail the selected saved city once, not an unrelated pinned card.
+        # Then return deterministic data so the retry is independent of
+        # third-party provider/network availability in CI.
+        is_delhi = location.lower() in {"new delhi", "delhi"}
+        if is_delhi and not failed_active_location:
+            failed_active_location = True
             route.fulfill(
                 status=500,
                 content_type="application/json",
                 body='{"detail":"cold start"}',
             )
             return
-
-        # Keep recovery deterministic: provider access in CI is not the subject
-        # of this test. Return valid weather for the requested city after the
-        # deliberate first failure instead of depending on external Open-Meteo.
-        query = urllib.parse.parse_qs(urllib.parse.urlparse(route.request.url).query)
-        location = query.get("location", ["New Delhi"])[0]
-        is_delhi = location.lower() in {"new delhi", "delhi"}
         payload = {
             "location": location,
             "state": "Delhi" if is_delhi else "Andhra Pradesh",
