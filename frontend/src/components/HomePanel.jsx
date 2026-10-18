@@ -195,7 +195,7 @@ function StationCard({ name, place, weather, active, onClick }) {
           <span className="wg-ref-station-weather"><WxIcon icon={weather.icon} size={38} /><b>{weather.current_temp}°</b><span>{weather.condition}</span></span>
           <span className="wg-ref-station-feels">Feels {weather.feels_like ?? "—"}° · H: {weather.daily?.[0]?.temp_max ?? "—"}° • L: {weather.daily?.[0]?.temp_min ?? "—"}°</span>
           <span className="wg-ref-station-metrics"><b>Rain {weather.hourly?.[0]?.rain_prob ?? weather.rain_prob ?? 0}%</b> · {weather.wind_speed ?? "—"} km/h · Hum {weather.humidity ?? "—"}% · AQI {weather.aqi ?? "—"} • {weather.aqi_status || "Poor"}</span>
-          <span className="wg-ref-station-source">{weather.data_source || "Source unavailable"} · {weather.status || "STATUS UNKNOWN"}</span>
+          <span className="wg-ref-station-feels">{weather.data_source || "Source unavailable"} · {weather.status || "STATUS UNKNOWN"}</span>
         </>
       ) : (
         <span className="wg-ref-station-weather muted">Select/search this place for live telemetry</span>
