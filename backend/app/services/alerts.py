@@ -7,6 +7,7 @@ government bulletins. The feed stays empty when no threshold is crossed
 or the upstream provider data is unavailable.
 """
 import datetime
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional
 
 from ..models import CAPAlert
@@ -91,12 +92,25 @@ def active_alerts(state: Optional[str] = None, district: Optional[str] = None,
     now = _stamp(0)
     alerts: List[CAPAlert] = []
 
-    for station in STATIONS:
-        if state and state.lower() not in station["state"].lower():
-            continue
-        if district and district.lower() not in station["district"].lower():
-            continue
-        sample = _sample(station["lat"], station["lon"])
+    # Filter first, then query stations concurrently. The previous sequential
+    # fan-out waited up to four seconds for each of ten stations, making a cold
+    # alert refresh take tens of seconds. Keep the pool bounded and preserve
+    # station order so the resulting feed remains deterministic.
+    stations = [
+        station for station in STATIONS
+        if not state or state.lower() in station["state"].lower()
+        if not district or district.lower() in station["district"].lower()
+    ]
+    if not stations:
+        return alerts
+
+    with ThreadPoolExecutor(max_workers=min(5, len(stations))) as pool:
+        samples = list(pool.map(
+            lambda station: _sample(station["lat"], station["lon"]),
+            stations,
+        ))
+
+    for station, sample in zip(stations, samples):
         # Never derive a warning from fallback/default numbers after a provider failure.
         if not sample.get("available"):
             continue
