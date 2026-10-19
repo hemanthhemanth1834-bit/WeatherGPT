@@ -27,6 +27,80 @@ def test_incomplete_open_meteo_payload_is_rejected_not_marked_live():
 
 
 
+@pytest.mark.parametrize(
+    ("group", "field"),
+    [
+        ("hourly", "temperature_2m"),
+        ("hourly", "precipitation_probability"),
+        ("hourly", "wind_speed_10m"),
+        ("hourly", "relative_humidity_2m"),
+        ("daily", "temperature_2m_max"),
+        ("daily", "temperature_2m_min"),
+        ("daily", "precipitation_sum"),
+        ("daily", "wind_speed_10m_max"),
+        ("daily", "sunrise"),
+        ("daily", "sunset"),
+    ],
+)
+def test_incomplete_forecast_arrays_are_rejected(group, field):
+    payload = {
+        "current": {
+            "temperature_2m": 28.3, "relative_humidity_2m": 79,
+            "apparent_temperature": 32.9, "precipitation": 0.0,
+            "weather_code": 3, "cloud_cover": 90, "surface_pressure": 1007.0,
+            "wind_speed_10m": 11.9, "wind_direction_10m": 88,
+        },
+        "hourly": {
+            "time": ["2026-10-14T20:00"], "temperature_2m": [28.3],
+            "precipitation_probability": [18], "weather_code": [3],
+            "wind_speed_10m": [11.9], "relative_humidity_2m": [79],
+            "visibility": [None],
+        },
+        "daily": {
+            "time": ["2026-10-14"], "weather_code": [3],
+            "temperature_2m_max": [30.0], "temperature_2m_min": [24.0],
+            "precipitation_sum": [0.0], "wind_speed_10m_max": [12.0],
+            "sunrise": ["2026-10-14T06:00"], "sunset": ["2026-10-14T17:45"],
+            "uv_index_max": [None],
+        },
+    }
+    payload[group].pop(field)
+
+    with pytest.raises(ValueError, match=field):
+        weather._from_api(
+            payload, 16.5, 80.6, "Vijayawada", "Andhra Pradesh",
+            "2026-10-14T20:00",
+        )
+
+
+def test_null_forecast_value_is_rejected_instead_of_rendered_as_zero():
+    payload = {
+        "current": {
+            "temperature_2m": 28.3, "relative_humidity_2m": 79,
+            "apparent_temperature": 32.9, "precipitation": 0.0,
+            "weather_code": 3, "cloud_cover": 90, "surface_pressure": 1007.0,
+            "wind_speed_10m": 11.9, "wind_direction_10m": 88,
+        },
+        "hourly": {
+            "time": ["2026-10-14T20:00"], "temperature_2m": [28.3],
+            "precipitation_probability": [None], "weather_code": [3],
+            "wind_speed_10m": [11.9], "relative_humidity_2m": [79],
+        },
+        "daily": {
+            "time": ["2026-10-14"], "weather_code": [3],
+            "temperature_2m_max": [30.0], "temperature_2m_min": [24.0],
+            "precipitation_sum": [0.0], "wind_speed_10m_max": [12.0],
+            "sunrise": ["2026-10-14T06:00"], "sunset": ["2026-10-14T17:45"],
+        },
+    }
+
+    with pytest.raises(ValueError, match="precipitation_probability contains missing values"):
+        weather._from_api(
+            payload, 16.5, 80.6, "Vijayawada", "Andhra Pradesh",
+            "2026-10-14T20:00",
+        )
+
+
 def test_live_weather_summary_marks_heuristic_aqi_as_estimated():
     from app.models import WeatherData
     from app.services.chat import _render_weather
