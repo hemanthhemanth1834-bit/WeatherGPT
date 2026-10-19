@@ -153,10 +153,21 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
     if missing_current:
         raise ValueError("Open-Meteo missing current data: " + ", ".join(missing_current))
 
+    # These fields are requested from Open-Meteo and are rendered as measured
+    # forecast values. Reject malformed/partial arrays instead of silently
+    # substituting plausible-looking temperatures, rain probabilities, or wind.
+    # UV and visibility remain optional below because their estimate fallbacks
+    # carry explicit provenance labels.
     required_arrays = {
-        "hourly": (hourly_raw, ("time", "temperature_2m", "weather_code")),
-        "daily": (daily_raw, ("time", "weather_code", "temperature_2m_max",
-                                "temperature_2m_min")),
+        "hourly": (hourly_raw, (
+            "time", "temperature_2m", "precipitation_probability",
+            "weather_code", "wind_speed_10m", "relative_humidity_2m",
+        )),
+        "daily": (daily_raw, (
+            "time", "weather_code", "temperature_2m_max",
+            "temperature_2m_min", "precipitation_sum", "wind_speed_10m_max",
+            "sunrise", "sunset",
+        )),
     }
     for group_name, (group, fields) in required_arrays.items():
         times = group.get("time")
@@ -166,6 +177,8 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
             values = group.get(field)
             if not isinstance(values, list) or len(values) < len(times):
                 raise ValueError(f"Open-Meteo {group_name}.{field} is incomplete")
+            if field != "time" and any(value is None for value in values[:len(times)]):
+                raise ValueError(f"Open-Meteo {group_name}.{field} contains missing values")
 
     code = int(current.get("weather_code", 1))
     label, icon = WMO_LABELS.get(code, ("Clear Sky", "Sun"))
@@ -186,11 +199,11 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         stamp = times[i]
         hourly.append(HourlyPoint(
             time=stamp.split("T")[1] if "T" in stamp else stamp,
-            temp=round(float(temps[i]), 1) if i < len(temps) else 25.0,
-            rain_prob=int(probs[i]) if i < len(probs) and probs[i] is not None else 0,
+            temp=round(float(temps[i]), 1),
+            rain_prob=int(probs[i]),
             condition=hlabel, icon=hicon,
-            wind_speed=round(float(winds[i]), 1) if i < len(winds) else 10.0,
-            humidity=int(hums[i]) if i < len(hums) and hums[i] is not None else 60,
+            wind_speed=round(float(winds[i]), 1),
+            humidity=int(hums[i]),
         ))
 
     daily: List[DailyPoint] = []
@@ -206,11 +219,11 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         wmax = daily_raw.get("wind_speed_10m_max", [])
         daily.append(DailyPoint(
             date=dates[i], day="Today" if i == 0 else day.strftime("%a"),
-            temp_max=round(float(tmax[i]), 1) if i < len(tmax) else 32.0,
-            temp_min=round(float(tmin[i]), 1) if i < len(tmin) else 22.0,
+            temp_max=round(float(tmax[i]), 1),
+            temp_min=round(float(tmin[i]), 1),
             condition=dlabel, icon=dicon,
-            rain_sum=round(float(rsum[i]), 1) if i < len(rsum) else 0.0,
-            wind_max=round(float(wmax[i]), 1) if i < len(wmax) else 15.0,
+            rain_sum=round(float(rsum[i]), 1),
+            wind_max=round(float(wmax[i]), 1),
         ))
 
     # Air quality: the stored payload carries the labelled state-level
