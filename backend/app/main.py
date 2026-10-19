@@ -323,6 +323,9 @@ def current(location: str = Query("Pune"),
             lon: Optional[float] = None,
             model: str = Query("auto", description="'auto', 'gfs', 'ecmwf', or 'icon'"),
             state: Optional[str] = Query(None, description="State override for coords")) -> WeatherData:
+    # An explicitly empty query string should behave like an omitted location;
+    # unknown non-empty locations still fail closed below instead of showing Pune.
+    location = location.strip() or "Pune"
     if lat is None or lon is None:
         lat, lon, proper, resolved_state, resolved = geo.resolve(location)
         if not resolved:
