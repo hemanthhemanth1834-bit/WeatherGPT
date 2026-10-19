@@ -6,7 +6,7 @@ honest LIVE / DEMO / STATIC / ESTIMATED / NOT CONFIGURED labels.
 """
 from typing import List, Optional
 
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import APP_VERSION, allow_credentials_for_origins, get_cors_origins
@@ -323,9 +323,21 @@ def current(location: str = Query("Pune"),
             lon: Optional[float] = None,
             model: str = Query("auto", description="'auto', 'gfs', 'ecmwf', or 'icon'"),
             state: Optional[str] = Query(None, description="State override for coords")) -> WeatherData:
+    # An explicitly empty query string should behave like an omitted location;
+    # unknown non-empty locations still fail closed below instead of showing Pune.
+    location = location.strip() or "Pune"
     if lat is None or lon is None:
-        lat, lon, proper, resolved = geo.geocode(location)
-        state = state or resolved
+        lat, lon, proper, resolved_state, resolved = geo.resolve(location)
+        if not resolved:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    f'Location "{location}" could not be resolved. '
+                    "Choose a suggested location or try a more specific name; "
+                    "no default-city weather was substituted."
+                ),
+            )
+        state = state or resolved_state
     else:
         proper = location
         state = state or "India"
