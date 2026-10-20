@@ -176,7 +176,7 @@ export default function ReferenceChrome({ children, tab, onTab, weather, alertCo
         <button type="button" className="wg-ref-menu-btn" onClick={() => setMobileOpen(true)} aria-label="Open navigation"><Menu size={20}/></button>
         <div className="wg-ref-brand">
           <div className="wg-ref-brand-icon"><Live3DIcon kind="storm" size="md" label="Live WeatherGPT" /><span /></div>
-          <div><div className="wg-ref-brand-name">WeatherGPT <em>PRO AI</em></div><p>AI Meteorology &amp; Disaster Intelligence Platform</p></div>
+          <div><div className="wg-ref-brand-name">WeatherGPT <em>WEATHER AI</em></div><p>AI Meteorology &amp; Disaster Intelligence Platform</p></div>
         </div>
 
         <button type="button" className="wg-ref-location" onClick={() => { setLocationPickerOpen(true); setLocationQuery(""); setLocationResults([]); setLocationSearchMessage("Search for a city, town, district, or postcode."); }} aria-haspopup="dialog" aria-label={"Change location. Current location: " + (weather?.location || "not selected")}>
