@@ -366,7 +366,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
             <div><span>7-Day Accumulation</span><b>{rainTotal != null ? rainTotal.toFixed(1) + " mm" : "—"}</b><small>{rainTotal == null ? "Forecast unavailable" : rainTotal >= 50 ? "High accumulation watch" : "Forecast accumulation"}</small></div>
           </div>
           <LiveWeatherChart weather={weather} />
-          <div className="wg-ref-legend"><span>Hourly live telemetry</span><span>Forecast data · model-dependent</span><span>Hover points for detail</span><b>Open-Meteo · free source · no API key</b></div>
+          <div className="wg-ref-legend"><span>Hourly forecast data</span><span>Forecast data · model-dependent</span><span>Hover points for detail</span><b>Open-Meteo · free source · no API key</b></div>
         </div>
       </Section>
 
