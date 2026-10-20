@@ -101,8 +101,8 @@ function TempSpark({ hourly, metric }) {
   return (
     <div className="wg-hourly-chart" role="img" aria-label={`24 hour ${cfg[0]} chart`}>
       <div className="wg-hourly-chart-head">
-        <div><b>{cfg[0]}</b><span>{format(values.at(-1))} {cfg[1]} now</span></div>
-        <small>Last 24 hours · hourly forecast</small>
+        <div><b>{cfg[0]}</b><span>Latest forecast: {format(values.at(-1))} {cfg[1]}</span></div>
+        <small>Next 24 hours · hourly forecast</small>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
         {[0,1,2,3].map(i => {
