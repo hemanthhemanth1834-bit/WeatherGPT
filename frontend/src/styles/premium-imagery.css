@@ -22,8 +22,8 @@
 .wg-explain-live-map{background:#07152d}
 .wg-ref-outlook-panel{background-image:linear-gradient(135deg,rgba(4,13,30,.94),rgba(6,24,48,.85)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg");background-size:cover;background-position:center}
 .wg-ref-synoptic{background-image:linear-gradient(135deg,rgba(4,13,30,.94),rgba(6,24,48,.85)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg");background-size:cover;background-position:center}
-.wg-ref-map-card{background-image:linear-gradient(135deg,rgba(4,13,30,.94),rgba(6,24,48,.82)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/4000/4866/Jeanne_TRM_2004270_lrg.jpg");background-size:cover;background-position:center}
-.wg-ref-emergency{border:1px solid rgba(251,146,60,.2);background:linear-gradient(110deg,rgba(124,45,18,.18),rgba(7,16,35,.9)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/4000/4866/Jeanne_TRM_2004270_lrg.jpg") center/cover}
+.wg-ref-map-card{background-image:linear-gradient(135deg,rgba(4,13,30,.94),rgba(6,24,48,.82)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg");background-size:cover;background-position:center}
+.wg-ref-emergency{border:1px solid rgba(251,146,60,.2);background:linear-gradient(110deg,rgba(124,45,18,.18),rgba(7,16,35,.9)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg") center/cover}
 .wg-ref-feature{min-height:9rem}
 figure[data-testid="live-imagery"]{background:linear-gradient(180deg,rgba(2,8,23,.18),rgba(2,8,23,.62));background-position:center;background-size:cover}
 figure[data-testid="live-imagery"] img{display:block;position:relative;z-index:1}
