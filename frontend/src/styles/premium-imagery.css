@@ -41,3 +41,5 @@ figure[data-testid="live-imagery"] img{display:block;position:relative;z-index:1
 @media(prefers-reduced-motion:reduce){
  .wg-ref-hero,.wg-ref-live-card,.wg-ref-map-card,.wg-ref-outlook-panel,.wg-ref-synoptic{scroll-behavior:auto}
 }
+
+.wg-ref-image-note{display:block;margin-top:.5rem;color:rgba(191,219,254,.78);font-size:.62rem;line-height:1.5;letter-spacing:.035em}
