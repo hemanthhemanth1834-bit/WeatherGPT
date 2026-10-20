@@ -58,8 +58,9 @@ function formatForecastDay(isoDate, index, timezone) {
 function LifeTips({ weather }) {
   if (!weather) return null;
   const tips = [];
-  const rain = weather.hourly?.[0]?.rain_prob ?? 0;
-  if (rain >= 60) tips.push("☂ Carry an umbrella — rain likely within hours.");
+  const rain = weather.hourly?.[0]?.rain_prob;
+  if (rain == null) tips.push("Rain probability is unavailable for this model; do not interpret missing data as a dry forecast.");
+  else if (rain >= 60) tips.push("☂ Carry an umbrella — rain likely within hours.");
   else if (rain >= 30) tips.push("☂ Keep rainwear handy — showers possible.");
   if (weather.uv_index >= 6) tips.push("🧴 High UV — sunscreen, hat, and midday shade.");
   if (weather.current_temp >= 38) tips.push("💧 Heat — hydrate often, avoid 12–3 PM exertion.");
@@ -79,17 +80,28 @@ function TempSpark({ hourly, metric }) {
   const rows = hourly.slice(0, 24);
   const cfg = {
     temp: ["Temperature", "°C", h => Number(h.temp)],
-    rain: ["Rain probability", "%", h => Number(h.rain_prob)],
+    rain: ["Rain probability", "%", h => h.rain_prob == null ? NaN : Number(h.rain_prob)],
     wind: ["Wind speed", "km/h", h => Number(h.wind_speed)],
     hum: ["Humidity", "%", h => Number(h.humidity)]
   }[metric] || ["Temperature", "°C", h => Number(h.temp)];
-  const values = rows.map(cfg[2]).map(Number);
-  const min = Math.min(...values.filter(Number.isFinite));
-  const max = Math.max(...values.filter(Number.isFinite));
+  const latestValue = rows.length ? Number(cfg[2](rows[rows.length - 1])) : NaN;
+  const values = rows.map(cfg[2]).map(Number).filter(Number.isFinite);
+  if (!values.length) {
+    return (
+      <div className="wg-hourly-chart" role="status">
+        <div className="wg-hourly-chart-head">
+          <div><b>{cfg[0]}</b><span>Unavailable for this model — no valid values were returned.</span></div>
+          <small>Next 24 hours · hourly forecast</small>
+        </div>
+      </div>
+    );
+  }
+  const min = Math.min(...values);
+  const max = Math.max(...values);
   const pad = Math.max((max - min) * .15, .5);
   const lo = min - pad, hi = max + pad;
   const W = 1000, H = 230, L = 54, R = 18, T = 18, B = 38;
-  const pts = rows.map((h,i) => {
+  const pts = rows.filter(h => Number.isFinite(Number(cfg[2](h)))).map((h,i) => {
     const v = Number(cfg[2](h));
     const x = L + i / Math.max(1, rows.length - 1) * (W-L-R);
     const y = H-B - ((v-lo)/(hi-lo))*(H-T-B);
@@ -101,7 +113,7 @@ function TempSpark({ hourly, metric }) {
   return (
     <div className="wg-hourly-chart" role="img" aria-label={`24 hour ${cfg[0]} chart`}>
       <div className="wg-hourly-chart-head">
-        <div><b>{cfg[0]}</b><span>Latest forecast: {format(values.at(-1))} {cfg[1]}</span></div>
+        <div><b>{cfg[0]}</b><span>Latest forecast: {Number.isFinite(latestValue) ? `${format(latestValue)} ${cfg[1]}` : "Unavailable for this model"}</span></div>
         <small>Next 24 hours · hourly forecast</small>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
@@ -116,7 +128,7 @@ function TempSpark({ hourly, metric }) {
         <path d={path} className="wg-hourly-line"/>
         {pts.map((p,i)=><circle key={i} cx={p.x} cy={p.y} r={i===pts.length-1?5:3} className={i===pts.length-1?"wg-hourly-dot current":"wg-hourly-dot"}><title>{p.h.time}: {format(p.v)} {cfg[1]}</title></circle>)}
       </svg>
-      <div className="wg-hourly-legend"><span>Y-axis: {cfg[1]}</span><span>X-axis: local time</span><span>● {rows.length} real hourly points</span></div>
+      <div className="wg-hourly-legend"><span>Y-axis: {cfg[1]}</span><span>X-axis: local time</span><span>● {pts.length} valid hourly points</span></div>
     </div>
   );
 }

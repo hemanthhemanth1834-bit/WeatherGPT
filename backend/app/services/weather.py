@@ -160,8 +160,8 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
     # carry explicit provenance labels.
     required_arrays = {
         "hourly": (hourly_raw, (
-            "time", "temperature_2m", "precipitation_probability",
-            "weather_code", "wind_speed_10m", "relative_humidity_2m",
+            "time", "temperature_2m", "precipitation_probability", "weather_code",
+            "wind_speed_10m", "relative_humidity_2m",
         )),
         "daily": (daily_raw, (
             "time", "weather_code", "temperature_2m_max",
@@ -177,7 +177,17 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
             values = group.get(field)
             if not isinstance(values, list) or len(values) < len(times):
                 raise ValueError(f"Open-Meteo {group_name}.{field} is incomplete")
-            if field != "time" and any(value is None for value in values[:len(times)]):
+            # ICON may legitimately omit precipitation probability values, but
+            # the requested array itself must still exist and align with timestamps.
+            # Missing probability is represented as null downstream, never as 0%.
+            icon_probability_optional = (
+                group_name == "hourly"
+                and field == "precipitation_probability"
+                and model_label.startswith("DWD ICON")
+            )
+            if field != "time" and not icon_probability_optional and any(
+                value is None for value in values[:len(times)]
+            ):
                 raise ValueError(f"Open-Meteo {group_name}.{field} contains missing values")
 
     code = int(current.get("weather_code", 1))
@@ -200,7 +210,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
         hourly.append(HourlyPoint(
             time=stamp.split("T")[1] if "T" in stamp else stamp,
             temp=round(float(temps[i]), 1),
-            rain_prob=int(probs[i]),
+            rain_prob=int(probs[i]) if i < len(probs) and probs[i] is not None else None,
             condition=hlabel, icon=hicon,
             wind_speed=round(float(winds[i]), 1),
             humidity=int(hums[i]),

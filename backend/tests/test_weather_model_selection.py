@@ -101,6 +101,61 @@ def test_null_forecast_value_is_rejected_instead_of_rendered_as_zero():
         )
 
 
+def test_icon_model_preserves_missing_rain_probability_as_unavailable():
+    current = {
+        "temperature_2m": 28.3, "relative_humidity_2m": 79,
+        "apparent_temperature": 32.9, "precipitation": 0.0,
+        "weather_code": 3, "cloud_cover": 90, "surface_pressure": 1007.0,
+        "wind_speed_10m": 11.9, "wind_direction_10m": 88,
+    }
+    hourly = {
+        "time": ["2026-10-14T20:00"], "temperature_2m": [28.3],
+        "precipitation_probability": [None], "weather_code": [3],
+        "wind_speed_10m": [11.9], "relative_humidity_2m": [79],
+    }
+    daily = {
+        "time": ["2026-10-14"], "weather_code": [3],
+        "temperature_2m_max": [30.0], "temperature_2m_min": [24.0],
+        "precipitation_sum": [0.0], "wind_speed_10m_max": [12.0],
+        "sunrise": ["2026-10-14T06:00"], "sunset": ["2026-10-14T17:45"],
+    }
+    result = weather._from_api(
+        {"current": current, "hourly": hourly, "daily": daily},
+        16.5, 80.6, "Vijayawada", "Andhra Pradesh", "2026-10-14T20:00",
+        "DWD ICON (via Open-Meteo)",
+    )
+    assert result.status == "LIVE"
+    assert result.hourly[0].rain_prob is None
+
+
+def test_icon_model_still_rejects_missing_probability_array():
+    # An absent array is a malformed response, unlike a present array of nulls.
+    with pytest.raises(ValueError, match="precipitation_probability is incomplete"):
+        weather._from_api(
+            {
+                "current": {
+                    "temperature_2m": 28.3, "relative_humidity_2m": 79,
+                    "apparent_temperature": 32.9, "precipitation": 0.0,
+                    "weather_code": 3, "cloud_cover": 90, "surface_pressure": 1007.0,
+                    "wind_speed_10m": 11.9, "wind_direction_10m": 88,
+                },
+                "hourly": {
+                    "time": ["2026-10-14T20:00"], "temperature_2m": [28.3],
+                    "weather_code": [3], "wind_speed_10m": [11.9],
+                    "relative_humidity_2m": [79],
+                },
+                "daily": {
+                    "time": ["2026-10-14"], "weather_code": [3],
+                    "temperature_2m_max": [30.0], "temperature_2m_min": [24.0],
+                    "precipitation_sum": [0.0], "wind_speed_10m_max": [12.0],
+                    "sunrise": ["2026-10-14T06:00"], "sunset": ["2026-10-14T17:45"],
+                },
+            },
+            16.5, 80.6, "Vijayawada", "Andhra Pradesh", "2026-10-14T20:00",
+            "DWD ICON (via Open-Meteo)",
+        )
+
+
 def test_live_weather_summary_marks_heuristic_aqi_as_estimated():
     from app.models import WeatherData
     from app.services.chat import _render_weather
