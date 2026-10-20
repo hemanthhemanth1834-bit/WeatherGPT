@@ -85,6 +85,8 @@ def test_provider_health_shape():
     by_name = {p["provider"]: p["status"] for p in body["providers"]}
     assert "Open-Meteo Air Quality" in by_name
     assert "WRF feed" in by_name
+    assert by_name["Open-Meteo Forecast"] == "NOT_CHECKED"
+    assert by_name["Open-Meteo Air Quality"] == "NOT_CHECKED"
     assert by_name["WRF feed"] == "NOT_CONFIGURED"
     assert by_name["IMD Portal"] == "PORTAL_ONLY"
     assert by_name["MOSDAC / ISRO"] == "REQUIRES_CREDENTIALS"
