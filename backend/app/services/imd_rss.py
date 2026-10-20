@@ -15,9 +15,15 @@ def get_imd_rss_warnings(limit: int = 25) -> Dict[str, Any]:
             raise RuntimeError(f"IMD RSS HTTP {response.status_code}")
         root = ET.fromstring(response.content)
         items: List[Dict[str, Any]] = []
-        for node in root.findall(".//item")[:max(1, min(limit, 100))]:
+        # IMD has served unnamespaced RSS and namespace-qualified XML.
+        def local_name(tag: str) -> str:
+            return tag.rsplit("}", 1)[-1].lower()
+
+        nodes = [node for node in root.iter() if local_name(node.tag) == "item"]
+        for node in nodes[:max(1, min(limit, 100))]:
             def val(tag: str) -> str:
-                el = node.find(tag)
+                el = next((child for child in node.iter()
+                           if child is not node and local_name(child.tag) == tag.lower()), None)
                 return (el.text or "").strip() if el is not None else ""
             items.append({
                 "title": val("title"), "description": val("description"),
