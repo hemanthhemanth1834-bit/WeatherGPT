@@ -177,7 +177,17 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
             values = group.get(field)
             if not isinstance(values, list) or len(values) < len(times):
                 raise ValueError(f"Open-Meteo {group_name}.{field} is incomplete")
-            if field != "time" and not (field == "precipitation_probability" and model_label.startswith("DWD ICON")) and any(value is None for value in values[:len(times)]):
+            # ICON may legitimately omit precipitation probability values, but
+            # the requested array itself must still exist and align with timestamps.
+            # Missing probability is represented as null downstream, never as 0%.
+            icon_probability_optional = (
+                group_name == "hourly"
+                and field == "precipitation_probability"
+                and model_label.startswith("DWD ICON")
+            )
+            if field != "time" and not icon_probability_optional and any(
+                value is None for value in values[:len(times)]
+            ):
                 raise ValueError(f"Open-Meteo {group_name}.{field} contains missing values")
 
     code = int(current.get("weather_code", 1))
