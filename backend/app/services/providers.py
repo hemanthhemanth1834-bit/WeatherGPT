@@ -65,7 +65,35 @@ def probe_rainviewer() -> Dict[str, Any]:
 
 def probe_imd_rss() -> Dict[str, Any]:
     """Probe the public official IMD district-nowcast RSS feed."""
-    return _get("https://mausam.imd.gov.in/imd_latest/contents/dist_nowcast_rss.php", timeout=8.0)
+    # Match the explicit client identity and XML accept header used by the feed consumer.
+    start = time.time()
+    try:
+        response = http_get(
+            "https://mausam.imd.gov.in/imd_latest/contents/dist_nowcast_rss.php",
+            timeout=8.0,
+            retries=1,
+            headers={
+                "User-Agent": "WeatherGPT/2026 (+https://github.com/hemanthhemanth1834-bit/WeatherGPT)",
+                "Accept": "application/rss+xml, application/xml, text/xml, */*",
+            },
+        )
+        latency = round((time.time() - start) * 1000)
+        if response.status_code == 200:
+            import xml.etree.ElementTree as ET
+            root = ET.fromstring(response.content)
+            has_items = any(
+                element.tag.rsplit("}", 1)[-1].lower() in ("item", "entry")
+                for element in root.iter()
+            )
+            if not has_items:
+                return {"ok": False, "latency_ms": latency, "status": 200,
+                        "error": "HTTP 200 but no RSS/Atom items found"}
+            return {"ok": True, "latency_ms": latency, "status": 200}
+        return {"ok": False, "latency_ms": latency, "status": response.status_code,
+                "error": f"HTTP {response.status_code}"}
+    except Exception as exc:
+        return {"ok": False, "latency_ms": round((time.time() - start) * 1000),
+                "status": None, "error": str(exc)[:120]}
 
 
 def probe_gibs() -> Dict[str, Any]:
