@@ -71,7 +71,7 @@ jobs:
           checks = [
               "/",
               "/api/health",
-              "/api/providers/health?live=true",
+              "/api/providers/health?live=false",
               "/api/agent/tools",
               "/api/agent/engine",
               "/api/voice/status",
@@ -92,11 +92,46 @@ jobs:
           ]
 
           failed = []
+          provider_prefixes = (
+              "/api/weather/current",
+              "/api/air-quality",
+              "/api/satellite/",
+              "/api/disasters/",
+              "/api/climate/",
+          )
           for path in checks:
-              response = requests.get(base + path, timeout=30)
-              print(f"{response.status_code} {path}")
-              if response.status_code != 200:
+              provider_dependent = path.startswith(provider_prefixes)
+              response = None
+              last_error = None
+              for attempt in range(2):
+                  try:
+                      response = requests.get(base + path, timeout=20)
+                      if response.status_code in (502, 503, 429) and provider_dependent and attempt == 0:
+                          print(f"Transient upstream status {response.status_code}; retrying {path}")
+                          time.sleep(2)
+                          continue
+                      break
+                  except requests.RequestException as exc:
+                      last_error = exc
+                      if attempt == 0:
+                          time.sleep(2)
+              if response is None:
+                  if provider_dependent:
+                      print(f"WARN upstream-backed endpoint timed out twice: {path}: {last_error}")
+                      continue
                   failed.append(path)
+                  print(f"FAIL {path}: {last_error}")
+                  continue
+
+              print(f"{response.status_code} {path}")
+              if response.status_code == 200:
+                  continue
+              # A source outage is a valid, explicit API state; never require
+              # the external weather/disaster provider to be online for CI.
+              if provider_dependent and response.status_code in (429, 502, 503):
+                  print(f"WARN provider-backed endpoint unavailable by design: {path}")
+                  continue
+              failed.append(path)
 
           if failed:
               print("FAILED:", failed)
