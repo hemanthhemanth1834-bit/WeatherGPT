@@ -382,11 +382,14 @@ def disasters(region: str = Query("world", description="'world' or 'india'")) ->
 @app.get("/api/disasters/earthquakes")
 def quakes(min_magnitude: float = Query(4.5), days: int = Query(7)) -> dict:
     """Recent earthquakes from USGS (OFFICIAL third-party, geological)."""
+    import requests
     from fastapi import HTTPException
     from .services.disasters import earthquakes
     try:
         return earthquakes(min_magnitude, days)
-    except RuntimeError as exc:
+    except (RuntimeError, requests.RequestException) as exc:
+        # Public upstream feeds can time out independently of our API. Report
+        # an explicit provider outage instead of leaking a 500 traceback.
         raise HTTPException(status_code=502, detail=f"USGS unavailable: {exc}")
 
 
