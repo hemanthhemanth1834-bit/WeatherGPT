@@ -11,9 +11,9 @@ export default function LiveWeatherChart({ weather }) {
   },[weather?.lat,weather?.lon]);
   const data=useMemo(()=>hours.slice(0,range==="24H"?24:range==="48H"?48:168),[hours,range]);
   const cfg={temperature_2m:["Temperature","°C"],apparent_temperature:["Feels like","°C"],precipitation:["Precipitation","mm"],precipitation_probability:["Rain probability","%"],wind_speed_10m:["Wind speed","km/h"],relative_humidity_2m:["Humidity","%"],surface_pressure:["Pressure","hPa"]}[metric];
-  const vals=data.map(x=>Number(x[metric])).filter(Number.isFinite); if(!vals.length)return <div className="wg-market-chart empty">Loading live telemetry…</div>;
+  const vals=data.map(x=>x[metric] == null ? NaN : Number(x[metric])).filter(Number.isFinite); if(!vals.length)return <div className="wg-market-chart empty">Loading live telemetry…</div>;
   const min=Math.min(...vals),max=Math.max(...vals),pad=Math.max((max-min)*.14,metric==="surface_pressure"?1:.5),lo=min-pad,hi=max+pad,W=1000,H=330,PX=58,PY=30;
-  const pts=data.map((d,i)=>{const v=Number(d[metric]),x=PX+i/Math.max(1,data.length-1)*(W-PX-20),y=H-PY-(v-lo)/(hi-lo)*(H-PY-PY);return{x,y,v,d}});
+  const pts=data.filter(d=>d[metric]!=null&&Number.isFinite(Number(d[metric]))).map((d,i,arr)=>{const v=Number(d[metric]),x=PX+i/Math.max(1,arr.length-1)*(W-PX-20),y=H-PY-(v-lo)/(hi-lo)*(H-PY-PY);return{x,y,v,d}});
   const path=pts.map((p,i)=>(i?"L":"M")+" "+p.x.toFixed(1)+" "+p.y.toFixed(1)).join(" "), area=path+" L "+(pts.at(-1)?.x||PX)+" "+(H-PY)+" L "+(pts[0]?.x||PX)+" "+(H-PY)+" Z";
   const latest=vals.at(-1),prev=vals.at(-2)??latest,delta=latest-prev;
   return <div className="wg-market-chart">
