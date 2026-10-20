@@ -5,8 +5,7 @@ The photographs below replace synthetic decorative backgrounds. The existing lay
 | Usage | Source image | Attribution / license |
 |---|---|---|
 | Home hero | [A Stormy Atlantic](https://earthobservatory.nasa.gov/images/9063/a-stormy-atlantic) | NASA image courtesy of the GOES Project Science Office; NASA Earth Observatory material is generally reusable unless a page notes an exception. |
-| Climate / synoptic panels and station-card backgrounds | [Cloudy Earth](https://earthobservatory.nasa.gov/images/85843/cloudy-earth) | NASA Earth Observatory image by Jesse Allen and Kevin Ward, using data from the MODIS Atmosphere Science Team; public NASA Earth Observatory imagery. |
-| Decorative storm / rainfall background | [Hurricane Jeanne](https://earthobservatory.nasa.gov/images/4866/hurricane-jeanne) | NASA Tropical Rainfall Measuring Mission imagery; image and caption courtesy of Owen Kelley, Steve Lang, and Jeff Halverson. Historical event image, not current radar. |
+| Climate / synoptic, station, map, risk and emergency panel backgrounds | [Cloudy Earth](https://earthobservatory.nasa.gov/images/85843/cloudy-earth) | NASA Earth Observatory image by Jesse Allen and Kevin Ward, using data from the MODIS Atmosphere Science Team; public NASA Earth Observatory imagery. |
 | Interactive 3D Earth texture | [Equirectangular Earth for “LARGEST”](https://svs.gsfc.nasa.gov/3615/) | NASA/Goddard Space Flight Center Scientific Visualization Studio; Blue Marble Next Generation data courtesy of Reto Stöckli (NASA/GSFC) and NASA Earth Observatory. |
 | Solar module photo context | [Photovoltaic Panels Reap Solar Energy on Farms](https://commons.wikimedia.org/wiki/File:Photovoltaic_Panels_Reap_Solar_Energy_on_Farms_%2820240809-USDA-RD-DCK-0327%29.jpg) | USDAgov photo by David Kosling; public domain as a U.S. federal government work, distributed via Wikimedia Commons. The displayed 960 px thumbnail is used to limit page weight. |
 
