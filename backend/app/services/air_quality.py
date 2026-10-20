@@ -44,10 +44,24 @@ def _download(lat: float, lon: float) -> Dict[str, Any]:
     url = ("https://air-quality-api.open-meteo.com/v1/air-quality"
            f"?latitude={lat}&longitude={lon}&current={FIELDS}"
            "&timezone=Asia%2FKolkata")
-    response = http_get(url, timeout=5)
+    try:
+        response = http_get(url, timeout=5)
+    except Exception as exc:
+        # Network timeouts/connection failures are provider outages, not
+        # unhandled application errors. Let the route return its honest
+        # UNAVAILABLE contract instead of a 500 response.
+        raise RuntimeError(
+            f"AQI upstream request failed: {type(exc).__name__}"
+        ) from exc
     if response.status_code != 200:
         raise RuntimeError(f"AQI upstream HTTP {response.status_code}")
-    current = response.json().get("current", {})
+    try:
+        payload = response.json()
+    except (ValueError, TypeError) as exc:
+        raise RuntimeError("AQI upstream returned invalid JSON") from exc
+    current = payload.get("current") if isinstance(payload, dict) else None
+    if not isinstance(current, dict):
+        raise RuntimeError("AQI upstream returned no current data")
     if "us_aqi" not in current or current.get("us_aqi") is None:
         raise RuntimeError("AQI upstream returned no index")
     ist = datetime.timezone(datetime.timedelta(hours=5, minutes=30))

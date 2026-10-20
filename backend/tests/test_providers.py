@@ -20,6 +20,15 @@ def needs_network():
         pytest.skip("no network for live provider test")
 
 
+def test_aqi_network_errors_are_reported_as_provider_unavailable(monkeypatch):
+    def timeout(*args, **kwargs):
+        raise TimeoutError("simulated upstream timeout")
+
+    monkeypatch.setattr(aq, "http_get", timeout)
+    with pytest.raises(RuntimeError, match="TimeoutError"):
+        aq._download(16.5, 80.6)
+
+
 def test_aqi_bands_and_dominant():
     assert aq.aqi_band(30) == "Good"
     assert aq.aqi_band(120) == "Unhealthy for Sensitive Groups"
@@ -36,12 +45,19 @@ def test_uv_guidance_tiers():
 
 def test_live_aqi_endpoint():
     needs_network()
-    body = client.get("/api/air-quality", params={"location": "Vijayawada"}).json()
+    response = client.get("/api/air-quality", params={"location": "Vijayawada"})
+    assert response.status_code == 200
+    body = response.json()
     assert body["standard"] == "US AQI (EPA)"
-    assert body["status"] in ("LIVE", "FALLBACK")
+    assert body["status"] in ("LIVE", "FALLBACK", "UNAVAILABLE")
     if body["status"] == "LIVE":
         assert isinstance(body["us_aqi"], int) and body["us_aqi"] >= 0
         assert body["pm2_5"] is not None
+    elif body["status"] == "UNAVAILABLE":
+        # Provider outages must remain explicit; never substitute a made-up AQI.
+        assert body["us_aqi"] is None
+        assert body["pm2_5"] is None
+        assert body["data_type"] == "Unavailable"
 
 
 def test_live_marine_endpoint():
@@ -78,6 +94,8 @@ def test_provider_health_shape():
     by_name = {p["provider"]: p["status"] for p in body["providers"]}
     assert "Open-Meteo Air Quality" in by_name
     assert "WRF feed" in by_name
+    assert by_name["Open-Meteo Forecast"] == "NOT_CHECKED"
+    assert by_name["Open-Meteo Air Quality"] == "NOT_CHECKED"
     assert by_name["WRF feed"] == "NOT_CONFIGURED"
     assert by_name["IMD Portal"] == "PORTAL_ONLY"
     assert by_name["MOSDAC / ISRO"] == "REQUIRES_CREDENTIALS"
