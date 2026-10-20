@@ -84,8 +84,18 @@ function TempSpark({ hourly, metric }) {
     hum: ["Humidity", "%", h => Number(h.humidity)]
   }[metric] || ["Temperature", "°C", h => Number(h.temp)];
   const values = rows.map(cfg[2]).map(Number).filter(Number.isFinite);
-  const min = Math.min(...values.filter(Number.isFinite));
-  const max = Math.max(...values.filter(Number.isFinite));
+  if (!values.length) {
+    return (
+      <div className="wg-hourly-chart" role="status">
+        <div className="wg-hourly-chart-head">
+          <div><b>{cfg[0]}</b><span>Unavailable for this model — no valid values were returned.</span></div>
+          <small>Next 24 hours · hourly forecast</small>
+        </div>
+      </div>
+    );
+  }
+  const min = Math.min(...values);
+  const max = Math.max(...values);
   const pad = Math.max((max - min) * .15, .5);
   const lo = min - pad, hi = max + pad;
   const W = 1000, H = 230, L = 54, R = 18, T = 18, B = 38;
