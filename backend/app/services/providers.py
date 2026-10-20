@@ -127,9 +127,14 @@ def health_snapshot(check_live: bool = True) -> Dict[str, Any]:
         if entry.get("fixed"):
             status = entry["fixed"]
             result: Dict[str, Any] = {"ok": status == "LIVE", "latency_ms": None}
-        elif probe is None or not check_live:
+        elif probe is None:
             status = "NOT_CONFIGURED"
             result = {"ok": False, "latency_ms": None}
+        elif not check_live:
+            # Metadata-only snapshots must not imply that a working provider
+            # is unconfigured merely because we intentionally skipped probing.
+            status = "NOT_CHECKED"
+            result = {"ok": None, "latency_ms": None}
         else:
             result = probe()
             status = "LIVE" if result["ok"] else "ERROR"
@@ -149,4 +154,5 @@ def health_snapshot(check_live: bool = True) -> Dict[str, Any]:
                 datetime.timezone(datetime.timedelta(hours=5, minutes=30))
             ).strftime("%d %b %Y, %H:%M IST"),
             "policy": "LIVE means probed OK now. ERROR means probe failed. "
-                      "NOT_CONFIGURED needs credentials or a feed."}
+                      "NOT_CHECKED means live probing was skipped. "
+                      "NOT_CONFIGURED means credentials or a feed are needed."}
