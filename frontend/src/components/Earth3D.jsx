@@ -10,6 +10,7 @@ import { fetchActiveAlerts, fetchEarthquakes, fetchWildfires } from "../services
    come from provider feeds and computed alert data (alerts, quakes, fires).
    Quality scales down on small screens / reduced motion / no WebGL. */
 const LAND_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json";
+const EARTH_TEXTURE_URL = "https://svs.gsfc.nasa.gov/vis/a000000/a003600/a003615/earth_noClouds.0330.jpg";
 const R = 1;
 
 function latLon(lat, lon, r = R) {
@@ -69,12 +70,35 @@ export default function Earth3D({ weather }) {
       const globe = new THREE.Group();
       scene.add(globe);
 
+      // Real NASA Blue Marble land/ocean texture, mapped onto the existing
+      // interactive globe. If the remote image is blocked, retain the dark globe.
+      let oceanMaterial = null;
+      const earthTexture = new THREE.TextureLoader().load(
+        EARTH_TEXTURE_URL,
+        () => {
+          earthTexture.colorSpace = THREE.SRGBColorSpace;
+          earthTexture.needsUpdate = true;
+        },
+        undefined,
+        () => {
+          if (oceanMaterial) {
+            oceanMaterial.map = null;
+            oceanMaterial.color.setHex(0x0a1a33);
+            oceanMaterial.needsUpdate = true;
+          }
+          if (!cancelled) setStatus("NASA Earth texture unavailable · fallback globe with live markers");
+        }
+      );
+      earthTexture.colorSpace = THREE.SRGBColorSpace;
+      oceanMaterial = new THREE.MeshPhongMaterial({
+        map: earthTexture, color: 0xffffff, shininess: 8, transparent: true, opacity: 0.98,
+      });
       const ocean = new THREE.Mesh(
         new THREE.SphereGeometry(R, small ? 32 : 64, small ? 32 : 64),
-        new THREE.MeshPhongMaterial({ color: 0x0a1a33, shininess: 8, transparent: true, opacity: 0.96 })
+        oceanMaterial
       );
       globe.add(ocean);
-      disposables.push(ocean.geometry, ocean.material);
+      disposables.push(ocean.geometry, ocean.material, earthTexture);
 
       // Graticule (our own linework).
       const grat = [];

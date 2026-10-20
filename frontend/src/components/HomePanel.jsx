@@ -290,6 +290,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
             <span className={`wg-chip ${weather?.status === "LIVE" ? "live" : "estimated"}`}>● WEATHER DATA · {weather?.status || "UNAVAILABLE"}</span>
             <h1>Weather Intelligence &amp; <span>Planetary Risk</span></h1>
             <p>Weather forecasts, recent radar and satellite imagery, model guidance and computed risk indicators — with source, freshness and fallback labels so you can judge the evidence.</p>
+            <small className="wg-ref-image-note">NASA archival satellite image for visual context only · not current local conditions.</small>
             <div className="wg-ref-hero-actions">
               <button className="wg-btn" onClick={() => onTab("deep_cast")}>☁ Model Deep-Cast</button>
               <button className="wg-btn-ghost" onClick={() => onTab("evacuation")}>🚨 Disaster &amp; Evacuation Hub</button>
