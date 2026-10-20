@@ -33,7 +33,12 @@ EXTERNAL_NOISE = re.compile(
     r"[abc]\.tile\.openstreetmap\.org|"
     r"gibs\.earthdata\.nasa\.gov|"
     r"tilecache\.rainviewer\.com|"
-    r"api\.rainviewer\.com"
+    r"api\.rainviewer\.com|"
+    r"assets\.science\.nasa\.gov|"
+    r"svs\.gsfc\.nasa\.gov|"
+    r"upload\.wikimedia\.org|"
+    r"earthobservatory\.nasa\.gov|"
+    r"images\.unsplash\.com"
     r")"
 )
 
@@ -196,8 +201,8 @@ def run(browser_type):
             and not (external_bad and e.startswith("Failed to load resource"))
         ]
         noise_note = (
-            f" [note: {len(external_bad)} third-party provider requests failed"
-            " - external noise, not a product error]"
+            f" [note: {len(external_bad)} allowlisted third-party requests failed"
+            f" - external noise, not a product error; URLs: {sorted(set(external_bad))[:4]}]"
             if external_bad and not real_errors
             else ""
         )
