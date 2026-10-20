@@ -230,10 +230,29 @@ def test_gfs_model_label():
     assert isinstance(gfs["current_temp"], (int, float))
 
 
+def test_earthquakes_endpoint_reports_upstream_timeout(monkeypatch):
+    import requests
+    from app.services import http as http_service
+
+    def timeout(*args, **kwargs):
+        raise requests.exceptions.ReadTimeout("simulated USGS timeout")
+
+    monkeypatch.setattr(http_service, "http_get", timeout)
+    response = client.get("/api/disasters/earthquakes",
+                          params={"min_magnitude": 9.0, "days": 30})
+    assert response.status_code == 502
+    assert "USGS unavailable" in response.json()["detail"]
+
+
 def test_earthquakes_live():
     needs_network()
-    body = client.get("/api/disasters/earthquakes",
-                      params={"min_magnitude": 4.5, "days": 7}).json()
+    response = client.get("/api/disasters/earthquakes",
+                          params={"min_magnitude": 4.5, "days": 7})
+    if response.status_code == 502:
+        assert "USGS unavailable" in response.json()["detail"]
+        return
+    assert response.status_code == 200
+    body = response.json()
     assert body["status"] == "LIVE"
     assert body["count"] >= 0
     assert "USGS" in body["source"]
