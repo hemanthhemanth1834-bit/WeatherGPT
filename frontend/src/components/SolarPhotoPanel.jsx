@@ -3,7 +3,7 @@ import React from "react";
 /* Real, public-domain USDA photograph used as a visual context panel.
    It is not a photo of the selected user's roof or a live measurement. */
 const SOLAR_IMAGE =
-  "https://upload.wikimedia.org/wikipedia/commons/0/01/Photovoltaic_Panels_Reap_Solar_Energy_on_Farms_%2820240809-USDA-RD-DCK-0327%29.jpg";
+  "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Photovoltaic_Panels_Reap_Solar_Energy_on_Farms_%2820240809-USDA-RD-DCK-0327%29.jpg/960px-Photovoltaic_Panels_Reap_Solar_Energy_on_Farms_%2820240809-USDA-RD-DCK-0327%29.jpg";
 
 export default function SolarPhotoPanel({ cloud = 40, uv = 5, ratedKw = 5, altitude = 45 }) {
   return (
