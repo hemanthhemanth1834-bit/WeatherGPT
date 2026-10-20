@@ -264,7 +264,7 @@ def test_imd_rss_parser_handles_items(monkeypatch):
     class Response:
         status_code = 200
         content = b"""<?xml version="1.0"?>
-        <rss><channel><item><title>District rain warning</title>
+        <rss xmlns="http://purl.org/rss/1.0/"><channel><item><title>District rain warning</title>
         <description>Heavy rain</description><link>https://mausam.imd.gov.in/example</link>
         <pubDate>Tue, 20 Oct 2026 06:00:00 GMT</pubDate></item></channel></rss>"""
 
