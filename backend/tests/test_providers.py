@@ -36,12 +36,19 @@ def test_uv_guidance_tiers():
 
 def test_live_aqi_endpoint():
     needs_network()
-    body = client.get("/api/air-quality", params={"location": "Vijayawada"}).json()
+    response = client.get("/api/air-quality", params={"location": "Vijayawada"})
+    assert response.status_code == 200
+    body = response.json()
     assert body["standard"] == "US AQI (EPA)"
-    assert body["status"] in ("LIVE", "FALLBACK")
+    assert body["status"] in ("LIVE", "FALLBACK", "UNAVAILABLE")
     if body["status"] == "LIVE":
         assert isinstance(body["us_aqi"], int) and body["us_aqi"] >= 0
         assert body["pm2_5"] is not None
+    elif body["status"] == "UNAVAILABLE":
+        # Provider outages must remain explicit; never substitute a made-up AQI.
+        assert body["us_aqi"] is None
+        assert body["pm2_5"] is None
+        assert body["data_type"] == "Unavailable"
 
 
 def test_live_marine_endpoint():
