@@ -153,8 +153,8 @@ function ExplanationGrid({ weather }) {
     ["LIVE WEATHER","Current conditions, rain chance, wind, humidity and AQI."],
     ["AI DEEP-CAST","Weather-model guidance turned into plain-language scenarios."],
     ["7-DAY OUTLOOK","See how temperature, rain and wind change over the week."],
-    ["LIVE GRAPH","Hourly history + forecast. Switch metrics and hover for values."],
-    ["LIVE MAP","Real map, stations, radar and satellite layers."],
+    ["HOURLY FORECAST","Forecast timeline. Switch metrics and hover for values."],
+    ["INTERACTIVE MAP","Map context, recent radar and satellite layers."],
     ["RISK & EVACUATION","Weather-risk context for planning; official alerts come first."],
     ["SECTOR HUBS","Weather translated for farming, roads, travel, lifestyle and solar."],
     ["DATA STATUS","LIVE = verified provider data · ESTIMATED = explicitly labeled estimate · UNAVAILABLE = no usable data."]
@@ -198,9 +198,9 @@ function StationCard({ name, place, weather, active, onClick }) {
           <span className="wg-ref-station-feels">{weather.data_source || "Source unavailable"} · {weather.status || "STATUS UNKNOWN"}</span>
         </>
       ) : (
-        <span className="wg-ref-station-weather muted">Select/search this place for live telemetry</span>
+        <span className="wg-ref-station-weather muted">Select this location to load its current forecast</span>
       )}
-      <small>{active ? "Active Station" : "Focus Station"}</small>
+      <small>{active ? "Active Location" : "Focus Location"}</small>
     </button>
   );
 }
@@ -327,12 +327,12 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
         <div className="wg-ref-feature-grid">
           <FeatureCard icon="✦" title="AI Deep-Cast Ensemble" text="Combines available numerical weather-model signals into an interpretable forecast view. Model availability and provenance are shown by the module." meta="MODEL GUIDANCE" action="Explore Soundings" onClick={() => onTab("deep_cast")} />
           <FeatureCard icon="⌁" title="Evacuation Routing" text="Uses weather and geographic context to support route planning. It should be checked against current official emergency instructions and local road conditions." meta="DECISION SUPPORT" action="Launch Evacuation Map" onClick={() => onTab("evacuation")} />
-          <FeatureCard icon="◈" title="FloodWatch Digital Twin" text="Visualizes available hydrology and flood-risk information to help understand exposed areas and changing conditions." meta="HYDROLOGY" action="View Digital Twin" onClick={() => onTab("risk")} />
+          <FeatureCard icon="◈" title="Flood Risk Explorer" text="Shows available flood-risk indicators and their limitations; this is not a live hydraulic digital twin." meta="RISK ESTIMATE" action="View Flood Risk" onClick={() => onTab("risk")} />
           <FeatureCard icon="◷" title="12-Month Climate Trends" text="Compares available climate and historical weather information so long-term patterns can be viewed separately from short-term forecasts." meta="CLIMATE CONTEXT" action="Analyze Anomalies" onClick={() => onTab("climate")} />
         </div>
       </Section>
 
-      <Section eyebrow="PRIORITY OBSERVATION NETWORK" title="Pinned Weather Dashboard">
+      <Section eyebrow="PINNED REFERENCE LOCATIONS" title="Pinned Weather Dashboard">
         <div className="wg-ref-dashboard-toolbar"><span><b>{stationCount} / 3 LOCATIONS</b> · Model-based forecasts for reference locations, not physical station observations</span><span className="wg-ref-toolbar-actions"><label><input type="checkbox" className="wg-check" checked={auto} onChange={(e) => setAuto(e.target.checked)} /> Auto-refresh <span className="wg-ref-refresh-age">60s interval</span></label><button className="wg-btn-ghost" onClick={() => weather && onRefresh(weather.location)}>↻ Refresh All</button><button className="wg-btn-ghost" onClick={() => setManageStations(true)}>Select &amp; Manage</button></span></div>
         <div className="wg-ref-station-grid">
           {regional.slice(0, stationCount).map(([name, stationPlace], i) => {
@@ -366,7 +366,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
             <div><span>7-Day Accumulation</span><b>{rainTotal != null ? rainTotal.toFixed(1) + " mm" : "—"}</b><small>{rainTotal == null ? "Forecast unavailable" : rainTotal >= 50 ? "High accumulation watch" : "Forecast accumulation"}</small></div>
           </div>
           <LiveWeatherChart weather={weather} />
-          <div className="wg-ref-legend"><span>Hourly live telemetry</span><span>Forecast + recent history</span><span>Hover points for detail</span><b>Open-Meteo · free source · no API key</b></div>
+          <div className="wg-ref-legend"><span>Hourly live telemetry</span><span>Forecast data · model-dependent</span><span>Hover points for detail</span><b>Open-Meteo · free source · no API key</b></div>
         </div>
       </Section>
 
@@ -375,7 +375,7 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
           <div className="wg-ref-map-head"><span>CLICK TO SELECT</span><span>Click anywhere on the map or tap a station pin to instantly set your active location.</span></div>
           <div className="wg-ref-map-body wg-ref-map-real-body">
             <div className="wg-ref-map-real"><RealIndiaMap weather={weather} onAsk={onAsk} /></div>
-            <div className="wg-ref-map-side"><b>ACTIVE STATION</b><strong>{weather?.location || "Location unavailable"}</strong><span>{Number.isFinite(weather?.lat) && Number.isFinite(weather?.lon) ? `${weather.lat.toFixed(1)}°, ${weather.lon.toFixed(1)}°` : "Coordinates unavailable"}</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>{weather?.status === "LIVE" ? "Live provider data" : weather?.status ? `${weather.status} weather data` : "Waiting for provider data"}</small></div>
+            <div className="wg-ref-map-side"><b>ACTIVE LOCATION</b><strong>{weather?.location || "Location unavailable"}</strong><span>{Number.isFinite(weather?.lat) && Number.isFinite(weather?.lon) ? `${weather.lat.toFixed(1)}°, ${weather.lon.toFixed(1)}°` : "Coordinates unavailable"}</span><strong>{weather?.current_temp ?? "—"}°C</strong><small>{weather?.status === "LIVE" ? "Live provider data" : weather?.status ? `${weather.status} weather data` : "Waiting for provider data"}</small></div>
           </div>
           <div className="wg-ref-map-tabs">{["All India","North","South","West","East & NE","Central"].map((x) => <button key={x} onClick={() => onTab("map")}>{x}</button>)}</div>
           <div className="wg-ref-hubs"><b>Quick Hubs:</b>{["New Delhi","Mumbai","Chennai","Bengaluru","Kolkata","Hyderabad","Kochi","Ahmedabad"].map((x) => <button key={x} onClick={() => onAsk(`Weather for ${x}`)}>{x}</button>)}</div>
@@ -383,19 +383,19 @@ export default function HomePanel({ weather, busy, detecting, locStatus = "IDLE"
       </Section>
 
       <Section eyebrow="SECTORAL INTELLIGENCE" title="Sectoral Climate & Lifestyle Hubs">
-        <div className="wg-ref-sector-header"><span>Hyperlocal decision engines tailored to key socio-economic activities</span><b>6 Real-Time Engines</b></div>
+        <div className="wg-ref-sector-header"><span>Hyperlocal decision engines tailored to key socio-economic activities</span><b>6 Weather-Driven Tools</b></div>
         <div className="wg-ref-feature-grid six">
           <FeatureCard icon="☀" title="Life Cast" text="Personal lifestyle weather forecasts: jogging, cycling, laundry drying, drone flights, and outdoor health ratings." onClick={() => onAsk(`Give me today's life-cast for ${askLocation}.`)} />
-          <FeatureCard icon="🌾" title="Farm & Crop Advisory" text="GKMS agricultural advisories, sowing/harvesting schedules, and chemical spraying windows." onClick={() => onTab("agri")} />
-          <FeatureCard icon="🛣" title="RoadWatch Transit" text="Highway hydroplaning risks, dense fog visibility warnings, and crosswind alerts." onClick={() => onAsk(`Give me road-weather advice for ${askLocation}.`)} />
-          <FeatureCard icon="🌳" title="TreeGuard Urban Canopy" text="Urban tree vulnerability, branch-fall danger, windthrow risk, and root anchorage." onClick={() => onTab("climate")} />
-          <FeatureCard icon="🧳" title="Weather Trip Planner" text="Multi-waypoint routing with weather-at-arrival forecasting and departure optimization." onClick={() => onAsk(`Help me plan a weather-safe trip around ${askLocation}.`)} />
+          <FeatureCard icon="🌾" title="Farm & Crop Advisory" text="Weather-based crop-work guidance. Verify decisions against current official agricultural advisories." onClick={() => onTab("agri")} />
+          <FeatureCard icon="🛣" title="RoadWatch Transit" text="Weather-based road risk indicators for rain, low visibility and crosswinds; local road conditions may differ." onClick={() => onAsk(`Give me road-weather advice for ${askLocation}.`)} />
+          <FeatureCard icon="🌳" title="TreeGuard Urban Canopy" text="Weather-based tree and branch-fall risk context; live canopy and root-condition data are not claimed." onClick={() => onTab("climate")} />
+          <FeatureCard icon="🧳" title="Weather Trip Planner" text="Multi-stop planning estimates with destination-weather context; not turn-by-turn driving navigation." onClick={() => onAsk(`Help me plan a weather-safe trip around ${askLocation}.`)} />
           <FeatureCard icon="☼" title="Solar & Clean Energy" text="GHI solar irradiance modeling, hourly generation estimation, and cleaning advisories." onClick={() => onTab("dashboard")} />
         </div>
       </Section>
 
       <div className="wg-ref-emergency">
-        <div><span>NATIONAL CRISIS &amp; EMERGENCY DISPATCH</span><b>24/7 direct toll-free connections to control centers</b></div>
+        <div><span>INDIA EMERGENCY HELPLINES</span><b>Use official emergency numbers and follow local authority instructions</b></div>
         <div className="wg-ref-emergency-links"><a href="tel:112">Dial 112 (National)</a><a href="tel:1078">1078 (NDMA)</a><a href="tel:1070">1070 (Relief Comm.)</a></div>
       </div>
 
