@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services import air_quality as aq
+from app.services import imd_rss, providers as provider_service
 from app.services import geo, weather
 from app.services import travel as tv
 
@@ -257,3 +258,48 @@ def test_quake_feature_normalize_pure():
     assert out["depth_km"] == 10.0
     assert out["tsunami"] is True
     assert out["status"] == "OFFICIAL third-party feed"
+
+
+def test_imd_rss_parser_handles_items(monkeypatch):
+    class Response:
+        status_code = 200
+        content = b"""<?xml version="1.0"?>
+        <rss><channel><item><title>District rain warning</title>
+        <description>Heavy rain</description><link>https://mausam.imd.gov.in/example</link>
+        <pubDate>Tue, 20 Oct 2026 06:00:00 GMT</pubDate></item></channel></rss>"""
+
+    monkeypatch.setattr(imd_rss, "http_get", lambda *a, **k: Response())
+    result = imd_rss.get_imd_rss_warnings(limit=1)
+    assert result["status"] == "LIVE"
+    assert result["count"] == 1
+    assert result["items"][0]["title"] == "District rain warning"
+    assert result["items"][0]["official"] is True
+
+
+def test_imd_rss_health_probe_uses_headers_and_validates_xml(monkeypatch):
+    class Response:
+        status_code = 200
+        content = b"<rss><channel><item><title>Test</title></item></channel></rss>"
+
+    seen = {}
+    def fake_get(url, **kwargs):
+        seen["url"] = url
+        seen.update(kwargs)
+        return Response()
+
+    monkeypatch.setattr(provider_service, "http_get", fake_get)
+    result = provider_service.probe_imd_rss()
+    assert result["ok"] is True
+    assert "User-Agent" in seen["headers"]
+    assert "Accept" in seen["headers"]
+
+
+def test_imd_rss_health_probe_rejects_non_feed_200(monkeypatch):
+    class Response:
+        status_code = 200
+        content = b"<html><body>Portal maintenance</body></html>"
+
+    monkeypatch.setattr(provider_service, "http_get", lambda *a, **k: Response())
+    result = provider_service.probe_imd_rss()
+    assert result["ok"] is False
+    assert "no RSS/Atom items" in result["error"]
