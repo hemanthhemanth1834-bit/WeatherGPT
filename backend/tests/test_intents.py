@@ -15,7 +15,7 @@ def test_cloud_cover_field_defaults_and_parses():
                     "wind_direction_10m": 90},
         "hourly": {"time": ["2026-09-30T00:00"], "temperature_2m": [30.0],
                    "precipitation_probability": [5], "weather_code": [1],
-                   "wind_speed_10m": [10.0]},
+                   "wind_speed_10m": [10.0], "relative_humidity_2m": [50]},
         "daily": {"time": ["2026-09-30"], "weather_code": [1],
                   "temperature_2m_max": [33.0], "temperature_2m_min": [24.0],
                   "precipitation_sum": [0.0], "wind_speed_10m_max": [12.0],
