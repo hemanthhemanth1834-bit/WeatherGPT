@@ -20,6 +20,15 @@ def needs_network():
         pytest.skip("no network for live provider test")
 
 
+def test_aqi_network_errors_are_reported_as_provider_unavailable(monkeypatch):
+    def timeout(*args, **kwargs):
+        raise TimeoutError("simulated upstream timeout")
+
+    monkeypatch.setattr(aq, "http_get", timeout)
+    with pytest.raises(RuntimeError, match="TimeoutError"):
+        aq._download(16.5, 80.6)
+
+
 def test_aqi_bands_and_dominant():
     assert aq.aqi_band(30) == "Good"
     assert aq.aqi_band(120) == "Unhealthy for Sensitive Groups"
