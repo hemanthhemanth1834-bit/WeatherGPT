@@ -160,7 +160,7 @@ def _from_api(payload: dict, lat: float, lon: float, place: str,
     # carry explicit provenance labels.
     required_arrays = {
         "hourly": (hourly_raw, (
-            "time", "temperature_2m", "weather_code",
+            "time", "temperature_2m", "precipitation_probability", "weather_code",
             "wind_speed_10m", "relative_humidity_2m",
         )),
         "daily": (daily_raw, (
