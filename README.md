@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/github/actions/workflow/status/hemanthhemanth1834-bit/WeatherGPT/ci.yml?branch=main&label=CI&logo=github" alt="CI">
-  <img src="https://img.shields.io/badge/license-not%20specified-lightgrey" alt="License not specified">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <img src="https://img.shields.io/github/last-commit/hemanthhemanth1834-bit/WeatherGPT?label=Last%20commit" alt="Last commit">
 </p>
 
@@ -53,6 +53,8 @@ WeatherGPT is an AI-assisted weather intelligence platform built for India. It c
 | Realtime | Optional MQTT/WIS2 | Mosquitto |
 
 Open-Meteo documents a free weather API and model families including ECMWF, NOAA and DWD. Sources: [Open-Meteo API](https://open-meteo.com/en/docs) · [Models](https://open-meteo.com/en/docs#models)
+
+**Free-tier note:** Open-Meteo's hosted free API is for non-commercial use and requires CC BY 4.0 attribution. Commercial use or higher traffic needs an appropriate licence or a self-hosted alternative. See [official terms](https://open-meteo.com/en/terms) before operating this publicly.
 
 ---
 
