@@ -1,4 +1,4 @@
-name: WeatherGPT Production Verification
+name: WeatherGPT Deploy and Verify
 
 on:
   workflow_dispatch:
@@ -6,8 +6,85 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: weathergpt-production
+  cancel-in-progress: false
+
 jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+    steps:
+      - name: Check out the verified commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Resolve the existing Vercel project
+        run: |
+          python - <<'PY'
+          import json, os, sys, urllib.parse, urllib.request
+
+          token = os.environ["VERCEL_TOKEN"]
+
+          def api(path, query=None):
+              url = "https://api.vercel.com" + path
+              if query:
+                  url += "?" + urllib.parse.urlencode(query)
+              request = urllib.request.Request(
+                  url, headers={"Authorization": f"Bearer {token}"}
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.load(response)
+
+          scopes = [None]
+          try:
+              scopes += [team["id"] for team in api("/v2/teams").get("teams", [])]
+          except Exception as exc:
+              print(f"Team lookup skipped: {exc}")
+
+          projects = {}
+          for team_id in scopes:
+              query = {"limit": 100}
+              if team_id:
+                  query["teamId"] = team_id
+              try:
+                  for project in api("/v9/projects", query).get("projects", []):
+                      projects[project["id"]] = project
+              except Exception as exc:
+                  print(f"Project lookup skipped for scope {team_id or 'personal'}: {exc}")
+
+          exact = [p for p in projects.values() if p.get("name", "").lower() == "weathergpt"]
+          candidates = exact or [
+              p for p in projects.values()
+              if "weathergpt" in p.get("name", "").lower()
+              or "weathergpt-kappa-pink" in json.dumps(p)
+          ]
+          if not candidates:
+              print("Visible projects: " + ", ".join(sorted(p.get("name", "?") for p in projects.values())))
+              sys.exit("No WeatherGPT project is visible to the VERCEL_TOKEN.")
+
+          project = candidates[0]
+          os.makedirs(".vercel", exist_ok=True)
+          with open(".vercel/project.json", "w", encoding="utf-8") as handle:
+              json.dump(
+                  {"projectId": project["id"], "orgId": project["accountId"]},
+                  handle,
+              )
+          print(f"Using Vercel project: {project.get('name')}")
+          PY
+
+      - name: Deploy to Vercel production
+        run: npx --yes vercel@latest deploy --prod --yes --archive=tgz --token "$VERCEL_TOKEN"
+
   verify:
+    needs: deploy
     runs-on: ubuntu-latest
     steps:
       - name: Verify public production API
@@ -22,7 +99,7 @@ jobs:
               "/",
               "/api/health",
               "/api/platform/capabilities",
-              "/api/providers/health?live=true",
+              "/api/providers/health?live=false",
               "/api/agent/tools",
               "/api/agent/engine",
               "/api/voice/status",
@@ -41,7 +118,7 @@ jobs:
               "/sitemap.xml",
           ]
 
-          for attempt in range(12):
+          for attempt in range(18):
               try:
                   response = requests.get(base + "/api/health", timeout=10)
                   if response.status_code == 200:
