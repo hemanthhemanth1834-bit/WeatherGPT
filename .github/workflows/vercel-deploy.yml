@@ -87,6 +87,14 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install verification client
+        run: python -m pip install requests
+
       - name: Verify public production API
         env:
           WEATHERGPT_URL: https://weathergpt-kappa-pink.vercel.app
