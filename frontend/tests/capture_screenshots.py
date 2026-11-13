@@ -21,25 +21,30 @@ PROD = "https://weathergpt-kappa-pink.vercel.app/"
 BENCH = "https://weather-gpt-umber.vercel.app/"
 CHROME = os.getenv("WG_CHROME_PATH", "")
 
-# Sidebar label -> output filename (desktop 1440x900, full page).
+# Primary sidebar label -> output filename (desktop 1440x900, full page).
 LOCAL_PAGES = [
     ("Overview", "local-home"),
     ("Live Weather", "local-dashboard"),
     ("AI Weather Deep-Cast", "local-deep-cast"),
-    ("Life Cast", "local-life-cast"),
-    ("Station Comparison", "local-compare"),
     ("Climate Trends", "local-climate"),
-    ("Live News Broadcast", "local-alerts"),
+    ("Severe Alerts", "local-alerts"),
+    ("FloodWatch", "local-floodwatch"),
+    ("Disaster Preparedness", "local-severe"),
     ("AI Weather Assistant", "local-chat"),
     ("Farm / Crop Advisory", "local-agri"),
+]
+
+# Postponed/preview modules are reachable only through the secondary Platform
+# Status page, never from the primary navigation.
+PREVIEW_PAGES = [
+    ("Platform Status", "local-capabilities"),
+    ("Life Cast", "local-life-cast"),
+    ("City / Model Comparison", "local-compare"),
     ("RoadWatch", "local-roadwatch"),
     ("TreeGuard", "local-treeguard"),
     ("Trip Planner", "local-trip-planner"),
     ("UtilityWatch", "local-utilitywatch"),
     ("Solar Energy Potential", "local-solar"),
-    ("Platform Status", "local-capabilities"),
-    ("Disaster Management", "local-severe"),
-    ("FloodWatch", "local-floodwatch"),
 ]
 
 
@@ -56,6 +61,13 @@ def shot(page, name, full_page=True):
     print(f"  saved {path.name}")
 
 
+def open_navigation(page):
+    toggle = page.locator(".wg-ref-menu-btn").first
+    if toggle.get_attribute("aria-expanded") != "true":
+        toggle.click(timeout=10000)
+        page.wait_for_timeout(350)
+
+
 def capture_local(browser):
     ctx = browser.new_context(viewport={"width": 1440, "height": 900})
     page = ctx.new_page()
@@ -67,6 +79,7 @@ def capture_local(browser):
 
     for label, name in LOCAL_PAGES[1:]:
         try:
+            open_navigation(page)
             page.get_by_role("button", name=label, exact=False).first.click(
                 timeout=15000
             )
@@ -74,6 +87,24 @@ def capture_local(browser):
             shot(page, name)
         except Exception as exc:  # noqa: BLE001
             print(f"  [warn] {label}: {exc}")
+    for label, name in PREVIEW_PAGES:
+        try:
+            page.get_by_role(
+                "button",
+                name="Open platform settings and provider status",
+                exact=True,
+            ).first.click(timeout=15000)
+            page.wait_for_selector("h1", timeout=20000)
+            page.wait_for_timeout(1500)
+            if label != "Platform Status":
+                page.get_by_role(
+                    "button", name=f"Open preview: {label}", exact=True
+                ).click(timeout=15000)
+                page.wait_for_timeout(4200)
+            shot(page, name)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  [warn] {label}: {exc}")
+
     # Map tab is only reachable via the header location button.
     try:
         page.locator(".wg-ref-location").first.click(timeout=10000)

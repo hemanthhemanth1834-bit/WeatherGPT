@@ -3,6 +3,7 @@
 Original implementation for this project. Field names form the public
 JSON contract consumed by the frontend and tests.
 """
+
 from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 
@@ -25,6 +26,7 @@ class DailyPoint(BaseModel):
     condition: str = "Clear Sky"
     icon: str = "Sun"
     rain_sum: float = 0.0
+    rain_prob: Optional[int] = Field(default=None, ge=0, le=100)
     wind_max: float = 15.0
 
 
@@ -148,6 +150,7 @@ class CityComparisonData(BaseModel):
     travel_safety_score: int = 90
     travel_advisory: str = ""
     health_advisory: HealthPersonas = Field(default_factory=HealthPersonas)
+    risk_breakdown: Optional[Dict[str, Any]] = None
 
 
 class WeatherQueryRequest(BaseModel):
@@ -180,6 +183,19 @@ class ChatResponse(BaseModel):
     # False when the named place could not be geocoded at all and the answer
     # is therefore about the built-in default location, not the asked place.
     location_resolved: bool = True
+    # Additive provenance envelope. Existing clients can ignore these fields;
+    # the frontend renders the source strip and evidence panel from them.
+    provenance: Optional[Dict[str, Any]] = None
+    sources: List[Dict[str, Any]] = Field(default_factory=list)
+    data_type: str = "MODEL_FORECAST"
+    freshness: str = "UNKNOWN"
+    limitations: List[str] = Field(default_factory=list)
+    tool_trace: List[Dict[str, Any]] = Field(default_factory=list)
+    official_alerts: List[Dict[str, Any]] = Field(default_factory=list)
+    official_alert_status: str = "NOT_REQUESTED"
+    location_candidates: List[Dict[str, Any]] = Field(default_factory=list)
+    needs_location_confirmation: bool = False
+    risk_breakdown: Optional[Dict[str, Any]] = None
 
 
 class RiskAssessment(BaseModel):

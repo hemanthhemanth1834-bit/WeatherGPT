@@ -5,7 +5,7 @@
 .wg-ref-hero{
   position:relative;
   isolation:isolate;
-  background-image:linear-gradient(90deg,rgba(2,8,23,.96) 0%,rgba(2,8,23,.88) 38%,rgba(2,8,23,.25) 100%),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/9000/9063/Atlantic_GOES_2008247_lrg.jpg");
+  background-image:linear-gradient(90deg,rgba(2,8,23,.96) 0%,rgba(2,8,23,.88) 38%,rgba(2,8,23,.25) 100%),url("/imagery/nasa-atlantic-goes-2008.jpg");
   background-position:center,right center;
   background-repeat:no-repeat;
   background-size:cover,cover;
@@ -20,20 +20,20 @@
 .wg-ref-source{line-height:1.65;overflow-wrap:anywhere}
 .wg-explain-live{border:1px solid rgba(103,232,249,.18);box-shadow:0 16px 45px rgba(0,0,0,.28)}
 .wg-explain-live-map{background:#07152d}
-.wg-ref-outlook-panel{background-image:linear-gradient(135deg,rgba(4,13,30,.94),rgba(6,24,48,.85)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg");background-size:cover;background-position:center}
-.wg-ref-synoptic{background-image:linear-gradient(135deg,rgba(4,13,30,.94),rgba(6,24,48,.85)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg");background-size:cover;background-position:center}
-.wg-ref-map-card{background-image:linear-gradient(135deg,rgba(4,13,30,.94),rgba(6,24,48,.82)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg");background-size:cover;background-position:center}
-.wg-ref-emergency{border:1px solid rgba(251,146,60,.2);background:linear-gradient(110deg,rgba(124,45,18,.18),rgba(7,16,35,.9)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg") center/cover}
+.wg-ref-outlook-panel{background:linear-gradient(135deg,rgba(4,13,30,.96),rgba(6,24,48,.88))}
+.wg-ref-synoptic{background:linear-gradient(135deg,rgba(4,13,30,.96),rgba(6,24,48,.88))}
+.wg-ref-map-card{background:linear-gradient(135deg,rgba(4,13,30,.96),rgba(6,24,48,.86))}
+.wg-ref-emergency{border:1px solid rgba(251,146,60,.2);background:linear-gradient(110deg,rgba(124,45,18,.18),rgba(7,16,35,.94))}
 .wg-ref-feature{min-height:9rem}
 figure[data-testid="live-imagery"]{background:linear-gradient(180deg,rgba(2,8,23,.18),rgba(2,8,23,.62));background-position:center;background-size:cover}
 figure[data-testid="live-imagery"] img{display:block;position:relative;z-index:1}
 .wg-ref-feature-copy{min-width:0}
 .wg-ref-feature strong,.wg-ref-feature span{overflow-wrap:anywhere}
-.wg-ref-station{background-image:linear-gradient(145deg,rgba(15,23,42,.86),rgba(2,8,23,.8)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/85000/85843/globalcldfr_amo_200207-201504_lrg.jpg");background-size:cover;background-position:center}
 .wg-ref-synoptic-days button,.wg-ref-summary-grid>div{backdrop-filter:blur(8px)}
+
 .wg-ref-hero :focus-visible,.wg-ref-home :focus-visible{outline:2px solid #67e8f9;outline-offset:3px}
 @media(max-width:820px){
- .wg-ref-hero{background-image:linear-gradient(180deg,rgba(2,8,23,.9),rgba(2,8,23,.82)),url("https://assets.science.nasa.gov/content/dam/science/esd/eo/images/imagerecords/9000/9063/Atlantic_GOES_2008247_lrg.jpg");background-position:center;background-size:cover;padding-bottom:1rem}
+ .wg-ref-hero{background-image:linear-gradient(180deg,rgba(2,8,23,.9),rgba(2,8,23,.82)),url("/imagery/nasa-atlantic-goes-2008.jpg");background-position:center;background-size:cover;padding-bottom:1rem}
  .wg-ref-hero-grid{gap:1rem}
  .wg-ref-hero h1{font-size:clamp(2rem,8vw,3.6rem);line-height:1.04}
  .wg-ref-live-card{min-width:0}
@@ -43,3 +43,61 @@ figure[data-testid="live-imagery"] img{display:block;position:relative;z-index:1
 }
 
 .wg-ref-image-note{display:block;margin-top:.5rem;color:rgba(191,219,254,.78);font-size:.62rem;line-height:1.5;letter-spacing:.035em}
+
+/* Overview command-center additions */
+.wg-ref-shortcut-section .wg-ref-section-head{margin-bottom:.7rem}
+.wg-ref-shortcut-groups{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.55rem}
+.wg-ref-shortcut-group{display:flex;flex-direction:column;gap:.4rem;min-width:0;padding:.7rem;border:1px solid rgba(148,163,184,.14);border-radius:14px;background:linear-gradient(160deg,rgba(15,23,42,.72),rgba(2,8,23,.52))}
+.wg-ref-shortcut-group>span{font-size:.6rem;font-weight:800;letter-spacing:.08em;color:rgba(148,163,184,.9)}
+.wg-ref-shortcut-group button{display:flex;justify-content:space-between;align-items:center;gap:.4rem;width:100%;padding:.48rem .55rem;border:1px solid rgba(148,163,184,.12);border-radius:9px;background:rgba(2,8,23,.5);color:#e2f2ff;font-size:.76rem;font-weight:700;text-align:left;cursor:pointer}
+.wg-ref-shortcut-group button:hover,.wg-ref-shortcut-group button:focus-visible{border-color:rgba(103,232,249,.55);background:rgba(8,47,73,.62)}
+.wg-ref-shortcut-group button b{color:#67e8f9;font-weight:800}
+.wg-ref-hourly{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(6.4rem,1fr);gap:.5rem;overflow-x:auto;padding:.1rem .1rem .55rem;scrollbar-width:thin}
+.wg-ref-hourly-item{display:flex;flex-direction:column;align-items:center;gap:.2rem;padding:.65rem .45rem;text-align:center;min-width:0}
+.wg-ref-hourly-item>span{font-size:.62rem;font-weight:800;letter-spacing:.05em;color:#93c5fd}
+.wg-ref-hourly-item b{font-size:1.15rem;font-variant-numeric:tabular-nums}
+.wg-ref-hourly-item small{font-size:.62rem;color:rgba(226,242,255,.72);line-height:1.25;min-height:1.6em}
+.wg-ref-hourly-item em{font-size:.6rem;font-style:normal;color:#67e8f9}
+.wg-ref-alert-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.55rem}
+.wg-ref-alert-summary-item{display:flex;flex-direction:column;align-items:flex-start;gap:.35rem;padding:.8rem;text-align:left;border:1px solid rgba(251,146,60,.25)}
+.wg-ref-alert-summary-item strong{font-size:.84rem;line-height:1.35}
+.wg-ref-alert-summary-item small{font-size:.68rem;color:rgba(226,242,255,.72);line-height:1.4}
+.wg-ref-alert-summary-item em{font-size:.62rem;font-style:normal;color:rgba(148,163,184,.9)}
+.wg-ref-alert-empty{display:flex;flex-direction:column;gap:.35rem;padding:.9rem;color:var(--wg-muted);font-size:.8rem;line-height:1.55}
+.wg-ref-alert-empty b{color:#e2f2ff}
+.wg-ref-alert-empty .wg-link-button{align-self:flex-start}
+.wg-link-button{padding:0;border:0;background:none;color:#67e8f9;font:inherit;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.wg-ref-risk-summary{display:grid;grid-template-columns:minmax(9rem,.8fr) minmax(0,2fr);gap:.8rem;padding:.9rem;align-items:start}
+.wg-ref-risk-overall{display:flex;flex-direction:column;gap:.2rem;padding-right:.8rem;border-right:1px solid rgba(148,163,184,.16)}
+.wg-ref-risk-overall>span{font-size:.62rem;letter-spacing:.08em;color:rgba(148,163,184,.9);font-weight:800}
+.wg-ref-risk-overall b{font-size:1.45rem;letter-spacing:-.02em}
+.wg-ref-risk-overall small{font-size:.65rem;color:var(--wg-muted);line-height:1.4}
+.wg-ref-risk-levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.4rem}
+.wg-ref-risk-levels>div{display:flex;flex-direction:column;gap:.15rem;padding:.45rem .55rem;border:1px solid rgba(148,163,184,.12);border-radius:9px;background:rgba(2,8,23,.4)}
+.wg-ref-risk-levels span{font-size:.6rem;text-transform:capitalize;color:rgba(148,163,184,.96)}
+.wg-ref-risk-levels b{font-size:.78rem}
+.wg-ref-risk-meta{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:.4rem 1rem;padding-top:.55rem;border-top:1px solid rgba(148,163,184,.12);font-size:.66rem;color:var(--wg-muted);line-height:1.45}
+.level-low{color:#86efac}.level-moderate{color:#fde68a}.level-high{color:#fdba74}.level-extreme{color:#fca5a5}.level-unknown{color:var(--wg-muted)}
+.wg-ref-climate-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.55rem;padding:.9rem}
+.wg-ref-climate-grid>div{display:flex;flex-direction:column;gap:.2rem;padding:.55rem;border:1px solid rgba(148,163,184,.12);border-radius:9px;background:rgba(2,8,23,.4)}
+.wg-ref-climate-grid span{font-size:.62rem;color:rgba(148,163,184,.9)}
+.wg-ref-climate-grid b{font-size:.9rem;font-variant-numeric:tabular-nums}
+.wg-ref-climate-grid p{grid-column:1/-1;margin:0;font-size:.68rem;color:var(--wg-muted);line-height:1.5}
+.wg-ref-satellite-card{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(14rem,.7fr);gap:.8rem;align-items:start}
+.wg-ref-satellite-note{display:flex;flex-direction:column;gap:.4rem;padding:.85rem;border:1px solid rgba(148,163,184,.14);border-radius:12px;background:rgba(2,8,23,.42);font-size:.74rem;color:var(--wg-muted);line-height:1.55}
+.wg-ref-satellite-note b{color:#e2f2ff}
+.wg-ref-freshness{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.7rem;padding:.8rem .9rem}
+.wg-ref-freshness>div{display:flex;flex-direction:column;gap:.2rem;min-width:0}
+.wg-ref-freshness b{font-size:.8rem}.wg-ref-freshness span{font-size:.66rem;color:var(--wg-muted)}
+.wg-ref-freshness label{display:flex;align-items:center;gap:.45rem;font-size:.72rem;color:var(--wg-muted)}
+@media(max-width:1100px){.wg-ref-shortcut-groups{grid-template-columns:repeat(3,minmax(0,1fr))}.wg-ref-climate-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:820px){
+ .wg-ref-shortcut-groups{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wg-ref-alert-summary{grid-template-columns:1fr}
+ .wg-ref-risk-summary{grid-template-columns:1fr}
+ .wg-ref-risk-overall{border-right:0;border-bottom:1px solid rgba(148,163,184,.16);padding:0 0 .6rem}
+ .wg-ref-satellite-card{grid-template-columns:1fr}
+ .wg-ref-climate-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wg-ref-freshness{align-items:flex-start}
+}
+@media(max-width:520px){.wg-ref-shortcut-groups{grid-template-columns:1fr}.wg-ref-risk-levels{grid-template-columns:repeat(2,minmax(0,1fr))}}

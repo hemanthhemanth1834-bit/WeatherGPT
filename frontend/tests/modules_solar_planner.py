@@ -37,28 +37,49 @@ MODULES = [
     (
         "Life Cast",
         ["Outdoor Activity", "Health & Comfort", "Laundry & Drying", "Drone / Cycling"],
+        True,
     ),
     (
         "RoadWatch",
         ["Hydroplaning Watch", "Visibility Watch", "Crosswind Watch", "Radar & Route"],
+        True,
     ),
     (
         "TreeGuard",
         ["Windthrow Risk", "Branch-Fall Watch", "Urban Exposure", "Climate Context"],
+        True,
     ),
     (
         "UtilityWatch",
         ["Storm Exposure", "Heat Stress", "Flood Context", "Live Providers"],
+        True,
     ),
     (
         "AI Weather Deep-Cast",
         ["NWP Models", "Soundings", "7-Day Synoptic", "Provider Health"],
+        False,
     ),
 ]
 
 
 def nav(page, label):
     page.get_by_role("button", name=label, exact=False).first.click()
+
+
+def open_preview(page, label):
+    """Postponed modules are intentionally out of primary navigation.
+
+    They remain reviewable from the secondary Platform Status page, so the
+    regression exercises the same implementation without re-exposing them in
+    the sidebar.
+    """
+    page.get_by_role(
+        "button", name="Open platform settings and provider status", exact=True
+    ).first.click()
+    page.get_by_role("heading", name="Platform Status", exact=True).wait_for(
+        timeout=30000
+    )
+    page.get_by_role("button", name=f"Open preview: {label}", exact=True).click()
 
 
 def wait_metrics(page, timeout_ms=20000):
@@ -150,7 +171,12 @@ def stable_location(page, timeout_ms=90000, settle_reads=2):
             cur = page.locator(".wg-ref-location b").inner_text().strip()
         except Exception:
             cur = ""
-        if cur and cur == prev and "Detecting" not in cur:
+            # The suite seeds a saved city, so a GPS-denied placeholder is still a
+        # transient state while the saved fallback loads. Do not treat it as
+        # the settled baseline for the later "chat must not move location"
+        # assertion.
+        placeholder = "tap to search" in cur.lower()
+        if cur and cur == prev and "Detecting" not in cur and not placeholder:
             settled += 1
             if settled >= settle_reads:
                 return cur
@@ -172,7 +198,11 @@ def run(browser_type):
     external_bad = []
     page.on(
         "console",
-        lambda m: console_errors.append(m.text) if m.type == "error" else None,
+        lambda m: (
+            console_errors.append(f"{m.text} @ {m.location.get('url', '')}")
+            if m.type == "error"
+            else None
+        ),
     )
     page.on(
         "response",
@@ -188,14 +218,16 @@ def run(browser_type):
     )
     # These module tests assert computed indicators; seed a legitimate saved
     # city so the GPS-denied CI/browser context still exercises live-data paths.
-    page.add_init_script("localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi']))")
+    page.add_init_script(
+        "localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi']))"
+    )
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", timeout=120000)
     start_location = stable_location(page)
     print(f"  active location (settled): {start_location!r}")
 
     print("[solar]")
-    nav(page, "Solar Energy Potential")
+    open_preview(page, "Solar Energy Potential")
     page.wait_for_selector(".wg-solar-stat", timeout=20000)
     azimuth_txt = page.locator(".wg-solar-stat").first.locator("strong").inner_text()
     parts = azimuth_txt.replace("°", " ").replace("(", " ").replace(")", " ").split()
@@ -228,9 +260,9 @@ def run(browser_type):
         failures,
     )
 
-    for label, titles in MODULES:
+    for label, titles, preview_only in MODULES:
         print(f"[{label}]")
-        nav(page, label)
+        open_preview(page, label) if preview_only else nav(page, label)
         page.wait_for_selector(".wg-ref-feature", timeout=20000)
         got = wait_metrics(page)
         cards = page.locator(".wg-ref-feature")
@@ -249,8 +281,8 @@ def run(browser_type):
             failures,
         )
 
-    print("[Trip Planner]")
-    nav(page, "Trip Planner")
+        print("[Trip Planner]")
+    open_preview(page, "Trip Planner")
     page.wait_for_selector('[data-testid="trip-planner"]', timeout=20000)
     for attempt in range(2):
         page.get_by_role("button", name="Show arrival weather").click()
@@ -295,8 +327,8 @@ def run(browser_type):
         failures,
     )
 
-    print("[Station Comparison provenance]")
-    nav(page, "Station Comparison")
+    print("[City / model comparison provenance]")
+    open_preview(page, "City / Model Comparison")
     try:
         page.wait_for_function(
             "() => {const b = document.body.innerText; return b.includes('City vs city') && !b.includes('Comparing') && !b.includes('loading…');}",
@@ -329,8 +361,8 @@ def run(browser_type):
         failures,
     )
 
-    print("[Disaster Management error states]")
-    nav(page, "Disaster Management")
+    print("[Disaster Preparedness error states]")
+    nav(page, "Disaster Preparedness")
     page.wait_for_timeout(35000)
     body = page.inner_text("body")
     check(
@@ -348,7 +380,7 @@ def run(browser_type):
 
     print("[chat sync guard]")
     nav(page, "AI Weather Assistant")
-    box = page.locator('input[aria-label="Type your weather question"]')
+    box = page.locator('textarea[aria-label="Type your weather question"]')
     ask1 = "What is the source and update time of this answer?"
     warm_chat(ask1)
     before = page.locator('[data-testid="assistant-message"]').count()

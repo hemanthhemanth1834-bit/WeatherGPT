@@ -7,12 +7,25 @@ import WeatherBrief from "./WeatherBrief";
 import WxIcon from "./WxIcon";
 import { IndiaSatelliteImagery, LocationRadarImagery } from "./LocationImagery";
 
+const METRIC_HELP = {
+  Humidity: "Share of water vapour in the air. High humidity makes heat feel heavier.",
+  Wind: "Sustained speed at 10 m. Direction is where the wind blows from.",
+  Pressure: "Surface pressure at this elevation. Falling pressure can signal approaching unsettled weather.",
+  Precipitation: "Rain or snow measured in the latest reporting interval, not a forecast.",
+  "Cloud cover": "Fraction of the sky covered by cloud at observation time.",
+  "UV index": "0–2 low, 3–5 moderate, 6–7 high, 8+ very high. Protect skin when high.",
+  Visibility: "Distance you can clearly see. Low values can affect travel.",
+  Sunrise: "Local IST time the sun rises at the selected coordinates.",
+  Sunset: "Local IST time the sun sets at the selected coordinates.",
+};
+
 function Metric({ label, value, sub }) {
   return (
     <div className="wg-card wg-tile">
       <div className="k">{label}</div>
       <div className="v">{value}</div>
       {sub && <div className="s">{sub}</div>}
+      {METRIC_HELP[label] && <p className="wg-tile-help">{METRIC_HELP[label]}</p>}
     </div>
   );
 }
@@ -270,26 +283,46 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
     };
   }, [weather?.location, weather?.lat, weather?.lon]);
 
-  if (busy && !weather) {
+    if (busy && !weather) {
     return (
-      <div role="status" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.8rem", padding: "4rem 0" }}>
-        <div className="wg-spin" aria-label="Loading weather" />
-        <p style={{ color: "var(--wg-muted)", fontSize: "0.85rem" }}>Fetching live model data…</p>
-      </div>
+      <section aria-label="Live weather">
+        <h1 style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>Live weather</h1>
+        <div role="status" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.8rem", padding: "4rem 0" }}>
+          <div className="wg-spin" aria-label="Loading weather" />
+          <p style={{ color: "var(--wg-muted)", fontSize: "0.85rem" }}>Fetching live model data…</p>
+        </div>
+      </section>
     );
   }
   if (!weather) {
     return (
-      <div className="wg-alert info" role="status">
-        No weather loaded yet. Search a place above, or allow location access.
-      </div>
+      <section aria-label="Live weather">
+        <h1 style={{ position: "absolute", width: 1, height: 1, padding: 0, margin: -1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap", border: 0 }}>Live weather</h1>
+        <div className="wg-alert info" role="status">
+          No weather loaded yet. Use CHANGE in the header to search, choose live location, or allow location access.
+        </div>
+      </section>
     );
   }
 
   const today = weather.daily?.[0];
   return (
-    <section aria-label="Forecast dashboard" style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
+        <section className="wg-dashboard" aria-label="Forecast dashboard" style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+      <header className="wg-dashboard-hero">
+        <div>
+          <span className="wg-dashboard-kicker">LIVE OBSERVATION · CURRENT CONDITIONS</span>
+          <h1>Live Weather</h1>
+          <p>
+            Current conditions and near-term forecast for {weather.location}{weather.state ? `, ${weather.state}` : ""}.
+            Every value below carries its provider, valid time and status — no conditions are estimated silently.
+          </p>
+        </div>
+        <div className="wg-dashboard-stamp">
+          <span>LOCAL POINT</span>
+          <b>{weather.lat.toFixed(2)}°N · {weather.lon.toFixed(2)}°E</b>
+        </div>
+      </header>
+      <div className="wg-dashboard-meta" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
         <span className="wg-mono">SOURCE: {weather.data_source}</span>
         <span className="wg-mono">UPDATED: {weather.updated_at_ist || "—"}</span>
         <span className={`wg-chip ${weather.status === "LIVE" ? "live" : "simulated"}`}>STATUS: {weather.status}</span>
@@ -320,7 +353,7 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "flex-end" }}>
           <div className="wg-card" style={{ padding: "0.5rem 0.9rem", textAlign: "right" }}>
-            <div style={{ fontSize: "0.68rem", color: "var(--wg-muted)" }}>{(weather.aqi_source || "").toLowerCase().includes("open-meteo air quality") ? "AQI (live)" : "AQI (estimated)"}</div>
+            <div style={{ fontSize: "0.68rem", color: "var(--wg-muted)" }}>{(weather.aqi_source || "").toLowerCase().includes("open-meteo air quality") ? "AQI (modelled)" : "AQI (estimated)"}</div>
             <div style={{ fontWeight: 800 }}>{weather.aqi} · {weather.aqi_status}</div>
           </div>
           <button className="wg-btn" onClick={() => onAsk(`Full weather and hazard outlook for ${weather.location} this week`)}>
@@ -435,6 +468,7 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
 
       <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
         <h3 style={{ margin: "0 0 0.5rem", fontSize: "0.8rem" }}>🧭 Today for you (COMPUTED tips)</h3>
+        <p className="wg-tile-help" style={{ margin: "0 0 0.55rem" }}>Practical actions computed from today&rsquo;s forecast. These are general tips, not official advice.</p>
         <LifeTips weather={weather} />
       </div>
 
@@ -459,6 +493,7 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
       <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", justifyContent: "space-between", marginBottom: "0.6rem" }}>
           <h3 style={{ margin: 0, fontSize: "0.8rem" }}>Next 24 hours (LIVE NWP)</h3>
+          <p className="wg-tile-help" style={{ margin: "0.2rem 0 0.5rem" }}>Hourly model guidance for temperature, rain chance, wind and humidity. Rain chance is a probability, not measured depth.</p>
           <div role="group" aria-label="Hourly metric" style={{ display: "flex", gap: "0.3rem" }}>
             {[["temp", "°C"], ["rain", "Rain %"], ["wind", "Wind"], ["hum", "Humidity"]].map(([id, label]) => (
               <button key={id} className="wg-tab" aria-selected={metric === id} onClick={() => setMetric(id)} style={{ fontSize: "0.7rem", padding: "0.35rem 0.6rem" }}>
@@ -489,6 +524,7 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
       <div className="wg-card" style={{ padding: "0.9rem 1rem" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: "0.8rem", alignItems: "center", flexWrap: "wrap" }}>
           <h3 style={{ margin: 0, fontSize: "0.8rem" }}>7-day outlook</h3>
+          <p className="wg-tile-help" style={{ margin: "0.2rem 0 0.5rem" }}>Daily highs, lows and expected rainfall totals. Totals are model forecasts, not gauge measurements.</p>
           <span className="wg-hourly-live-status"><span>● LIVE OPEN-METEO FORECAST</span><small>{liveDailyUpdated ? `Updated ${liveDailyUpdated.toLocaleTimeString()}` : "Connecting to live forecast…"}</small></span>
         </div>
         <SourceLine source="Open-Meteo · daily forecast" status={liveDaily.length ? "LIVE" : "UNAVAILABLE"} hint={liveDailyError ? "Live daily feed unavailable" : "Forecast model data · refreshed every 10 min"} />

@@ -1,0 +1,973 @@
+/* ==========================================================================
+   WeatherGPT — Cinematic Intelligence System (v2)
+   Shared tokens, shell, typography, surfaces, motion and module atmosphere.
+   Loaded after the legacy stylesheets so it can unify the whole application.
+   ========================================================================== */
+
+:root {
+  --cine-bg-0: #05080f;
+  --cine-bg-1: #070b14;
+  --cine-bg-2: #0c1422;
+  --cine-bg-3: #101b2b;
+  --cine-ink: #f4f7fc;
+  --cine-ink-soft: #d7e1ee;
+  --cine-muted: #9baabd;
+  --cine-faint: #66788e;
+  --cine-cyan: #42d9f5;
+  --cine-cyan-soft: #8ce9fb;
+  --cine-blue: #477bff;
+  --cine-violet: #8b7cff;
+  --cine-warning: #f4b84a;
+  --cine-danger: #f05d65;
+  --cine-success: #38c98a;
+  --cine-line: rgba(155, 170, 189, 0.14);
+  --cine-line-soft: rgba(155, 170, 189, 0.08);
+  --cine-line-bright: rgba(66, 217, 245, 0.32);
+  --cine-surface: rgba(12, 20, 34, 0.72);
+  --cine-surface-2: rgba(16, 27, 43, 0.82);
+  --cine-glass: linear-gradient(155deg, rgba(20, 34, 54, 0.82), rgba(7, 13, 24, 0.78));
+  --cine-font-display: "Space Grotesk Variable", "Space Grotesk", "Inter Variable", sans-serif;
+  --cine-font-body: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cine-font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+  --cine-radius-xs: 8px;
+  --cine-radius-sm: 12px;
+  --cine-radius-md: 18px;
+  --cine-radius-lg: 26px;
+  --cine-radius-xl: 34px;
+  --cine-radius-pill: 999px;
+  --cine-shadow-sm: 0 10px 28px -18px rgba(0, 0, 0, 0.8);
+  --cine-shadow-md: 0 24px 70px -32px rgba(0, 0, 0, 0.9);
+  --cine-shadow-glow: 0 0 60px -18px rgba(66, 217, 245, 0.4);
+  --cine-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --cine-ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --cine-fast: 180ms;
+  --cine-base: 320ms;
+  --cine-slow: 720ms;
+  --cine-header-h: 99px;
+  --cine-max: 1280px;
+  --cine-z-header: 100;
+  --cine-z-drawer: 120;
+  --cine-z-modal: 200;
+}
+
+.wg-ref-app {
+  --wg-font: var(--cine-font-body);
+  --wg-font-display: var(--cine-font-display);
+  --wg-mono: var(--cine-font-mono);
+  --wg-ink: var(--cine-ink);
+  --wg-text-primary: var(--cine-ink);
+  --wg-text-secondary: var(--cine-ink-soft);
+  --wg-muted: var(--cine-muted);
+  --wg-accent: var(--cine-cyan);
+  --wg-teal: var(--cine-cyan);
+  --wg-good: var(--cine-success);
+  --wg-success: var(--cine-success);
+  --wg-warning: var(--cine-warning);
+  --wg-warn: var(--cine-warning);
+  --wg-danger: var(--cine-danger);
+  --wg-bad: var(--cine-danger);
+  --wg-line: var(--cine-line);
+  --wg-radius: var(--cine-radius-md);
+  --wg-radius-lg: var(--cine-radius-lg);
+  background:
+    radial-gradient(1100px 600px at 12% -8%, rgba(66, 217, 245, 0.09), transparent 58%),
+    radial-gradient(900px 520px at 88% 4%, rgba(71, 123, 255, 0.1), transparent 60%),
+    radial-gradient(1200px 700px at 50% 108%, rgba(139, 124, 255, 0.06), transparent 62%),
+    linear-gradient(180deg, #05080f 0%, #070b14 42%, #05080f 100%);
+  color: var(--cine-ink);
+  font-family: var(--cine-font-body);
+  font-feature-settings: "ss01" 1, "cv11" 1;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.wg-ref-app::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.55;
+  background-image:
+    linear-gradient(rgba(155, 190, 220, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(155, 190, 220, 0.022) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 72%);
+}
+
+/* --------------------------------------------------------------------------
+   Typography
+   -------------------------------------------------------------------------- */
+.wg-ref-app h1,
+.wg-ref-app h2,
+.wg-ref-app h3,
+.wg-ref-app h4,
+.wg-ref-app .wg-ref-brand-name,
+.wg-ref-app .wg-cine-display {
+  font-family: var(--cine-font-display);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  color: var(--cine-ink);
+}
+
+.wg-ref-app h1 { line-height: 0.95; }
+.wg-ref-app h2 { line-height: 1.04; }
+.wg-ref-app h3 { line-height: 1.16; }
+
+.wg-ref-app p,
+.wg-ref-app li,
+.wg-ref-app label,
+.wg-ref-app small {
+  font-family: var(--cine-font-body);
+}
+
+.wg-ref-app .wg-mono,
+.wg-ref-app code,
+.wg-ref-app time,
+.wg-ref-app .wg-ref-source,
+.wg-ref-app .wg-chip,
+.wg-ref-app .wg-ref-section-head h2 + p {
+  font-family: var(--cine-font-mono);
+}
+
+.wg-ref-app ::selection {
+  background: rgba(66, 217, 245, 0.28);
+  color: #fff;
+}
+
+.wg-ref-app :focus-visible {
+  outline: 2px solid var(--cine-cyan);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+.wg-ref-app .wg-ref-header {
+  background:
+    linear-gradient(180deg, rgba(7, 12, 23, 0.94), rgba(7, 12, 23, 0.78));
+  border-bottom: 1px solid rgba(155, 170, 189, 0.12);
+  box-shadow: 0 18px 60px -34px rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(26px) saturate(150%);
+  -webkit-backdrop-filter: blur(26px) saturate(150%);
+}
+
+.wg-ref-app .wg-ref-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(66, 217, 245, 0.45) 18%, rgba(71, 123, 255, 0.28) 52%, transparent);
+  opacity: 0.7;
+}
+
+.wg-ref-app .wg-ref-header-main {
+  width: 100%;
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: clamp(14px, 2.4vw, 34px);
+}
+
+.wg-ref-app .wg-ref-menu-btn {
+  border: 1px solid var(--cine-line);
+  background: rgba(16, 27, 43, 0.6);
+  color: var(--cine-ink-soft);
+  border-radius: 13px;
+  transition: border-color var(--cine-fast) ease, background var(--cine-fast) ease, color var(--cine-fast) ease;
+}
+
+.wg-ref-app .wg-ref-menu-btn:hover {
+  border-color: var(--cine-line-bright);
+  background: rgba(66, 217, 245, 0.08);
+  color: var(--cine-ink);
+}
+
+.wg-ref-app .wg-ref-brand {
+  gap: 0.8rem;
+}
+
+.wg-ref-app .wg-ref-brand-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  border: 1px solid rgba(66, 217, 245, 0.22);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(66, 217, 245, 0.24), transparent 60%),
+    linear-gradient(150deg, rgba(16, 27, 43, 0.9), rgba(5, 8, 15, 0.9));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 12px 36px -18px rgba(66, 217, 245, 0.55);
+}
+
+.wg-ref-app .wg-ref-brand-name {
+  font-size: clamp(1.2rem, 1.6vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.wg-ref-app .wg-ref-brand-name em {
+  font-family: var(--cine-font-mono);
+  font-style: normal;
+  font-size: 0.48rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: var(--cine-cyan-soft);
+  padding: 0.24rem 0.44rem;
+  border: 1px solid rgba(66, 217, 245, 0.28);
+  border-radius: 5px;
+  background: rgba(66, 217, 245, 0.07);
+}
+
+.wg-ref-app .wg-ref-brand p {
+  color: var(--cine-faint);
+  font-size: 0.66rem;
+  letter-spacing: 0.02em;
+}
+
+.wg-ref-app .wg-ref-location {
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-pill);
+  background: rgba(12, 20, 34, 0.62);
+  color: var(--cine-ink-soft);
+  padding: 0.42rem 0.8rem;
+  transition: border-color var(--cine-fast) ease, background var(--cine-fast) ease, transform var(--cine-fast) ease;
+}
+
+.wg-ref-app .wg-ref-location:hover {
+  border-color: var(--cine-line-bright);
+  background: rgba(16, 27, 43, 0.86);
+  transform: translateY(-1px);
+}
+
+.wg-ref-app .wg-ref-location em {
+  font-family: var(--cine-font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: var(--cine-cyan);
+  opacity: 0.9;
+}
+
+.wg-ref-app .wg-ref-location-text b {
+  font-weight: 600;
+}
+
+.wg-ref-app .wg-ref-location-text small {
+  color: var(--cine-faint);
+}
+
+.wg-ref-app .wg-ref-header-actions > button,
+.wg-ref-app .wg-ref-icon-btn,
+.wg-ref-app .wg-ref-language {
+  border: 1px solid transparent;
+  border-radius: var(--cine-radius-pill);
+  transition: border-color var(--cine-fast) ease, background var(--cine-fast) ease, color var(--cine-fast) ease;
+}
+
+.wg-ref-app .wg-ref-header-actions > button:hover,
+.wg-ref-app .wg-ref-icon-btn:hover {
+  border-color: var(--cine-line);
+  background: rgba(66, 217, 245, 0.06);
+}
+
+.wg-ref-app .wg-ref-weather-pill {
+  border: 1px solid var(--cine-line);
+  background: rgba(12, 20, 34, 0.6);
+}
+
+.wg-ref-app .wg-ref-weather-pill b {
+  font-family: var(--cine-font-mono);
+  color: var(--cine-ink);
+  font-weight: 550;
+}
+
+.wg-ref-app .wg-ref-weather-pill small {
+  color: var(--cine-faint);
+}
+
+.wg-ref-app .wg-ref-online {
+  border: 1px solid var(--cine-line);
+  background: rgba(12, 20, 34, 0.72);
+  font-family: var(--cine-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+}
+
+.wg-ref-app .wg-ref-online.live i {
+  background: var(--cine-success);
+  box-shadow: 0 0 0 4px rgba(56, 201, 138, 0.12), 0 0 14px rgba(56, 201, 138, 0.7);
+}
+
+.wg-ref-app .wg-ref-online.degraded i {
+  background: var(--cine-warning);
+  box-shadow: 0 0 0 4px rgba(244, 184, 74, 0.12);
+}
+
+.wg-ref-app .wg-ref-icon-btn b {
+  background: var(--cine-danger);
+  color: #fff;
+  font-family: var(--cine-font-mono);
+  box-shadow: 0 0 16px rgba(240, 93, 101, 0.5);
+}
+
+.wg-ref-app .wg-ref-live {
+  border: 1px solid rgba(66, 217, 245, 0.26);
+  border-radius: var(--cine-radius-pill);
+  background: rgba(66, 217, 245, 0.08);
+  color: var(--cine-cyan-soft);
+  font-family: var(--cine-font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+}
+
+.wg-ref-app .wg-ref-language select {
+  background: transparent;
+  color: var(--cine-ink-soft);
+  border: 0;
+  font-family: var(--cine-font-mono);
+  font-size: 0.64rem;
+}
+
+/* --------------------------------------------------------------------------
+   Sidebar / drawers / navigation
+   -------------------------------------------------------------------------- */
+.wg-ref-app .wg-ref-sidebar {
+  background:
+    radial-gradient(700px 300px at 0% 0%, rgba(66, 217, 245, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(9, 16, 28, 0.985), rgba(5, 8, 15, 0.99));
+  border-right: 1px solid rgba(66, 217, 245, 0.14);
+  box-shadow: 30px 0 90px rgba(0, 0, 0, 0.55);
+}
+
+.wg-ref-app .wg-ref-sidebar-head {
+  border-bottom: 1px solid var(--cine-line-soft);
+}
+
+.wg-ref-app .wg-ref-sidebar-head b,
+.wg-ref-app .wg-ref-nav-heading,
+.wg-ref-app .wg-ref-mobile-drawer-head b {
+  font-family: var(--cine-font-mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cine-faint);
+}
+
+.wg-ref-app .wg-ref-nav-group {
+  margin-bottom: 1.35rem;
+}
+
+.wg-ref-app .wg-ref-nav-item {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.58rem 0.72rem;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  background: transparent;
+  color: var(--cine-muted);
+  font-family: var(--cine-font-body);
+  font-size: 0.79rem;
+  font-weight: 500;
+  text-align: left;
+  transition: color var(--cine-fast) ease, background var(--cine-fast) ease, border-color var(--cine-fast) ease, transform var(--cine-fast) ease;
+}
+
+.wg-ref-app .wg-ref-nav-item:hover {
+  color: var(--cine-ink);
+  background: rgba(66, 217, 245, 0.055);
+  border-color: rgba(66, 217, 245, 0.12);
+  transform: translateX(2px);
+}
+
+.wg-ref-app .wg-ref-nav-item.active {
+  color: var(--cine-ink);
+  background: linear-gradient(100deg, rgba(66, 217, 245, 0.14), rgba(71, 123, 255, 0.06));
+  border-color: rgba(66, 217, 245, 0.24);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.wg-ref-app .wg-ref-nav-item.active::before {
+  content: "";
+  position: absolute;
+  left: -0.72rem;
+  top: 22%;
+  bottom: 22%;
+  width: 2px;
+  border-radius: 2px;
+  background: var(--cine-cyan);
+  box-shadow: 0 0 12px rgba(66, 217, 245, 0.8);
+}
+
+.wg-ref-app .wg-ref-nav-icon {
+  display: inline-flex;
+  width: 22px;
+  justify-content: center;
+  opacity: 0.85;
+}
+
+.wg-ref-app .wg-ref-mobile-drawer {
+  background:
+    radial-gradient(600px 300px at 10% 0%, rgba(66, 217, 245, 0.08), transparent 60%),
+    linear-gradient(180deg, rgba(9, 16, 28, 0.99), rgba(5, 8, 15, 0.99));
+  border-right: 1px solid rgba(66, 217, 245, 0.16);
+}
+
+.wg-ref-app .wg-ref-mobile-nav {
+  background: rgba(5, 8, 15, 0.94);
+  border-top: 1px solid rgba(66, 217, 245, 0.14);
+  backdrop-filter: blur(22px);
+}
+
+.wg-ref-app .wg-ref-mobile-nav button {
+  font-family: var(--cine-font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  color: var(--cine-faint);
+  border-radius: 10px;
+}
+
+.wg-ref-app .wg-ref-mobile-nav button.active {
+  color: var(--cine-cyan);
+  background: rgba(66, 217, 245, 0.08);
+}
+
+/* --------------------------------------------------------------------------
+   Primitives: buttons, chips, inputs, cards
+   -------------------------------------------------------------------------- */
+.wg-ref-app .wg-btn,
+.wg-ref-app .wg-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.65rem;
+  padding: 0.62rem 1.05rem;
+  border-radius: var(--cine-radius-pill);
+  font-family: var(--cine-font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--cine-fast) var(--cine-ease), box-shadow var(--cine-fast) var(--cine-ease), background var(--cine-fast) ease, border-color var(--cine-fast) ease;
+}
+
+.wg-ref-app .wg-btn {
+  border: 1px solid rgba(140, 233, 251, 0.5);
+  background: linear-gradient(110deg, var(--cine-cyan), #63b7ff 55%, var(--cine-blue));
+  color: #041019;
+  box-shadow: 0 16px 40px -18px rgba(66, 217, 245, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.wg-ref-app .wg-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 52px -18px rgba(66, 217, 245, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.wg-ref-app .wg-btn:active {
+  transform: translateY(0);
+}
+
+.wg-ref-app .wg-btn-ghost {
+  border: 1px solid var(--cine-line);
+  background: rgba(16, 27, 43, 0.55);
+  color: var(--cine-ink-soft);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.wg-ref-app .wg-btn-ghost:hover {
+  border-color: var(--cine-line-bright);
+  background: rgba(66, 217, 245, 0.08);
+  color: var(--cine-ink);
+  transform: translateY(-1px);
+}
+
+.wg-ref-app .wg-btn:disabled,
+.wg-ref-app .wg-btn-ghost:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.wg-ref-app .wg-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-pill);
+  background: rgba(66, 217, 245, 0.045);
+  color: var(--cine-muted);
+  font-size: 0.56rem;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.wg-ref-app .wg-chip.live {
+  color: var(--cine-success);
+  border-color: rgba(56, 201, 138, 0.3);
+  background: rgba(56, 201, 138, 0.07);
+}
+
+.wg-ref-app .wg-chip.estimated {
+  color: var(--cine-cyan-soft);
+  border-color: rgba(66, 217, 245, 0.22);
+  background: rgba(66, 217, 245, 0.06);
+}
+
+.wg-ref-app .wg-input,
+.wg-ref-app input[type="text"],
+.wg-ref-app input[type="search"],
+.wg-ref-app select,
+.wg-ref-app textarea {
+  background: rgba(5, 8, 15, 0.62);
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-sm);
+  color: var(--cine-ink);
+  font-family: var(--cine-font-body);
+  transition: border-color var(--cine-fast) ease, box-shadow var(--cine-fast) ease, background var(--cine-fast) ease;
+}
+
+.wg-ref-app .wg-input:focus,
+.wg-ref-app input:focus,
+.wg-ref-app select:focus,
+.wg-ref-app textarea:focus {
+  border-color: rgba(66, 217, 245, 0.55);
+  box-shadow: 0 0 0 3px rgba(66, 217, 245, 0.1);
+  outline: none;
+  background: rgba(5, 8, 15, 0.85);
+}
+
+.wg-ref-app .wg-card {
+  position: relative;
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-md);
+  background: var(--cine-glass);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045), var(--cine-shadow-sm);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.wg-ref-app .wg-card.hoverable {
+  transition: transform var(--cine-base) var(--cine-ease), border-color var(--cine-base) ease, box-shadow var(--cine-base) ease;
+}
+
+.wg-ref-app .wg-card.hoverable:hover {
+  transform: translateY(-3px);
+  border-color: rgba(66, 217, 245, 0.26);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 26px 60px -30px rgba(0, 0, 0, 0.9), 0 0 40px -22px rgba(66, 217, 245, 0.5);
+}
+
+.wg-ref-app .wg-link-button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--cine-cyan);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Content shell and section language
+   -------------------------------------------------------------------------- */
+.wg-ref-app .wg-ref-content {
+  min-width: 0;
+  width: 100%;
+}
+
+.wg-ref-app .wg-reference-main {
+  max-width: var(--cine-max);
+  padding: clamp(14px, 2vw, 22px) clamp(14px, 2.4vw, 28px) 72px !important;
+}
+
+.wg-ref-app .wg-ref-home {
+  gap: clamp(1.1rem, 2.1vw, 1.65rem);
+}
+
+.wg-ref-app .wg-ref-section {
+  position: relative;
+  padding-block: clamp(0.35rem, 1vw, 0.75rem);
+}
+
+.wg-ref-app .wg-ref-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--cine-line-soft);
+}
+
+.wg-ref-app .wg-ref-section-head > div {
+  min-width: 0;
+}
+
+.wg-ref-app .wg-ref-section-head h2 {
+  margin: 0.35rem 0 0.25rem;
+  font-size: clamp(1.35rem, 2.2vw, 1.9rem);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+}
+
+.wg-ref-app .wg-ref-section-head p {
+  margin: 0.2rem 0 0;
+  max-width: 62ch;
+  color: var(--cine-muted);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.wg-ref-app .wg-ref-action {
+  flex: 0 0 auto;
+  min-height: 2.3rem;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.7rem;
+}
+
+.wg-ref-app .wg-ref-empty {
+  border: 1px dashed rgba(155, 170, 189, 0.2);
+  border-radius: var(--cine-radius-md);
+  padding: 1.25rem;
+  color: var(--cine-muted);
+  background: rgba(12, 20, 34, 0.4);
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.wg-ref-app .wg-ref-source,
+.wg-ref-app .wg-ref-image-note {
+  font-family: var(--cine-font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  color: var(--cine-faint);
+}
+
+/* --------------------------------------------------------------------------
+   Module atmosphere: a real photographic wash behind each workspace.
+   Decorative and clearly separate from live map / satellite products.
+   -------------------------------------------------------------------------- */
+.wg-module-atmosphere {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 560px;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.22;
+  background-position: center top;
+  background-size: cover;
+  background-repeat: no-repeat;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent 88%);
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.8), transparent 88%);
+}
+
+.wg-reference-main { position: relative; }
+.wg-reference-main > *:not(.wg-module-atmosphere) { position: relative; z-index: 1; }
+
+.wg-reference-main[data-module="dashboard"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/stratocumulus-clouds.webp"); }
+.wg-reference-main[data-module="deep_cast"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/hurricane-florence.webp"); opacity: 0.28; }
+.wg-reference-main[data-module="climate"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/sikkim-glacier.webp"); }
+.wg-reference-main[data-module="alerts"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/lightning-danube.webp"); opacity: 0.18; }
+.wg-reference-main[data-module="risk"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/flood-affected-village.webp"); opacity: 0.16; }
+.wg-reference-main[data-module="severe"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/flood-affected-village.webp"); opacity: 0.18; }
+.wg-reference-main[data-module="chat"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/earth-blue-marble.webp"); opacity: 0.12; }
+.wg-reference-main[data-module="agri"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/paddy-field-golden-hour.webp"); opacity: 0.2; }
+.wg-reference-main[data-module="map"] .wg-module-atmosphere { background-image: url("/imagery/cinematic/monsoon-rain-maharashtra.webp"); opacity: 0.14; }
+
+/* Shared module surfaces */
+.wg-ref-app .wg-ref-content > .wg-reference-main > section,
+.wg-ref-app .wg-reference-main > div[class*="wg-"] {
+  border-radius: var(--cine-radius-lg);
+}
+
+.wg-ref-app .wg-reference-main :is(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+.wg-ref-app .wg-climate-card,
+.wg-ref-app .wg-dc-card,
+.wg-ref-app .wg-prep-card,
+.wg-ref-app .wg-risk-card,
+.wg-ref-app .wg-alert-card {
+  border-color: var(--cine-line);
+  background: var(--cine-glass);
+}
+
+/* Tables and data surfaces stay monospaced and legible */
+.wg-ref-app table {
+  font-variant-numeric: tabular-nums;
+  border-color: var(--cine-line);
+}
+
+.wg-ref-app th {
+  font-family: var(--cine-font-mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cine-faint);
+}
+
+.wg-ref-app td {
+  color: var(--cine-ink-soft);
+  border-color: var(--cine-line-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Footer
+   -------------------------------------------------------------------------- */
+.wg-ref-app .wg-ref-site-footer {
+  max-width: var(--cine-max);
+  border-top: 1px solid var(--cine-line-soft);
+  color: var(--cine-faint);
+  font-size: 0.7rem;
+  padding-top: 2rem;
+}
+
+.wg-ref-app .wg-ref-site-footer-brand b {
+  font-family: var(--cine-font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--cine-ink);
+}
+
+.wg-ref-app .wg-ref-site-footer-brand span {
+  color: var(--cine-muted);
+  line-height: 1.65;
+}
+
+.wg-ref-app .wg-ref-site-footer-links button {
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-pill);
+  background: rgba(12, 20, 34, 0.55);
+  color: var(--cine-muted);
+  font-family: var(--cine-font-body);
+  font-size: 0.68rem;
+  font-weight: 500;
+  transition: color var(--cine-fast) ease, border-color var(--cine-fast) ease, background var(--cine-fast) ease;
+}
+
+.wg-ref-app .wg-ref-site-footer-links button:hover {
+  color: var(--cine-ink);
+  border-color: var(--cine-line-bright);
+  background: rgba(66, 217, 245, 0.06);
+}
+
+.wg-ref-app .wg-ref-site-footer-meta {
+  border-top: 1px solid var(--cine-line-soft);
+  padding-top: 0.85rem;
+  margin-top: 1.2rem;
+  color: var(--cine-faint);
+  font-family: var(--cine-font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.02em;
+}
+
+.wg-ref-app .wg-ref-site-footer-status {
+  font-family: var(--cine-font-mono);
+}
+
+/* --------------------------------------------------------------------------
+   Location dialog polish
+   -------------------------------------------------------------------------- */
+.wg-ref-app .wg-location-picker-backdrop {
+  background: rgba(2, 5, 10, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.wg-ref-app .wg-location-picker {
+  border: 1px solid rgba(66, 217, 245, 0.2);
+  border-radius: var(--cine-radius-lg);
+  background:
+    radial-gradient(700px 280px at 20% 0%, rgba(66, 217, 245, 0.12), transparent 58%),
+    linear-gradient(160deg, #0c1422, #05080f);
+  box-shadow: 0 40px 120px -40px rgba(0, 0, 0, 0.95), 0 0 80px -40px rgba(66, 217, 245, 0.4);
+}
+
+.wg-ref-app .wg-location-picker-head p {
+  font-family: var(--cine-font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
+  color: var(--cine-cyan);
+}
+
+.wg-ref-app .wg-location-picker-head h2 {
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+}
+
+.wg-ref-app .wg-location-search-row {
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-sm);
+  background: rgba(5, 8, 15, 0.7);
+}
+
+.wg-ref-app .wg-location-search-row:focus-within {
+  border-color: rgba(66, 217, 245, 0.5);
+  box-shadow: 0 0 0 3px rgba(66, 217, 245, 0.08);
+}
+
+.wg-ref-app .wg-location-search-row input {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.wg-ref-app .wg-location-results button {
+  border-radius: var(--cine-radius-sm);
+  transition: background var(--cine-fast) ease, border-color var(--cine-fast) ease;
+}
+
+.wg-ref-app .wg-location-results button:hover {
+  background: rgba(66, 217, 245, 0.07);
+  border-color: rgba(66, 217, 245, 0.2);
+}
+
+/* --------------------------------------------------------------------------
+   Motion — purposeful, low-cost, reduced-motion aware
+   -------------------------------------------------------------------------- */
+@keyframes wgCineRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wgCineGlow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.04); }
+}
+
+@keyframes wgCineDrift {
+  from { transform: translate3d(-1.5%, 0, 0) scale(1.04); }
+  to { transform: translate3d(1.5%, -1%, 0) scale(1.08); }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .wg-ref-app .wg-ref-section {
+      animation: wgCineRise 0.85s var(--cine-ease) both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 26%;
+    }
+  }
+}
+
+.wg-ref-app .wg-ref-section-head h2 {
+  background: linear-gradient(100deg, #ffffff 0%, #d9ecff 58%, #8ce9fb 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.wg-ref-app .wg-ref-section-head .wg-chip {
+  -webkit-text-fill-color: currentColor;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wg-ref-app *,
+  .wg-ref-app *::before,
+  .wg-ref-app *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The persistent theme control stays available but becomes a compact orb so
+   it never covers observation values or the scroll cue. */
+.wg-ref-app .wg-ref-theme-float {
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+  border-radius: 50% !important;
+  background: rgba(7, 18, 34, 0.86) !important;
+  border: 1px solid rgba(66, 217, 245, 0.22) !important;
+  color: var(--cine-cyan-soft);
+  box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.9), 0 0 28px -16px rgba(66, 217, 245, 0.6);
+}
+
+.wg-ref-app .wg-ref-theme-float > span:not(.wg-ref-pulse) {
+  display: none;
+}
+
+.wg-ref-app .wg-ref-theme-float .wg-ref-pulse {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 5px;
+  height: 5px;
+}
+
+@media (max-width: 820px) {
+  .wg-ref-app .wg-ref-theme-float {
+    right: 12px;
+    bottom: 66px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .wg-ref-app .wg-reference-main {
+    padding-inline: 18px !important;
+  }
+}
+
+@media (max-width: 820px) {
+  .wg-ref-app .wg-reference-main {
+    padding: 10px 12px 88px !important;
+  }
+
+  .wg-ref-app .wg-ref-brand p {
+    display: none;
+  }
+
+  .wg-ref-app .wg-ref-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .wg-ref-app .wg-ref-section-head .wg-ref-action {
+    align-self: flex-start;
+  }
+
+  .wg-ref-app .wg-ref-site-footer {
+    padding-bottom: 5.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .wg-ref-app .wg-reference-main {
+    padding-inline: 10px !important;
+  }
+
+  .wg-ref-app .wg-ref-brand-name {
+    font-size: 1.08rem;
+  }
+
+  .wg-ref-app .wg-ref-brand-name em {
+    display: none;
+  }
+
+  .wg-ref-app .wg-ref-section-head h2 {
+    font-size: 1.28rem;
+  }
+}

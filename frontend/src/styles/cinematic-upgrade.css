@@ -25,7 +25,7 @@
 .wg-ref-header-main,.wg-ref-sidebar,.wg-ref-mobile-drawer,.wg-ref-theme-float,.wg-ref-card,.wg-card{
   backdrop-filter:blur(14px) saturate(135%);
 }
-.wg-ref-brand-icon,.wg-ref-location,.wg-ref-weather-pill,.wg-ref-header-actions>button,.wg-ref-language,.wg-ref-install,.wg-ref-live{
+.wg-ref-brand-icon,.wg-ref-location,.wg-ref-weather-pill,.wg-ref-header-actions>button,.wg-ref-language,.wg-ref-live{
   border:1px solid rgba(103,232,249,.14)!important;
   background:linear-gradient(180deg,rgba(15,31,54,.78),rgba(5,12,27,.78));
   box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 8px 26px rgba(0,0,0,.16);

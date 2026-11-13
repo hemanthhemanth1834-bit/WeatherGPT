@@ -4,19 +4,36 @@ Conversational weather intelligence: live Open-Meteo data, computed
 alerts, advisories, risk estimates, and model/data provenance — with
 honest LIVE / DEMO / STATIC / ESTIMATED / NOT CONFIGURED labels.
 """
+
+import datetime as _dt
+import logging
+import os
+import uuid as _uuid
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import APP_VERSION, allow_credentials_for_origins, get_cors_origins
-from .models import (AgriCropAdvisory, AviationBriefing, CAPAlert,
-                     ChatResponse, CityComparisonData, DeveloperMeta,
-                     MarineAdvisory, WeatherData, WeatherQueryRequest)
+from .models import (
+    AgriCropAdvisory,
+    AviationBriefing,
+    CAPAlert,
+    ChatResponse,
+    CityComparisonData,
+    DeveloperMeta,
+    MarineAdvisory,
+    WeatherData,
+    WeatherQueryRequest,
+)
 from .services import geo
-from .services.advisories import (aviation_briefing, climate_reference,
-                                  crop_advisory, marine_advisory,
-                                  supported_crops)
+from .services.advisories import (
+    aviation_briefing,
+    climate_reference,
+    crop_advisory,
+    marine_advisory,
+    supported_crops,
+)
 from .services.agent_tools import list_tools
 from .services.air_quality import get_air_quality, uv_guidance
 from .services.alerts import active_alerts
@@ -24,11 +41,14 @@ from .services.chat import _compare as compare_places
 from .services.chat import answer
 from .services.gdacs import global_disasters
 from .services.history import climate_history
+from .services.climate_dashboard import climate_dashboard
+from .services.ensemble import get_ensemble_forecast
 from .services.imd_rss import get_imd_rss_warnings
 from .services.indian_sources_service import get_indian_sources_status
 from .services.nwp_service import get_nwp_status
 from .services.free_capabilities import capability_matrix
 from .services.providers import health_snapshot
+from .services.taxonomy import contract_document
 from .services.risk_engine import assess_risk
 from .services.satellite_service import get_satellite_info
 from .services.travel import travel_safety
@@ -36,9 +56,11 @@ from .services.weather import get_weather
 
 app = FastAPI(
     title="WeatherGPT API — AI Weather Intelligence (SIH 2026)",
-    description=("Conversational weather intelligence and decision support. "
-                 "SIH 2026 implementation by Muchakarla Hemanth Kumar, "
-                 "SRK Institute of Technology."),
+    description=(
+        "Conversational weather intelligence and decision support. "
+        "SIH 2026 implementation by Muchakarla Hemanth Kumar, "
+        "SRK Institute of Technology."
+    ),
     version=APP_VERSION,
 )
 
@@ -49,6 +71,7 @@ app.add_middleware(
     allow_credentials=allow_credentials_for_origins(ORIGINS),
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Request-ID", "X-Process-Time-ms"],
 )
 
 # Best-effort per-IP rate limiting (in-memory sliding window; per worker).
@@ -67,10 +90,12 @@ _RATE_TIERS = {
     "/api/weather/compare": int(_os.getenv("RATE_LIMIT_COMPARE_PER_MINUTE", "60")),
     "/api/climate/history": int(_os.getenv("RATE_LIMIT_CLIMATE_PER_MINUTE", "30")),
     "/api/climate/monthly": int(_os.getenv("RATE_LIMIT_CLIMATE_PER_MINUTE", "30")),
+    "/api/climate/dashboard": int(_os.getenv("RATE_LIMIT_CLIMATE_PER_MINUTE", "20")),
     "/api/assistant/explain": int(_os.getenv("RATE_LIMIT_EXPLAIN_PER_MINUTE", "30")),
 }
 _RATE_WINDOW = 60.0
 _MAX_TRACKED_IPS = 2000
+_MAX_BODY_BYTES = int(_os.getenv("MAX_REQUEST_BODY_BYTES", "8192"))
 _rate_hits: dict = {}
 
 
@@ -103,20 +128,118 @@ async def rate_limit_middleware(request: _Request, call_next):
     return await call_next(request)
 
 
+@app.middleware("http")
+async def request_body_limit_middleware(request: _Request, call_next):
+    """Reject oversized JSON request bodies before routing.
+
+    The limit is deliberately central so every current and future endpoint
+    inherits it. 8 KB is generous for this API's largest legitimate payload
+    (chat query, location payloads) and keeps accidental bulk uploads out.
+    """
+    if request.method in ("POST", "PUT", "PATCH") and request.url.path.startswith(
+        "/api/"
+    ):
+        declared = request.headers.get("content-length")
+        if declared is not None:
+            try:
+                size = int(declared)
+            except ValueError:
+                return _JSONResponse(
+                    status_code=400,
+                    content={"detail": "Invalid Content-Length header."},
+                    headers={"Access-Control-Allow-Origin": "*"},
+                )
+            if size > _MAX_BODY_BYTES:
+                return _JSONResponse(
+                    status_code=413,
+                    content={
+                        "detail": f"Request body exceeds {_MAX_BODY_BYTES} bytes."
+                    },
+                    headers={"Access-Control-Allow-Origin": "*"},
+                )
+        else:
+            # Chunked/streamed clients: read once; Starlette caches the body.
+            body = await request.body()
+            if len(body) > _MAX_BODY_BYTES:
+                return _JSONResponse(
+                    status_code=413,
+                    content={
+                        "detail": f"Request body exceeds {_MAX_BODY_BYTES} bytes."
+                    },
+                    headers={"Access-Control-Allow-Origin": "*"},
+                )
+    return await call_next(request)
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: _Request, call_next):
+    """Attach a request ID, basic hardening headers and lightweight timing.
+
+    The same ID is returned to the client and used in error logs so a browser
+    failure can be matched to a server event without exposing internals.
+    """
+    request_id = request.headers.get("X-Request-ID") or _uuid.uuid4().hex
+    started = _time.perf_counter()
+    try:
+        response = await call_next(request)
+    except Exception:
+        logging.getLogger("weathergpt.api").exception(
+            "request_failed request_id=%s method=%s path=%s",
+            request_id,
+            request.method,
+            request.url.path,
+        )
+        raise
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Process-Time-ms"] = (
+        f"{(_time.perf_counter() - started) * 1000:.1f}"
+    )
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault(
+        "Permissions-Policy",
+        "geolocation=(self), microphone=(self), camera=(), payment=()",
+    )
+    response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    return response
+
+
 watchers: List[WebSocket] = []
 
 
 @app.get("/api/health")
 def health() -> dict:
-    return {"status": "healthy", "service": "WeatherGPT Engine",
-            "version": APP_VERSION,
-            "standards": ["ITU CAP v1.2", "WMO WIS2.0"]}
+    return {
+        "status": "healthy",
+        "service": "WeatherGPT Engine",
+        "version": APP_VERSION,
+        "standards": ["ITU CAP v1.2", "WMO WIS2.0"],
+    }
+
+
+@app.get("/api/health/ready")
+def readiness() -> dict:
+    """Fast process readiness check; never waits on external providers."""
+    ist = _dt.timezone(_dt.timedelta(hours=5, minutes=30))
+    return {
+        "status": "ready",
+        "service": "WeatherGPT Engine",
+        "version": APP_VERSION,
+        "checked_at_ist": _dt.datetime.now(ist).isoformat(timespec="seconds"),
+        "checks": {"api": "ok", "configuration": "ok"},
+        "scope": (
+            "Process readiness only. Upstream weather providers are probed "
+            "separately at /api/providers/health and can be delayed or unavailable."
+        ),
+    }
 
 
 @app.get("/api/voice/status")
 def voice_status() -> dict:
     """Server-side TTS status with free Edge-TTS fallback."""
     from .services.vibevoice import configured, provider
+
     return {
         "provider": provider(),
         "configured": configured(),
@@ -130,7 +253,12 @@ def voice_status() -> dict:
 async def voice_tts(payload: dict):
     """Synthesize multilingual WeatherGPT speech through VibeVoice or free Edge-TTS."""
     from .services.vibevoice import synthesize
-    return await synthesize(str(payload.get("text", "")), str(payload.get("speaker", "Carter")), str(payload.get("language", "en")))
+
+    return await synthesize(
+        str(payload.get("text", "")),
+        str(payload.get("speaker", "Carter")),
+        str(payload.get("language", "en")),
+    )
 
 
 @app.get("/api/meta/developer", response_model=DeveloperMeta)
@@ -147,10 +275,12 @@ def project() -> dict:
         "category": "AI / ML / Weather Intelligence / Disaster Decision Support",
         "developer": "Muchakarla Hemanth Kumar (SRK Institute of Technology, CSE – AI/ML, 2024–2028)",
         "version": APP_VERSION,
-        "license_note": ("MIT License applies to the original WeatherGPT application code. "
-                         "Third-party packages, data services, tiles, and fonts "
-                         "remain under their respective upstream licenses; see "
-                         "THIRD_PARTY_NOTICES.md."),
+        "license_note": (
+            "MIT License applies to the original WeatherGPT application code. "
+            "Third-party packages, data services, tiles, and fonts "
+            "remain under their respective upstream licenses; see "
+            "THIRD_PARTY_NOTICES.md."
+        ),
     }
 
 
@@ -159,30 +289,43 @@ def tools() -> dict:
     return list_tools()
 
 
+@app.get("/api/data-contract")
+def data_contract() -> dict:
+    """Canonical data-kind taxonomy shared by every module."""
+    return contract_document()
+
+
 @app.post("/api/language/analyze")
 def language(payload: dict) -> dict:
     """Deterministic language/script/intent analysis (no ML, no LLM)."""
     from .services.langid import analyze_query
+
     return analyze_query(str(payload.get("text", ""))[:500])
 
 
 @app.get("/api/agent/engine")
-def engine() -> dict:
-    """How answers are produced: deterministic tools; LLM only if configured."""
-    import os
-    from .services.llm import configured_providers
-    provider = os.getenv("AI_PROVIDER", "auto").lower()
-    available = configured_providers()
-    active = "RULE-BASED TOOL-GROUNDED"
-    if provider not in ("auto", "none", "") and available:
-        active = "LLM-ASSISTED (key configured)"
+def engine(live: bool = False) -> dict:
+    """How answers are produced: deterministic tools; LLM only if configured.
+
+    ``live=true`` performs a short provider health probe. The default avoids
+    adding latency to page load and reports health as NOT_CHECKED.
+    """
+    from .services.llm import provider_status
+
+    status = provider_status(check_live=live)
     return {
-        "engine": active,
-        "ai_provider_setting": provider,
-        "llm_configured": bool(available),
-        "configured_providers": available,
-        "fallback": "deterministic WeatherGPT tools (always available)",
-        "note": "Figures always originate from data tools, never invented.",
+        "engine": status["active_engine"],
+        "ai_provider_setting": os.getenv("AI_PROVIDER", "auto").lower(),
+        "llm_configured": status["configured"],
+        "configured_providers": status["configured_providers"],
+        "selected_provider": status["selected_provider"],
+        "selected_model": status["selected_model"],
+        "active_inference": status["active_inference"],
+        "health": status["health"],
+        "health_detail": status["health_detail"],
+        "live_check": status["live_check"],
+        "fallback": status["fallback"],
+        "note": status["note"],
     }
 
 
@@ -193,8 +336,11 @@ def providers(live: bool = True) -> dict:
 
 
 @app.get("/api/air-quality")
-def air_quality(location: str = Query("Pune"), lat: Optional[float] = None,
-                lon: Optional[float] = None) -> dict:
+def air_quality(
+    location: str = Query("Pune"),
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+) -> dict:
     """Live AQI + pollutants (US AQI standard). Falls back to estimate."""
     if lat is None or lon is None:
         lat, lon, proper, state = geo.geocode(location)
@@ -203,20 +349,34 @@ def air_quality(location: str = Query("Pune"), lat: Optional[float] = None,
     try:
         return get_air_quality(lat, lon)
     except RuntimeError:
-        return {"us_aqi": None, "band": "Unavailable", "standard": "US AQI (EPA)",
-                "dominant_pollutant": None, "pm2_5": None, "pm10": None,
-                "nitrogen_dioxide": None, "ozone": None, "sulphur_dioxide": None,
-                "carbon_monoxide": None, "observed_at": "",
-                "data_source": "Open-Meteo Air Quality",
-                "data_type": "Unavailable", "status": "UNAVAILABLE",
-                "message": "AQI upstream is temporarily unavailable; no value is fabricated."}
+        return {
+            "us_aqi": None,
+            "band": "Unavailable",
+            "standard": "US AQI (EPA)",
+            "dominant_pollutant": None,
+            "pm2_5": None,
+            "pm10": None,
+            "nitrogen_dioxide": None,
+            "ozone": None,
+            "sulphur_dioxide": None,
+            "carbon_monoxide": None,
+            "observed_at": "",
+            "data_source": "Open-Meteo Air Quality",
+            "data_type": "Unavailable",
+            "status": "UNAVAILABLE",
+            "message": "AQI upstream is temporarily unavailable; no value is fabricated.",
+        }
 
 
 @app.get("/api/travel/safety")
-def travel(location: str = Query("Pune"), lat: Optional[float] = None,
-           lon: Optional[float] = None) -> dict:
+def travel(
+    location: str = Query("Pune"),
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+) -> dict:
     """LOW / MODERATE / HIGH trip read with drivers (ESTIMATED)."""
     from fastapi import HTTPException
+
     try:
         if lat is None or lon is None:
             lat, lon, proper, state = geo.geocode(location)
@@ -224,13 +384,16 @@ def travel(location: str = Query("Pune"), lat: Optional[float] = None,
             proper, state = location, "India"
         return travel_safety(get_weather(lat, lon, proper, state))
     except Exception:
-        raise HTTPException(status_code=502, detail="Travel engine temporarily unavailable")
+        raise HTTPException(
+            status_code=502, detail="Travel engine temporarily unavailable"
+        )
 
 
 @app.get("/api/climate/history")
 def history_years(location: str = Query("Pune"), years: int = Query(5)) -> dict:
     """Observed yearly means from ERA5 reanalysis (LIVE archive)."""
     from fastapi import HTTPException
+
     lat, lon, proper, state = geo.geocode(location)
     try:
         return climate_history(lat, lon, proper, state, years)
@@ -243,6 +406,7 @@ def history_monthly(location: str = Query("Pune"), year: int = Query(2025)) -> d
     """Observed monthly means for one year (LIVE archive)."""
     from fastapi import HTTPException
     from .services.history import monthly_means
+
     lat, lon, proper, state = geo.geocode(location)
     try:
         return monthly_means(lat, lon, proper, state, year)
@@ -250,20 +414,60 @@ def history_monthly(location: str = Query("Pune"), year: int = Query(2025)) -> d
         raise HTTPException(status_code=502, detail=f"Archive unavailable: {exc}")
 
 
+@app.get("/api/climate/dashboard")
+def climate_dashboard_route(
+    location: str = Query(...),
+    year: Optional[int] = Query(None, ge=1950, le=2100),
+    start_year: int = Query(1991, ge=1950, le=2100),
+    baseline_start: int = Query(1991, ge=1950, le=2100),
+    baseline_end: int = Query(2020, ge=1951, le=2100),
+) -> dict:
+    """One-request historical climate dashboard (ERA5 reanalysis)."""
+    from fastapi import HTTPException
+
+    try:
+        lat, lon, proper, state = geo.geocode(location)
+        return climate_dashboard(
+            lat,
+            lon,
+            proper,
+            state,
+            year=year,
+            start_year=start_year,
+            baseline_start=baseline_start,
+            baseline_end=baseline_end,
+        )
+    except Exception as exc:
+        detail = str(exc).replace("\n", " ")[:240] or type(exc).__name__
+        raise HTTPException(status_code=502, detail=f"Archive unavailable: {detail}")
+
+
 @app.post("/api/assistant/explain")
 def assistant_explain(payload: dict) -> dict:
-    """Optional LLM explanation grounded in live context (deterministic fallback)."""
-    from .services.llm import explain
+    """Optional LLM explanation grounded in validated live facts."""
+    from .services.llm import explain_grounded
+
     topic = str(payload.get("topic", "current weather"))[:200]
     location = str(payload.get("location", "Pune"))[:80]
     lat, lon, proper, state = geo.geocode(location)
     data = get_weather(lat, lon, proper, state)
-    context = (f"{proper}, {state}: {data.condition}, {data.current_temp}C "
-               f"(feels {data.feels_like}C), humidity {data.humidity}%, "
-               f"wind {data.wind_speed} km/h {data.wind_direction}, "
-               f"precipitation {data.precipitation} mm, pressure {data.pressure} hPa. "
-               f"Source {data.data_source}, {data.status}, updated {data.updated_at_ist}.")
-    return explain(topic, context)
+    facts = {
+        "location": proper,
+        "state": state,
+        "condition": data.condition,
+        "current_temp_c": data.current_temp,
+        "feels_like_c": data.feels_like,
+        "humidity_percent": data.humidity,
+        "wind_speed_kmh": data.wind_speed,
+        "wind_direction": data.wind_direction,
+        "precipitation_mm": data.precipitation,
+        "pressure_hpa": data.pressure,
+        "source": data.data_source,
+        "status": data.status,
+        "data_type": data.data_type,
+        "updated_at_ist": data.updated_at_ist,
+    }
+    return explain_grounded(topic, facts)
 
 
 @app.get("/api/uv")
@@ -273,13 +477,19 @@ def uv(location: str = Query("Pune")) -> dict:
     data = get_weather(lat, lon, proper, state)
     guide = uv_guidance(data.uv_index)
     uv_is_live = data.uv_index_source.startswith("Open-Meteo")
-    return {"location": proper, "state": state, "uv_index": data.uv_index,
-            "level": guide["level"], "advice": guide["advice"],
-            "sunrise": data.sunrise, "sunset": data.sunset,
-            "data_source": data.uv_index_source,
-            "data_type": "Forecast" if uv_is_live else "Estimated",
-            "status": "LIVE" if uv_is_live else "ESTIMATED",
-            "updated_at_ist": data.updated_at_ist}
+    return {
+        "location": proper,
+        "state": state,
+        "uv_index": data.uv_index,
+        "level": guide["level"],
+        "advice": guide["advice"],
+        "sunrise": data.sunrise,
+        "sunset": data.sunset,
+        "data_source": data.uv_index_source,
+        "data_type": "Forecast" if uv_is_live else "Estimated",
+        "status": "LIVE" if uv_is_live else "ESTIMATED",
+        "updated_at_ist": data.updated_at_ist,
+    }
 
 
 @app.post("/api/chat/query", response_model=ChatResponse)
@@ -293,9 +503,11 @@ def chat(request: WeatherQueryRequest) -> ChatResponse:
             detected_language="en",
             persona=request.persona or "general",
             speech_text="Weather data is temporarily unavailable. Please try again.",
-            markdown_response=("⚠️ **Data temporarily unavailable** — the weather engine "
-                               "could not retrieve live data. No values are shown rather "
-                               "than guessed. Please retry shortly."),
+            markdown_response=(
+                "⚠️ **Data temporarily unavailable** — the weather engine "
+                "could not retrieve live data. No values are shown rather "
+                "than guessed. Please retry shortly."
+            ),
             quick_suggestions=["Retry my question", "Active alerts"],
             suggested_actions=[{"label": "Check alerts", "action": "open_alerts"}],
         )
@@ -318,11 +530,13 @@ def reverse_geocode(lat: float = Query(...), lon: float = Query(...)) -> dict:
 
 
 @app.get("/api/weather/current", response_model=WeatherData)
-def current(location: str = Query("Pune"),
-            lat: Optional[float] = None,
-            lon: Optional[float] = None,
-            model: str = Query("auto", description="'auto', 'gfs', 'ecmwf', or 'icon'"),
-            state: Optional[str] = Query(None, description="State override for coords")) -> WeatherData:
+def current(
+    location: str = Query("Pune"),
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+    model: str = Query("auto", description="'auto', 'gfs', 'ecmwf', or 'icon'"),
+    state: Optional[str] = Query(None, description="State override for coords"),
+) -> WeatherData:
     # An explicitly empty query string should behave like an omitted location;
     # unknown non-empty locations still fail closed below instead of showing Pune.
     location = location.strip() or "Pune"
@@ -345,31 +559,55 @@ def current(location: str = Query("Pune"),
 
 
 @app.get("/api/weather/compare", response_model=CityComparisonData)
-def compare(city1: str = Query("Mumbai"),
-            city2: str = Query("Delhi")) -> CityComparisonData:
+def compare(
+    city1: str = Query("Mumbai"), city2: str = Query("Delhi")
+) -> CityComparisonData:
     return compare_places(city1, city2)
 
 
 @app.get("/api/weather/history")
 def history(location: str = Query("Pune")) -> dict:
     lat, lon, proper, state = geo.geocode(location)
-    return {"location": proper, "state": state, "lat": lat, "lon": lon,
-            "data_type": "STATIC reference series", "status": "STATIC",
-            "source": "Bundled multi-decadal reference",
-            "trends": climate_reference(f"{proper} ({state})")}
+    return {
+        "location": proper,
+        "state": state,
+        "lat": lat,
+        "lon": lon,
+        "data_type": "STATIC reference series",
+        "status": "STATIC",
+        "source": "Bundled multi-decadal reference",
+        "trends": climate_reference(f"{proper} ({state})"),
+    }
+
+
+@app.get("/api/ensemble/forecast")
+def ensemble_forecast(
+    lat: float = Query(..., ge=-90, le=90),
+    lon: float = Query(..., ge=-180, le=180),
+    days: int = Query(3, ge=1, le=7),
+) -> dict:
+    """Member spread from the free Open-Meteo Ensemble API.
+
+    Forecast uncertainty only: not an official warning and not a calibrated
+    probability. Failures return an explicit UNAVAILABLE payload.
+    """
+    return get_ensemble_forecast(lat, lon, days)
 
 
 @app.get("/api/alerts/active", response_model=List[CAPAlert])
-def alerts(state: Optional[str] = None, district: Optional[str] = None,
-           severity: Optional[str] = None) -> List[CAPAlert]:
+def alerts(
+    state: Optional[str] = None,
+    district: Optional[str] = None,
+    severity: Optional[str] = None,
+) -> List[CAPAlert]:
     return active_alerts(state=state, district=district, severity=severity)
-
 
 
 @app.get("/api/alerts/india")
 def india_alarms(state: str | None = None) -> dict:
     """Fused India alert layer: computed + GDACS + tsunami-flagged USGS."""
     from .services.india import india_alert_layer
+
     return india_alert_layer(state)
 
 
@@ -385,6 +623,7 @@ def quakes(min_magnitude: float = Query(4.5), days: int = Query(7)) -> dict:
     import requests
     from fastapi import HTTPException
     from .services.disasters import earthquakes
+
     try:
         return earthquakes(min_magnitude, days)
     except (RuntimeError, requests.RequestException) as exc:
@@ -398,6 +637,7 @@ def fires(limit: int = Query(20)) -> dict:
     """Open wildfire detections from NASA EONET (OFFICIAL third-party)."""
     from fastapi import HTTPException
     from .services.disasters import wildfires
+
     try:
         return wildfires(limit)
     except RuntimeError as exc:
@@ -409,8 +649,10 @@ def emergency_places(lat: float = Query(...), lon: float = Query(...)) -> dict:
     """Nearby hospitals/police/fire/assembly points (OSM, LIVE)."""
     from fastapi import HTTPException
     from .services.places import emergency_places as lookup
+
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         from fastapi import HTTPException as HE
+
         raise HE(status_code=422, detail="Invalid coordinates")
     try:
         return lookup(lat, lon)
@@ -419,11 +661,13 @@ def emergency_places(lat: float = Query(...), lon: float = Query(...)) -> dict:
 
 
 @app.get("/api/flood/risk")
-def flood(location: str = Query("Pune"), lat: float | None = None,
-          lon: float | None = None) -> dict:
+def flood(
+    location: str = Query("Pune"), lat: float | None = None, lon: float | None = None
+) -> dict:
     """Computed flood-risk proxy from rain + elevation (COMPUTED, unofficial)."""
     from fastapi import HTTPException
     from .services.flood import flood_risk
+
     try:
         if lat is None or lon is None:
             lat, lon, proper, state = geo.geocode(location)
@@ -431,23 +675,33 @@ def flood(location: str = Query("Pune"), lat: float | None = None,
             proper, state = location, "India"
         return flood_risk(lat, lon, proper, state)
     except Exception:
-        raise HTTPException(status_code=502, detail="Flood proxy temporarily unavailable")
+        raise HTTPException(
+            status_code=502, detail="Flood proxy temporarily unavailable"
+        )
 
 
 @app.get("/api/solar/estimate")
 def solar(location: str = Query("Pune"), rated_kw: float = Query(1.0)) -> dict:
     """Estimated rooftop yield from live UV + cloud (ESTIMATED)."""
     from .services.solar import solar_estimate
+
     lat, lon, proper, state = geo.geocode(location)
     data = get_weather(lat, lon, proper, state)
-    out = solar_estimate(data.uv_index, data.cloud_cover, data.sunrise, data.sunset, rated_kw)
-    out.update({"location": proper, "state": state, "updated_at_ist": data.updated_at_ist})
+    out = solar_estimate(
+        data.uv_index, data.cloud_cover, data.sunrise, data.sunset, rated_kw
+    )
+    out.update(
+        {"location": proper, "state": state, "updated_at_ist": data.updated_at_ist}
+    )
     return out
 
 
 @app.get("/api/advisory/crop", response_model=AgriCropAdvisory)
-def crop(crop: str = Query("paddy"), district: str = Query("Nagpur"),
-         state: str = Query("Maharashtra")) -> AgriCropAdvisory:
+def crop(
+    crop: str = Query("paddy"),
+    district: str = Query("Nagpur"),
+    state: str = Query("Maharashtra"),
+) -> AgriCropAdvisory:
     lat, lon, proper, resolved = geo.geocode(district)
     live = get_weather(lat, lon, proper, resolved)
     rain = live.hourly[0].rain_prob if live.hourly else 20
@@ -463,6 +717,7 @@ def crops() -> list:
 def aviation(airport: str = Query("VIDP")) -> AviationBriefing:
     """Live ADDS METAR/TAF first; STATIC sample fallback (labelled)."""
     from .services.aviation_live import KNOWN as LIVE_AIRPORTS, live_briefing
+
     code = (airport or "VIDP").upper()
     if code in LIVE_AIRPORTS or len(code) == 4:
         live = live_briefing(code)
@@ -473,8 +728,14 @@ def aviation(airport: str = Query("VIDP")) -> AviationBriefing:
                 "temperature_c": live["temperature_c"],
                 "dewpoint_c": live["dewpoint_c"],
                 "wind": f"{live['wind_dir_deg']}° at {live['wind_speed_kt']} kt"
-                        + (f" gusting {live['wind_gust_kt']} kt" if live["wind_gust_kt"] else ""),
-                "visibility": f"{live['visibility_sm']} SM" if live["visibility_sm"] is not None else "not reported",
+                + (
+                    f" gusting {live['wind_gust_kt']} kt"
+                    if live["wind_gust_kt"]
+                    else ""
+                ),
+                "visibility": f"{live['visibility_sm']} SM"
+                if live["visibility_sm"] is not None
+                else "not reported",
                 "ceiling_ft": live["ceiling_ft"],
                 "altimeter_hpa": live["altimeter_hpa"],
                 "observed_at": live["observed_at"],
@@ -503,9 +764,13 @@ def climate(region: str = Query("All India")) -> dict:
 
 
 @app.get("/api/risk/assess")
-def risk(location: str = Query("Pune"), lat: Optional[float] = None,
-         lon: Optional[float] = None) -> dict:
+def risk(
+    location: str = Query("Pune"),
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
+) -> dict:
     from fastapi import HTTPException
+
     try:
         if lat is None or lon is None:
             lat, lon, proper, state = geo.geocode(location)
@@ -513,11 +778,9 @@ def risk(location: str = Query("Pune"), lat: Optional[float] = None,
             proper, state = location, "India"
         return assess_risk(get_weather(lat, lon, proper, state))
     except Exception:
-        raise HTTPException(status_code=502, detail="Risk engine temporarily unavailable")
-
-
-
-
+        raise HTTPException(
+            status_code=502, detail="Risk engine temporarily unavailable"
+        )
 
 
 @app.get("/api/nwp/compare")
@@ -538,8 +801,16 @@ def nwp_compare(location: str = Query("Pune")) -> dict:
             "status": wx.status,
             "updated_at_ist": wx.updated_at_ist,
         }
-    temps = [v["temperature_c"] for v in results.values() if isinstance(v["temperature_c"], (int, float))]
-    rains = [v["rain_probability_pct"] for v in results.values() if isinstance(v["rain_probability_pct"], (int, float))]
+    temps = [
+        v["temperature_c"]
+        for v in results.values()
+        if isinstance(v["temperature_c"], (int, float))
+    ]
+    rains = [
+        v["rain_probability_pct"]
+        for v in results.values()
+        if isinstance(v["rain_probability_pct"], (int, float))
+    ]
     return {
         "location": proper,
         "state": state,
@@ -553,10 +824,12 @@ def nwp_compare(location: str = Query("Pune")) -> dict:
         "interpretation": "Model disagreement is shown as spread; it is not hidden or converted into certainty.",
     }
 
+
 @app.get("/api/platform/capabilities")
 def platform_capabilities() -> dict:
     """Free-first provider matrix and optional adapter readiness."""
     return capability_matrix()
+
 
 @app.get("/api/nwp/status")
 def nwp() -> dict:
@@ -586,7 +859,8 @@ async def alert_socket(socket: WebSocket) -> None:
     try:
         while True:
             await socket.receive_text()
-            await socket.send_json({"type": "heartbeat_ack",
-                                    "active_alerts_count": len(active_alerts())})
+            await socket.send_json(
+                {"type": "heartbeat_ack", "active_alerts_count": len(active_alerts())}
+            )
     except WebSocketDisconnect:
         watchers.remove(socket)

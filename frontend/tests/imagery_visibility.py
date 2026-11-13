@@ -12,13 +12,18 @@ Usage: backend on :8000 (unused, kept for parity), preview build on :4173::
 
 Env: WG_UI_URL, WG_BROWSERS (csv), WG_CHROME_PATH.
 """
+
 import base64
 import json
 import os
 import sys
 
 UI_URL = os.getenv("WG_UI_URL", "http://127.0.0.1:4173/")
-BROWSERS = [b.strip() for b in os.getenv("WG_BROWSERS", "chromium,firefox").split(",") if b.strip()]
+BROWSERS = [
+    b.strip()
+    for b in os.getenv("WG_BROWSERS", "chromium,firefox").split(",")
+    if b.strip()
+]
 CHROME_PATH = os.getenv("WG_CHROME_PATH", "")
 
 PNG_1PX = base64.b64decode(
@@ -35,66 +40,164 @@ RADAR_META = {
 
 def weather_fixture():
     hourly = [
-        {"time": f"{h:02d}:00", "temp": 28.0, "rain_prob": 10,
-         "condition": "Partly Cloudy", "icon": "CloudSun",
-         "wind_speed": 12.0, "humidity": 60}
+        {
+            "time": f"{h:02d}:00",
+            "temp": 28.0,
+            "rain_prob": 10,
+            "condition": "Partly Cloudy",
+            "icon": "CloudSun",
+            "wind_speed": 12.0,
+            "humidity": 60,
+        }
         for h in range(24)
     ]
     daily = [
-        {"date": f"2026-10-{15 + i:02d}", "day": "Today" if i == 0 else "Day",
-         "temp_max": 31.0, "temp_min": 23.0, "condition": "Partly Cloudy",
-         "icon": "CloudSun", "rain_sum": 0.0, "wind_max": 15.0}
+        {
+            "date": f"2026-10-{15 + i:02d}",
+            "day": "Today" if i == 0 else "Day",
+            "temp_max": 31.0,
+            "temp_min": 23.0,
+            "condition": "Partly Cloudy",
+            "icon": "CloudSun",
+            "rain_sum": 0.0,
+            "wind_max": 15.0,
+        }
         for i in range(7)
     ]
     return {
-        "location": "Pune", "state": "Maharashtra", "country": "India",
-        "lat": 18.52, "lon": 73.85, "current_temp": 28.5, "feels_like": 30.0,
-        "condition": "Partly Cloudy", "condition_code": 2, "humidity": 60,
-        "wind_speed": 12.0, "wind_direction": "W", "precipitation": 0.0,
-        "cloud_cover": 25.0, "pressure": 1011.0, "uv_index": 6.0,
-        "visibility": 9.0, "aqi": 78, "aqi_status": "Satisfactory",
-        "sunrise": "06:05", "sunset": "18:35", "hourly": hourly, "daily": daily,
-        "nwp_model": "test blend", "data_source": "Open-Meteo",
-        "data_type": "Forecast", "status": "LIVE",
-        "updated_at_ist": "15 Oct 2026, 12:00 IST", "confidence": "test",
+        "location": "Pune",
+        "state": "Maharashtra",
+        "country": "India",
+        "lat": 18.52,
+        "lon": 73.85,
+        "current_temp": 28.5,
+        "feels_like": 30.0,
+        "condition": "Partly Cloudy",
+        "condition_code": 2,
+        "humidity": 60,
+        "wind_speed": 12.0,
+        "wind_direction": "W",
+        "precipitation": 0.0,
+        "cloud_cover": 25.0,
+        "pressure": 1011.0,
+        "uv_index": 6.0,
+        "visibility": 9.0,
+        "aqi": 78,
+        "aqi_status": "Satisfactory",
+        "sunrise": "06:05",
+        "sunset": "18:35",
+        "hourly": hourly,
+        "daily": daily,
+        "nwp_model": "test blend",
+        "data_source": "Open-Meteo",
+        "data_type": "Forecast",
+        "status": "LIVE",
+        "updated_at_ist": "15 Oct 2026, 12:00 IST",
+        "confidence": "test",
     }
 
 
 def mock_backend(page):
-    page.route("**/api/weather/current*", lambda r: r.fulfill(
-        status=200, content_type="application/json", body=json.dumps(weather_fixture())))
-    page.route("**/api/alerts/active*", lambda r: r.fulfill(
-        status=200, content_type="application/json", body="[]"))
-    page.route("**/api/air-quality*", lambda r: r.fulfill(
-        status=200, content_type="application/json",
-        body=json.dumps({"us_aqi": 42, "band": "Good", "standard": "US AQI (EPA)",
-                         "status": "LIVE", "dominant_pollutant": "—"})))
-    page.route("**/api/uv*", lambda r: r.fulfill(
-        status=200, content_type="application/json",
-        body=json.dumps({"uv_index": 5.0, "level": "Moderate", "advice": "test",
-                         "data_source": "test", "status": "LIVE"})))
-    page.route("**/api/solar/estimate*", lambda r: r.fulfill(
-        status=200, content_type="application/json",
-        body=json.dumps({"daily_kwh_per_kw": 4.2, "peak_sun_hours": 4.2,
-                         "daylight_hours": 11.5})))
-    page.route("**/api/locations/regional-explorer*", lambda r: r.fulfill(
-        status=200, content_type="application/json", body="[]"))
-    page.route("**/api/locations/search*", lambda r: r.fulfill(
-        status=200, content_type="application/json",
-        body=json.dumps([{"name": "Pune", "lat": 18.52, "lon": 73.85,
-                          "display_name": "Pune, Maharashtra"}])))
-    page.route("**/api/risk/assess*", lambda r: r.fulfill(
-        status=200, content_type="application/json",
-        body=json.dumps({"overall": "LOW", "advisories": ["test"], "levels": {}})))
+    page.route(
+        "**/api/weather/current*",
+        lambda r: r.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(weather_fixture()),
+        ),
+    )
+    page.route(
+        "**/api/alerts/active*",
+        lambda r: r.fulfill(status=200, content_type="application/json", body="[]"),
+    )
+    page.route(
+        "**/api/air-quality*",
+        lambda r: r.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "us_aqi": 42,
+                    "band": "Good",
+                    "standard": "US AQI (EPA)",
+                    "status": "LIVE",
+                    "dominant_pollutant": "—",
+                }
+            ),
+        ),
+    )
+    page.route(
+        "**/api/uv*",
+        lambda r: r.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "uv_index": 5.0,
+                    "level": "Moderate",
+                    "advice": "test",
+                    "data_source": "test",
+                    "status": "LIVE",
+                }
+            ),
+        ),
+    )
+    page.route(
+        "**/api/solar/estimate*",
+        lambda r: r.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {"daily_kwh_per_kw": 4.2, "peak_sun_hours": 4.2, "daylight_hours": 11.5}
+            ),
+        ),
+    )
+    page.route(
+        "**/api/locations/regional-explorer*",
+        lambda r: r.fulfill(status=200, content_type="application/json", body="[]"),
+    )
+    page.route(
+        "**/api/locations/search*",
+        lambda r: r.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                [
+                    {
+                        "name": "Pune",
+                        "lat": 18.52,
+                        "lon": 73.85,
+                        "display_name": "Pune, Maharashtra",
+                    }
+                ]
+            ),
+        ),
+    )
+    page.route(
+        "**/api/risk/assess*",
+        lambda r: r.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps({"overall": "LOW", "advisories": ["test"], "levels": {}}),
+        ),
+    )
 
 
 def mock_imagery_ok(page):
-    page.route("**/api.rainviewer.com/**", lambda r: r.fulfill(
-        status=200, content_type="application/json", body=json.dumps(RADAR_META)))
-    page.route("**/tilecache.rainviewer.com/**", lambda r: r.fulfill(
-        status=200, content_type="image/png", body=PNG_1PX))
-    page.route("**/gibs.earthdata.nasa.gov/**", lambda r: r.fulfill(
-        status=200, content_type="image/jpeg", body=PNG_1PX))
+    page.route(
+        "**/api.rainviewer.com/**",
+        lambda r: r.fulfill(
+            status=200, content_type="application/json", body=json.dumps(RADAR_META)
+        ),
+    )
+    page.route(
+        "**/tilecache.rainviewer.com/**",
+        lambda r: r.fulfill(status=200, content_type="image/png", body=PNG_1PX),
+    )
+    page.route(
+        "**/gibs.earthdata.nasa.gov/**",
+        lambda r: r.fulfill(status=200, content_type="image/jpeg", body=PNG_1PX),
+    )
 
 
 def check(cond, label, failures):
@@ -105,9 +208,14 @@ def check(cond, label, failures):
 
 def mock_geo(page):
     # App auto-locates via browser GPS on load: grant it and answer Pune.
-    page.route("**/api/locations/reverse*", lambda r: r.fulfill(
-        status=200, content_type="application/json",
-        body=json.dumps({"city": "Pune", "state": "Maharashtra"})))
+    page.route(
+        "**/api/locations/reverse*",
+        lambda r: r.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps({"city": "Pune", "state": "Maharashtra"}),
+        ),
+    )
 
 
 def click_visible_button(page, name, timeout=15000):
@@ -117,16 +225,20 @@ def click_visible_button(page, name, timeout=15000):
     # text matches exactly.
     deadline = timeout / 1000.0
     import time as _t
+
     end = _t.time() + deadline
     while _t.time() < end:
-        found = page.evaluate("""(label) => {
+        found = page.evaluate(
+            """(label) => {
           const hit = [...document.querySelectorAll('button')]
             .find(b => ((b.innerText || '').trim() === label
                          || (b.getAttribute('aria-label') || '').trim() === label)
                         && b.offsetParent !== null);
           if (hit) { hit.click(); return true; }
           return false;
-        }""", name)
+        }""",
+            name,
+        )
         if found:
             return
         page.wait_for_timeout(400)
@@ -135,7 +247,7 @@ def click_visible_button(page, name, timeout=15000):
 
 def open_dashboard(page, viewport):
     if viewport["width"] < 700:
-        click_visible_button(page, "Open navigation")
+        click_visible_button(page, "Open menu")
         page.wait_for_timeout(600)
     click_visible_button(page, "Live Weather")
     page.get_by_test_id("live-imagery").first.wait_for(timeout=20000)
@@ -143,7 +255,8 @@ def open_dashboard(page, viewport):
 
 def load_dashboard(page, viewport):
     page.wait_for_function(
-        """() => document.body.innerText.includes('Pune')""", timeout=30000)
+        """() => document.body.innerText.includes('Pune')""", timeout=30000
+    )
     open_dashboard(page, viewport)
 
 
@@ -159,9 +272,11 @@ def run_browser(pw, name, viewport):
     except Exception as exc:
         print(f"SKIP {tag} launcher unavailable: {str(exc)[:120]}")
         return None
-    ctx = browser.new_context(viewport=viewport,
-                              geolocation={"latitude": 18.52, "longitude": 73.85},
-                              permissions=["geolocation"])
+    ctx = browser.new_context(
+        viewport=viewport,
+        geolocation={"latitude": 18.52, "longitude": 73.85},
+        permissions=["geolocation"],
+    )
     page = ctx.new_page()
     errors = []
     # External provider responses (rate-limits like 429/503, and the
@@ -172,9 +287,15 @@ def run_browser(pw, name, viewport):
 
     def _note_external(r):
         try:
-            if r.status >= 400 and any(h in r.url for h in (
-                    "api.open-meteo.com", "gibs.earthdata.nasa.gov",
-                    "tilecache.rainviewer.com", "api.rainviewer.com")):
+            if r.status >= 400 and any(
+                h in r.url
+                for h in (
+                    "api.open-meteo.com",
+                    "gibs.earthdata.nasa.gov",
+                    "tilecache.rainviewer.com",
+                    "api.rainviewer.com",
+                )
+            ):
                 external_statuses.add(str(r.status))
         except Exception:
             pass
@@ -191,21 +312,37 @@ def run_browser(pw, name, viewport):
         load_dashboard(page, viewport)
 
         figs = page.get_by_test_id("live-imagery")
-        check(figs.count() >= 2, f"{tag} dashboard shows radar + satellite figures", failures)
+        check(
+            figs.count() >= 2,
+            f"{tag} dashboard shows radar + satellite figures",
+            failures,
+        )
         statuses = page.get_by_test_id("live-imagery-status").all_inner_texts()
-        check(all(s.strip() in ("DELAYED", "UNAVAILABLE") for s in statuses) and any(
-            s.strip() == "DELAYED" for s in statuses),
-            f"{tag} honest imagery status (DELAYED, never fabricated LIVE) {statuses}", failures)
+        check(
+            all(s.strip() in ("DELAYED", "UNAVAILABLE") for s in statuses)
+            and any(s.strip() == "DELAYED" for s in statuses),
+            f"{tag} honest imagery status (DELAYED, never fabricated LIVE) {statuses}",
+            failures,
+        )
         srcs = page.get_by_test_id("live-imagery-source")
         hrefs = [srcs.nth(i).get_attribute("href") for i in range(srcs.count())]
-        check(any("rainviewer.com" in (h or "") for h in hrefs),
-              f"{tag} RainViewer attribution link present", failures)
-        check(any("worldview.earthdata.nasa.gov" in (h or "") for h in hrefs),
-              f"{tag} NASA Worldview attribution link present", failures)
+        check(
+            any("rainviewer.com" in (h or "") for h in hrefs),
+            f"{tag} RainViewer attribution link present",
+            failures,
+        )
+        check(
+            any("worldview.earthdata.nasa.gov" in (h or "") for h in hrefs),
+            f"{tag} NASA Worldview attribution link present",
+            failures,
+        )
         imgs = page.get_by_test_id("live-imagery-img")
         alts = [imgs.nth(i).get_attribute("alt") for i in range(imgs.count())]
-        check(len(alts) > 0 and all(a and len(a) > 10 for a in alts),
-              f"{tag} imagery alt text meaningful", failures)
+        check(
+            len(alts) > 0 and all(a and len(a) > 10 for a in alts),
+            f"{tag} imagery alt text meaningful",
+            failures,
+        )
         # Lazy images below the fold only fetch once scrolled into view.
         for i in range(imgs.count()):
             try:
@@ -216,28 +353,47 @@ def run_browser(pw, name, viewport):
             page.wait_for_function(
                 """() => [...document.querySelectorAll('[data-testid="live-imagery-img"]')]
                      .every(i => i.naturalWidth > 0)""",
-                timeout=15000)
+                timeout=15000,
+            )
             widths = page.evaluate(
                 """() => [...document.querySelectorAll('[data-testid="live-imagery-img"]')]
-                     .map(i => i.naturalWidth)""")
+                     .map(i => i.naturalWidth)"""
+            )
         except Exception:
             widths = [0]
-        check(widths and all(w > 0 for w in widths),
-              f"{tag} mocked tiles actually rendered {widths}", failures)
+        check(
+            widths and all(w > 0 for w in widths),
+            f"{tag} mocked tiles actually rendered {widths}",
+            failures,
+        )
         observed = page.evaluate(
             """() => [...document.querySelectorAll('[data-testid="live-imagery"]')]
-                 .map(f => f.innerText.slice(0, 400))""")
-        check(any("RainViewer" in t for t in observed),
-              f"{tag} radar observation timestamp shown", failures)
-        check(page.get_by_text("LIVE RADAR HISTORY").count() == 0
-              and page.get_by_text("LIVE REFERENCE").count() == 0,
-              f"{tag} no stale LIVE imagery labels remain", failures)
+                 .map(f => f.innerText.slice(0, 400))"""
+        )
+        check(
+            any("RainViewer" in t for t in observed),
+            f"{tag} radar observation timestamp shown",
+            failures,
+        )
+        check(
+            page.get_by_text("LIVE RADAR HISTORY").count() == 0
+            and page.get_by_text("LIVE REFERENCE").count() == 0,
+            f"{tag} no stale LIVE imagery labels remain",
+            failures,
+        )
 
         # GIBS topic layers (flood water / rain rate / aerosol): the switcher
         # offers them and switching loads the selected product image.
-        for layer_label in ("MODIS flood water (2-day)", "IMERG rain rate", "MODIS aerosol depth"):
-            check(page.get_by_role("button", name=layer_label).count() >= 1,
-                  f"{tag} satellite switcher offers {layer_label}", failures)
+        for layer_label in (
+            "MODIS flood water (2-day)",
+            "IMERG rain rate",
+            "MODIS aerosol depth",
+        ):
+            check(
+                page.get_by_role("button", name=layer_label).count() >= 1,
+                f"{tag} satellite switcher offers {layer_label}",
+                failures,
+            )
         flood_btn = page.get_by_role("button", name="MODIS flood water (2-day)").first
         if flood_btn.count():
             flood_btn.click()
@@ -246,54 +402,87 @@ def run_browser(pw, name, viewport):
                 page.wait_for_function(
                     """() => [...document.querySelectorAll('[data-testid="live-imagery-img"]')]
                          .some(i => (i.src || '').includes('MODIS_Combined_Flood_2-Day') && i.naturalWidth > 0)""",
-                    timeout=15000)
+                    timeout=15000,
+                )
                 switched = True
             except Exception:
                 switched = False
-            check(switched, f"{tag} flood layer switch loads the selected product image", failures)
+            check(
+                switched,
+                f"{tag} flood layer switch loads the selected product image",
+                failures,
+            )
 
         # Failure path: fresh page, providers down.
         page2 = ctx.new_page()
         page2.on("response", _note_external)
-        page2.on("console", lambda m: errors.append("p2:" + m.text) if m.type == "error" else None)
+        page2.on(
+            "console",
+            lambda m: errors.append("p2:" + m.text) if m.type == "error" else None,
+        )
         page2.on("pageerror", lambda e: errors.append("p2:" + str(e)))
         mock_backend(page2)
         mock_geo(page2)
-        page2.route("**/api.rainviewer.com/**", lambda r: r.fulfill(status=500, body="{}"))
-        page2.route("**/tilecache.rainviewer.com/**", lambda r: r.fulfill(status=404, body="nope"))
-        page2.route("**/gibs.earthdata.nasa.gov/**", lambda r: r.fulfill(status=404, body="nope"))
+        page2.route(
+            "**/api.rainviewer.com/**", lambda r: r.fulfill(status=500, body="{}")
+        )
+        page2.route(
+            "**/tilecache.rainviewer.com/**",
+            lambda r: r.fulfill(status=404, body="nope"),
+        )
+        page2.route(
+            "**/gibs.earthdata.nasa.gov/**",
+            lambda r: r.fulfill(status=404, body="nope"),
+        )
         page2.goto(UI_URL, wait_until="load", timeout=60000)
         page2.wait_for_timeout(2000)
         page2.wait_for_function(
-            """() => document.body.innerText.includes('Pune')""", timeout=30000)
+            """() => document.body.innerText.includes('Pune')""", timeout=30000
+        )
         open_dashboard(page2, viewport)
         # Lazy tiles below the fold only fail once scrolled into view.
         for i in range(page2.get_by_test_id("live-imagery").count()):
             try:
-                page2.get_by_test_id("live-imagery").nth(i).scroll_into_view_if_needed(timeout=8000)
+                page2.get_by_test_id("live-imagery").nth(i).scroll_into_view_if_needed(
+                    timeout=8000
+                )
             except Exception:
                 pass
         try:
             page2.wait_for_function(
                 """() => [...document.querySelectorAll('[data-testid="live-imagery-status"]')]
                      .every(el => el.innerText.trim() === 'UNAVAILABLE')""",
-                timeout=20000)
+                timeout=20000,
+            )
         except Exception:
             pass
         st2 = page2.get_by_test_id("live-imagery-status").all_inner_texts()
-        check(all(s.strip() == "UNAVAILABLE" for s in st2) and len(st2) >= 2,
-              f"{tag} provider outage degrades to UNAVAILABLE {st2}", failures)
-        check(page2.get_by_text("Retry imagery").count() >= 1,
-              f"{tag} retry action offered on failure", failures)
+        check(
+            all(s.strip() == "UNAVAILABLE" for s in st2) and len(st2) >= 2,
+            f"{tag} provider outage degrades to UNAVAILABLE {st2}",
+            failures,
+        )
+        check(
+            page2.get_by_text("Retry imagery").count() >= 1,
+            f"{tag} retry action offered on failure",
+            failures,
+        )
         page2.close()
 
-        noise = [e for e in errors if "ERR_CONNECTION_REFUSED" not in e
-                 and "api.open-meteo.com" not in e and "net::" not in e
-                 and "leaflet" not in e.lower()
-                 and "fonts.g" not in e and "500 (Internal Server Error)" not in e
-                 and not ("Failed to load resource" in e
-                          and any(f"status of {c}" in e
-                                  for c in external_statuses))]
+        noise = [
+            e
+            for e in errors
+            if "ERR_CONNECTION_REFUSED" not in e
+            and "api.open-meteo.com" not in e
+            and "net::" not in e
+            and "leaflet" not in e.lower()
+            and "fonts.g" not in e
+            and "500 (Internal Server Error)" not in e
+            and not (
+                "Failed to load resource" in e
+                and any(f"status of {c}" in e for c in external_statuses)
+            )
+        ]
         check(not noise, f"{tag} no relevant console/page errors {noise[:3]}", failures)
     except Exception as exc:
         failures.append(f"{tag} exception: {type(exc).__name__}: {str(exc)[:200]}")
@@ -308,6 +497,7 @@ def run_browser(pw, name, viewport):
 
 def main():
     from playwright.sync_api import sync_playwright
+
     viewports = [{"width": 1440, "height": 900}, {"width": 390, "height": 844}]
     all_failures, ran = [], 0
     with sync_playwright() as pw:

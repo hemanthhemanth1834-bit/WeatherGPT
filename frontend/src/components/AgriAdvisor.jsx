@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Sprout } from "lucide-react";
 import { fetchCropAdvisory, fetchCurrentWeather } from "../services/api";
 import { speechEngine } from "../services/voice";
-import { LocationRadarImagery } from "./LocationImagery";
+import { LocationRadarImagery, LocalSatelliteImagery } from "./LocationImagery";
 
 const CROPS = [
   ["paddy", "Paddy / Rice"],
@@ -69,11 +69,13 @@ export default function AgriAdvisor({ place, onAsk }) {
   };
 
   return (
-    <section aria-label="Farm advisories" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
-      <div className="wg-card" style={{ padding: "1rem 1.2rem" }}>
-        <h2 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem", display: "flex", alignItems: "center", gap: "0.45rem" }}>
-          <Sprout size={19} color="#34d399" /> Farm advisories
-        </h2>
+    <section className="wg-agri" aria-label="Farm advisories" style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+      <div className="wg-card wg-agri-hero" style={{ padding: "1rem 1.2rem" }}>
+        <span className="wg-agri-kicker">FIELD INTELLIGENCE · CROP ADVISORY</span>
+        <small className="wg-agri-credit">Photograph: Basile Morin &middot; CC BY-SA 4.0 &middot; illustrative context, not field imagery.</small>
+        <h1 style={{ margin: "0 0 0.25rem", fontSize: "1.15rem", display: "flex", alignItems: "center", gap: "0.45rem" }}>
+                    <Sprout size={19} color="#34d399" /> Farm advisories
+        </h1>
         <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--wg-muted)" }}>
           Weather-driven field guidance in Meghdoot-style format (DEMO-grade).{" "}
           <strong>Informational only — not professional agronomic advice.</strong>
@@ -103,6 +105,9 @@ export default function AgriAdvisor({ place, onAsk }) {
             Ask AI agronomist →
           </button>
         </div>
+        <p className="wg-tile-help" style={{ margin: "0.45rem 0 0" }}>
+          Choose a crop and district to recompute the advisory. The rules use the live 24-hour rain probability and current temperature for that place; they do not read soil moisture, crop sensors or local pest reports.
+        </p>
         {wx && (
           <p className="wg-mono" style={{ margin: "0.5rem 0 0", fontSize: "0.68rem", color: "var(--wg-muted)" }}>
             DISTRICT NOW: {wx.location} {wx.current_temp}°C · rain {wx.hourly?.[0]?.rain_prob ?? 0}% · wind {wx.wind_speed} km/h · {wx.updated_at_ist}
@@ -120,22 +125,39 @@ export default function AgriAdvisor({ place, onAsk }) {
         />
       )}
 
+      {wx && (
+        <LocalSatelliteImagery
+          lat={wx.lat}
+          lon={wx.lon}
+          place={wx.location || district}
+          title={`Agricultural landscape context - ${wx.location || district}`}
+          description="NASA GIBS true-color satellite view from the previous day for field and landscape context. Clouds can obscure the surface. This is not a crop-condition, soil-moisture or yield assessment."
+        />
+      )}
+
       {error && <div className="wg-alert error" role="alert">⚠️ {error}</div>}
       {busy && <div role="status" style={{ color: "var(--wg-muted)" }}>Loading advisory…</div>}
 
       {data && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(16rem,1fr))", gap: "0.7rem" }}>
+        <>
+          <p className="wg-section-intro" style={{ margin: "0.15rem 0 0" }}>
+            Rule-based guidance for {data.crop} at the {data.growth_stage} stage. Each card states one field action triggered by today&rsquo;s rain probability and humidity. Treat it as a starting point, not a diagnosis or a guaranteed outcome.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(16rem,1fr))", gap: "0.7rem" }}>
           <div className="wg-card" style={{ padding: "0.95rem 1.05rem" }}>
             <h3 style={{ margin: "0 0 0.35rem", fontSize: "0.85rem" }}>💧 Irrigation</h3>
             <p style={{ margin: 0, fontSize: "0.83rem", lineHeight: 1.6 }}>{data.irrigation_advice}</p>
+            <p className="wg-tile-help">Based on whether 24-hour rain probability is above 40%.</p>
           </div>
           <div className="wg-card" style={{ padding: "0.95rem 1.05rem" }}>
             <h3 style={{ margin: "0 0 0.35rem", fontSize: "0.85rem" }}>🐛 Spray timing</h3>
             <p style={{ margin: 0, fontSize: "0.83rem", lineHeight: 1.6 }}>{data.pesticide_advice}</p>
+            <p className="wg-tile-help">Generic crop-stage guidance. It does not identify a pest or confirm an infestation.</p>
           </div>
           <div className="wg-card" style={{ padding: "0.95rem 1.05rem" }}>
             <h3 style={{ margin: "0 0 0.35rem", fontSize: "0.85rem" }}>🌾 Harvest</h3>
             <p style={{ margin: 0, fontSize: "0.83rem", lineHeight: 1.6 }}>{data.harvest_recommendation}</p>
+            <p className="wg-tile-help">A rain-probability rule, not a grain-moisture or market-timing assessment.</p>
           </div>
           <div className="wg-card" style={{ padding: "0.95rem 1.05rem" }}>
             <h3 style={{ margin: "0 0 0.35rem", fontSize: "0.85rem" }}>⚡ Field safety</h3>
@@ -145,8 +167,10 @@ export default function AgriAdvisor({ place, onAsk }) {
             <p className="wg-mono" style={{ fontSize: "0.7rem", color: "var(--wg-muted)" }}>
               Stage {data.growth_stage} · {data.district}, {data.state} · suitability {data.suitability_score}%
             </p>
+            <p className="wg-tile-help">Suitability is a two-level field-work heuristic (60% when rain is likely, 85% when dry), not a yield or soil rating.</p>
           </div>
-        </div>
+          </div>
+        </>
       )}
     </section>
   );

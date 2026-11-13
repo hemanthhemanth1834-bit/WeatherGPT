@@ -1,0 +1,224 @@
+/* Global ambient motion layer.
+   Loaded last so it can add life to every module without changing layout.
+   All movement is transform/translate/opacity only and is disabled for
+   visitors who prefer reduced motion. */
+
+@keyframes wgm-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -4px; }
+}
+
+@keyframes wgm-float-soft {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -2px; }
+}
+
+@keyframes wgm-ambient {
+  0% { transform: translate3d(-2%, -1%, 0) scale(1); }
+  50% { transform: translate3d(2%, 2%, 0) scale(1.06); }
+  100% { transform: translate3d(-1%, 3%, 0) scale(1.02); }
+}
+
+@keyframes wgm-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(1.5%, -2%, 0); }
+}
+
+@keyframes wgm-sheen {
+  0%, 62% { transform: translateX(-130%) skewX(-18deg); }
+  82%, 100% { transform: translateX(130%) skewX(-18deg); }
+}
+
+@keyframes wgm-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(0.82); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+@keyframes wgm-icon-bob {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  45% { transform: translateY(-2px) rotate(-4deg); }
+  70% { transform: translateY(0) rotate(2deg); }
+}
+
+@keyframes wgm-rise {
+  from { opacity: 0; translate: 0 10px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@keyframes wgm-text-glow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Drifting atmosphere behind every route. #root sits above it. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: -22%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 42% at 18% 28%, rgba(34, 211, 238, 0.10), transparent 68%),
+    radial-gradient(34% 38% at 82% 62%, rgba(129, 140, 248, 0.09), transparent 70%),
+    radial-gradient(30% 34% at 52% 88%, rgba(16, 185, 129, 0.06), transparent 72%);
+  filter: blur(18px);
+  animation: wgm-ambient 26s ease-in-out infinite;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Stagger section entrances that already fade in. */
+main section:nth-of-type(2) { animation-delay: 0.05s; }
+main section:nth-of-type(3) { animation-delay: 0.1s; }
+main section:nth-of-type(4) { animation-delay: 0.15s; }
+main section:nth-of-type(5) { animation-delay: 0.2s; }
+main section:nth-of-type(6) { animation-delay: 0.25s; }
+main section:nth-of-type(7) { animation-delay: 0.3s; }
+main section:nth-of-type(8) { animation-delay: 0.35s; }
+
+/* Every major panel/card drifts gently; negative delays de-synchronise them. */
+main .wg-card,
+main .wg-ref-feature-card,
+main .wg-dc-topic,
+main .wg-dc-metric,
+main .wg-dc-table-wrap,
+main .wg-alert-card,
+main .wg-alert,
+main .wg-provider-card,
+main .wg-risk-card,
+main .wg-solar-card,
+main .wg-ref-command,
+main .wg-ref-shortcut {
+  animation: wgm-float 11s ease-in-out infinite;
+  animation-delay: -2s;
+}
+
+main .wg-card:nth-of-type(2n),
+main .wg-ref-feature-card:nth-of-type(2n),
+main .wg-dc-topic:nth-of-type(2n),
+main .wg-alert-card:nth-of-type(2n) {
+  animation-delay: -5.5s;
+}
+
+main .wg-card:nth-of-type(3n),
+main .wg-ref-feature-card:nth-of-type(3n),
+main .wg-dc-topic:nth-of-type(3n),
+main .wg-alert-card:nth-of-type(3n) {
+  animation-delay: -8.5s;
+}
+
+/* Headers, chips and command surfaces breathe rather than drift. */
+.wg-ref-header-main { animation: wgm-rise 0.6s ease both, wgm-float-soft 14s ease-in-out 0.6s infinite; }
+.wg-ref-bottom-command,
+.wg-ref-mobile-nav { animation: wgm-float-soft 9s ease-in-out infinite; }
+
+.wg-ref-nav-item button,
+.wg-ref-sidebar button,
+.wg-ref-mobile-nav button,
+.wg-ref-bottom-command button {
+  transition: transform 0.22s ease, background 0.22s ease, color 0.22s ease;
+}
+
+.wg-ref-nav-item button:hover,
+.wg-ref-sidebar button:hover,
+.wg-ref-mobile-nav button:hover,
+.wg-ref-bottom-command button:hover {
+  transform: translateY(-2px);
+}
+
+.wg-ref-nav-item button:hover svg,
+.wg-ref-sidebar button:hover svg,
+.wg-ref-mobile-nav button:hover svg,
+.wg-ref-bottom-command button:hover span:first-child {
+  animation: wgm-icon-bob 0.6s ease;
+}
+
+/* Primary actions get a slow light sweep. */
+.wg-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.wg-btn::after {
+  content: "";
+  position: absolute;
+  inset: -20% -30%;
+  pointer-events: none;
+  background: linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.16) 50%,
+    transparent 65%
+  );
+  animation: wgm-sheen 7s ease-in-out infinite;
+}
+
+/* Live status language moves everywhere it appears. */
+.wg-chip.live,
+.wg-live-dot,
+.live-dot,
+.status-dot {
+  animation: wgm-pulse 2.2s ease-in-out infinite;
+}
+
+/* Cards/list rows lift when touched. */
+main article,
+main .wg-ai-message,
+main .wg-ref-section > .wg-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+main article:hover,
+main .wg-ai-message:hover {
+  transform: translateY(-2px);
+}
+
+/* Tables scroll in place; no horizontal motion is added. */
+main table {
+  animation: wgm-rise 0.5s ease both;
+}
+
+/* Respect the visitor's motion preference everywhere, including body::before. */
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  main section,
+  main h1,
+  main h2,
+  main table,
+  main .wg-card,
+  main .wg-ref-feature-card,
+  main .wg-dc-topic,
+  main .wg-dc-metric,
+  main .wg-dc-table-wrap,
+  main .wg-alert-card,
+main .wg-alert,
+  main .wg-provider-card,
+  main .wg-risk-card,
+  main .wg-solar-card,
+  main .wg-ref-command,
+  main .wg-ref-shortcut,
+  .wg-ref-header-main,
+  .wg-ref-bottom-command,
+  .wg-ref-mobile-nav,
+  .wg-chip.live,
+  .wg-live-dot,
+  .live-dot,
+  .status-dot,
+  .wg-btn::after {
+    animation: none !important;
+    translate: none !important;
+    transition: none !important;
+  }
+
+  main article:hover,
+  main .wg-ai-message:hover,
+  .wg-ref-nav-item button:hover,
+  .wg-ref-sidebar button:hover,
+  .wg-ref-mobile-nav button:hover,
+  .wg-ref-bottom-command button:hover {
+    transform: none !important;
+  }
+}

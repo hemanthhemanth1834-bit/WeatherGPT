@@ -10,7 +10,7 @@ import { fetchActiveAlerts, fetchEarthquakes, fetchWildfires } from "../services
    come from provider feeds and computed alert data (alerts, quakes, fires).
    Quality scales down on small screens / reduced motion / no WebGL. */
 const LAND_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json";
-const EARTH_TEXTURE_URL = "https://svs.gsfc.nasa.gov/vis/a000000/a003600/a003615/earth_noClouds.0330.jpg";
+const EARTH_TEXTURE_URL = "/imagery/cinematic/earth-blue-marble.webp";
 const R = 1;
 
 function latLon(lat, lon, r = R) {

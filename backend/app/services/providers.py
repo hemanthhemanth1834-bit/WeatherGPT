@@ -5,6 +5,7 @@ LIVE (verified now), FALLBACK (backup path in use), ESTIMATED (computed),
 STATIC (bundled reference), DEMO (illustrative), NOT_CONFIGURED (needs
 credentials/access), ERROR (probe failed). Probes never raise.
 """
+
 import datetime
 import time
 from typing import Any, Callable, Dict, List
@@ -19,44 +20,62 @@ def _get(url: str, timeout: float = 5.0) -> Dict[str, Any]:
         latency = round((time.time() - start) * 1000)
         if response.status_code == 200:
             return {"ok": True, "latency_ms": latency, "status": response.status_code}
-        return {"ok": False, "latency_ms": latency, "status": response.status_code,
-                "error": f"HTTP {response.status_code}"}
+        return {
+            "ok": False,
+            "latency_ms": latency,
+            "status": response.status_code,
+            "error": f"HTTP {response.status_code}",
+        }
     except Exception as exc:
-        return {"ok": False, "latency_ms": round((time.time() - start) * 1000),
-                "status": None, "error": str(exc)[:120]}
+        return {
+            "ok": False,
+            "latency_ms": round((time.time() - start) * 1000),
+            "status": None,
+            "error": str(exc)[:120],
+        }
 
 
 def probe_open_meteo() -> Dict[str, Any]:
-    return _get("https://api.open-meteo.com/v1/forecast?latitude=20&longitude=78"
-                "&current=temperature_2m&timezone=Asia%2FKolkata")
+    return _get(
+        "https://api.open-meteo.com/v1/forecast?latitude=20&longitude=78"
+        "&current=temperature_2m&timezone=Asia%2FKolkata"
+    )
 
 
 def probe_gfs() -> Dict[str, Any]:
     """Probe the actual GFS model selector rather than the default blend."""
-    return _get("https://api.open-meteo.com/v1/forecast?latitude=20&longitude=78"
-                "&current=temperature_2m&models=gfs_seamless&timezone=Asia%2FKolkata")
-
-
+    return _get(
+        "https://api.open-meteo.com/v1/forecast?latitude=20&longitude=78"
+        "&current=temperature_2m&models=gfs_seamless&timezone=Asia%2FKolkata"
+    )
 
 
 def probe_geocoding() -> Dict[str, Any]:
-    return _get("https://geocoding-api.open-meteo.com/v1/search?name=Pune&count=1&format=json")
+    return _get(
+        "https://geocoding-api.open-meteo.com/v1/search?name=Pune&count=1&format=json"
+    )
 
 
 def probe_air_quality() -> Dict[str, Any]:
-    return _get("https://air-quality-api.open-meteo.com/v1/air-quality?latitude=20"
-                "&longitude=78&current=us_aqi&timezone=Asia%2FKolkata")
+    return _get(
+        "https://air-quality-api.open-meteo.com/v1/air-quality?latitude=20"
+        "&longitude=78&current=us_aqi&timezone=Asia%2FKolkata"
+    )
 
 
 def probe_marine() -> Dict[str, Any]:
-    return _get("https://marine-api.open-meteo.com/v1/marine?latitude=13&longitude=80"
-                "&current=wave_height&timezone=Asia%2FKolkata")
+    return _get(
+        "https://marine-api.open-meteo.com/v1/marine?latitude=13&longitude=80"
+        "&current=wave_height&timezone=Asia%2FKolkata"
+    )
 
 
 def probe_archive() -> Dict[str, Any]:
-    return _get("https://archive-api.open-meteo.com/v1/archive?latitude=20&longitude=78"
-                "&start_date=2020-01-01&end_date=2020-01-02&daily=temperature_2m_max"
-                "&timezone=Asia%2FKolkata")
+    return _get(
+        "https://archive-api.open-meteo.com/v1/archive?latitude=20&longitude=78"
+        "&start_date=2020-01-01&end_date=2020-01-02&daily=temperature_2m_max"
+        "&timezone=Asia%2FKolkata"
+    )
 
 
 def probe_rainviewer() -> Dict[str, Any]:
@@ -80,28 +99,45 @@ def probe_imd_rss() -> Dict[str, Any]:
         latency = round((time.time() - start) * 1000)
         if response.status_code == 200:
             import xml.etree.ElementTree as ET
+
             root = ET.fromstring(response.content)
             has_items = any(
                 element.tag.rsplit("}", 1)[-1].lower() in ("item", "entry")
                 for element in root.iter()
             )
             if not has_items:
-                return {"ok": False, "latency_ms": latency, "status": 200,
-                        "error": "HTTP 200 but no RSS/Atom items found"}
+                return {
+                    "ok": False,
+                    "latency_ms": latency,
+                    "status": 200,
+                    "error": "HTTP 200 but no RSS/Atom items found",
+                }
             return {"ok": True, "latency_ms": latency, "status": 200}
-        return {"ok": False, "latency_ms": latency, "status": response.status_code,
-                "error": f"HTTP {response.status_code}"}
+        return {
+            "ok": False,
+            "latency_ms": latency,
+            "status": response.status_code,
+            "error": f"HTTP {response.status_code}",
+        }
     except Exception as exc:
-        return {"ok": False, "latency_ms": round((time.time() - start) * 1000),
-                "status": None, "error": str(exc)[:120]}
+        return {
+            "ok": False,
+            "latency_ms": round((time.time() - start) * 1000),
+            "status": None,
+            "error": str(exc)[:120],
+        }
 
 
 def probe_gibs() -> Dict[str, Any]:
     """Probe a recent NASA GIBS tile so the health check does not expire."""
-    probe_date = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2)).strftime("%Y-%m-%d")
-    url = ("https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/"
-           "MODIS_Terra_CorrectedReflectance_TrueColor/default/"
-           f"{probe_date}/GoogleMapsCompatible_Level9/5/18/12.jpg")
+    probe_date = (
+        datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=2)
+    ).strftime("%Y-%m-%d")
+    url = (
+        "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/"
+        "MODIS_Terra_CorrectedReflectance_TrueColor/default/"
+        f"{probe_date}/GoogleMapsCompatible_Level9/5/18/12.jpg"
+    )
     return _get(url, timeout=8.0)
 
 
@@ -110,41 +146,116 @@ def probe_portal(url: str) -> Dict[str, Any]:
 
 
 PROVIDERS: List[Dict[str, Any]] = [
-    {"name": "Open-Meteo Forecast", "role": "weather", "kind": "LIVE data",
-     "needs_key": False, "probe": probe_open_meteo},
-    {"name": "Open-Meteo Geocoding", "role": "geocoding", "kind": "LIVE data",
-     "needs_key": False, "probe": probe_geocoding},
-    {"name": "Open-Meteo Air Quality", "role": "air_quality", "kind": "LIVE data",
-     "needs_key": False, "probe": probe_air_quality},
-    {"name": "Open-Meteo Marine", "role": "marine", "kind": "LIVE data",
-     "needs_key": False, "probe": probe_marine},
-    {"name": "Open-Meteo Archive (ERA5)", "role": "climate", "kind": "LIVE data",
-     "needs_key": False, "probe": probe_archive},
-    {"name": "GFS via Open-Meteo models", "role": "nwp", "kind": "LIVE data",
-     "needs_key": False, "probe": probe_gfs},
-    {"name": "RainViewer Radar", "role": "radar", "kind": "LIVE tiles",
-     "needs_key": False, "probe": probe_rainviewer},
-    {"name": "NASA GIBS Tiles", "role": "satellite", "kind": "LIVE tiles",
-     "needs_key": False, "probe": probe_gibs},
-    {"name": "IMD District Nowcast RSS", "role": "india", "kind": "official warning text",
-     "needs_key": False, "probe": probe_imd_rss},
-    {"name": "IMD Portal", "role": "india", "kind": "portal reachable; protected APIs not claimed",
-     "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
-    {"name": "MOSDAC / ISRO", "role": "india", "kind": "auth required",
-     "needs_key": True, "probe": None, "fixed": "REQUIRES_CREDENTIALS"},
-    {"name": "INCOIS", "role": "india", "kind": "no open data API",
-     "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
-    {"name": "NDMA / Bhuvan / Vedas", "role": "india", "kind": "portals reachable; login-gated data",
-     "needs_key": False, "probe": None, "fixed": "PORTAL_ONLY"},
-    {"name": "WRF feed", "role": "nwp", "kind": "no live feed provisioned; free WRF is optional/local",
-     "needs_key": False, "probe": None, "fixed": "NOT_CONFIGURED"},
-    {"name": "LLM provider", "role": "ai", "kind": "none configured; free local Ollama is optional",
-     "needs_key": False, "probe": None, "fixed": "NOT_CONFIGURED"},
+    {
+        "name": "Open-Meteo Forecast",
+        "role": "weather",
+        "kind": "LIVE data",
+        "needs_key": False,
+        "probe": probe_open_meteo,
+    },
+    {
+        "name": "Open-Meteo Geocoding",
+        "role": "geocoding",
+        "kind": "LIVE data",
+        "needs_key": False,
+        "probe": probe_geocoding,
+    },
+    {
+        "name": "Open-Meteo Air Quality",
+        "role": "air_quality",
+        "kind": "LIVE data",
+        "needs_key": False,
+        "probe": probe_air_quality,
+    },
+    {
+        "name": "Open-Meteo Marine",
+        "role": "marine",
+        "kind": "LIVE data",
+        "needs_key": False,
+        "probe": probe_marine,
+    },
+    {
+        "name": "Open-Meteo Archive (ERA5)",
+        "role": "climate",
+        "kind": "LIVE data",
+        "needs_key": False,
+        "probe": probe_archive,
+    },
+    {
+        "name": "GFS via Open-Meteo models",
+        "role": "nwp",
+        "kind": "LIVE data",
+        "needs_key": False,
+        "probe": probe_gfs,
+    },
+    {
+        "name": "RainViewer Radar",
+        "role": "radar",
+        "kind": "LIVE tiles",
+        "needs_key": False,
+        "probe": probe_rainviewer,
+    },
+    {
+        "name": "NASA GIBS Tiles",
+        "role": "satellite",
+        "kind": "LIVE tiles",
+        "needs_key": False,
+        "probe": probe_gibs,
+    },
+    {
+        "name": "IMD District Nowcast RSS",
+        "role": "india",
+        "kind": "official warning text",
+        "needs_key": False,
+        "probe": probe_imd_rss,
+    },
+    {
+        "name": "IMD Portal",
+        "role": "india",
+        "kind": "portal reachable; protected APIs not claimed",
+        "needs_key": False,
+        "probe": None,
+        "fixed": "PORTAL_ONLY",
+    },
+    {
+        "name": "MOSDAC / ISRO",
+        "role": "india",
+        "kind": "auth required",
+        "needs_key": True,
+        "probe": None,
+        "fixed": "REQUIRES_CREDENTIALS",
+    },
+    {
+        "name": "INCOIS",
+        "role": "india",
+        "kind": "no open data API",
+        "needs_key": False,
+        "probe": None,
+        "fixed": "PORTAL_ONLY",
+    },
+    {
+        "name": "NDMA / Bhuvan / Vedas",
+        "role": "india",
+        "kind": "portals reachable; login-gated data",
+        "needs_key": False,
+        "probe": None,
+        "fixed": "PORTAL_ONLY",
+    },
+    {
+        "name": "WRF feed",
+        "role": "nwp",
+        "kind": "no live feed provisioned; free WRF is optional/local",
+        "needs_key": False,
+        "probe": None,
+        "fixed": "NOT_CONFIGURED",
+    },
 ]
 
-STATUS_UNAVAILABLE = {"OPENWEATHER": "not implemented (key-gated; OM covers needs)",
-                      "WEATHERAPI": "not implemented (key-gated; OM covers needs)",
-                      "NOMINATIM": "evaluated, not used (1 req/s policy; OM geocoding + cache suffice)"}
+STATUS_UNAVAILABLE = {
+    "OPENWEATHER": "not implemented (key-gated; OM covers needs)",
+    "WEATHERAPI": "not implemented (key-gated; OM covers needs)",
+    "NOMINATIM": "evaluated, not used (1 req/s policy; OM geocoding + cache suffice)",
+}
 
 
 def health_snapshot(check_live: bool = True) -> Dict[str, Any]:
@@ -168,19 +279,50 @@ def health_snapshot(check_live: bool = True) -> Dict[str, Any]:
             status = "LIVE" if result["ok"] else "ERROR"
             if entry["role"] == "india" and result["ok"]:
                 status = "AVAILABLE"
-        rows.append({
-            "provider": entry["name"],
-            "role": entry["role"],
-            "status": status,
-            "latency_ms": result.get("latency_ms"),
-            "coverage": entry["kind"],
-            "needs_key": entry["needs_key"],
-            "error": result.get("error"),
-        })
-    return {"providers": rows, "evaluated_not_used": STATUS_UNAVAILABLE,
-            "checked_at_ist": datetime.datetime.now(
-                datetime.timezone(datetime.timedelta(hours=5, minutes=30))
-            ).strftime("%d %b %Y, %H:%M IST"),
-            "policy": "LIVE means probed OK now. ERROR means probe failed. "
-                      "NOT_CHECKED means live probing was skipped. "
-                      "NOT_CONFIGURED means credentials or a feed are needed."}
+        rows.append(
+            {
+                "provider": entry["name"],
+                "role": entry["role"],
+                "status": status,
+                "latency_ms": result.get("latency_ms"),
+                "coverage": entry["kind"],
+                "needs_key": entry["needs_key"],
+                "error": result.get("error"),
+            }
+        )
+
+    # LLM status is derived at request time. Treating it as a fixed
+    # NOT_CONFIGURED row made the health table contradict /api/agent/engine.
+    from .llm import provider_status
+
+    llm = provider_status(check_live=check_live)
+    llm_health = llm.get("health_detail") or {}
+    rows.append(
+        {
+            "provider": "LLM provider",
+            "role": "ai",
+            "status": "CONFIGURED" if llm["configured"] else "NOT_CONFIGURED",
+            "latency_ms": llm_health.get("latency_ms"),
+            "coverage": (
+                "configured: " + ", ".join(llm["configured_providers"])
+                if llm["configured"]
+                else "none configured; deterministic engine active"
+            ),
+            "needs_key": False,
+            "error": llm_health.get("error"),
+            "configured": llm["configured"],
+            "selected_provider": llm["selected_provider"],
+            "active_inference": llm["active_inference"],
+            "health": llm["health"],
+        }
+    )
+    return {
+        "providers": rows,
+        "evaluated_not_used": STATUS_UNAVAILABLE,
+        "checked_at_ist": datetime.datetime.now(
+            datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+        ).strftime("%d %b %Y, %H:%M IST"),
+        "policy": "LIVE means probed OK now. ERROR means probe failed. "
+        "NOT_CHECKED means live probing was skipped. "
+        "NOT_CONFIGURED means credentials or a feed are needed.",
+    }

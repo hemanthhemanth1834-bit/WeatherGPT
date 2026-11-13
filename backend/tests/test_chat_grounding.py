@@ -1,4 +1,5 @@
 """Regression tests for chat place-extraction grounding and forecast-horizon honesty."""
+
 import datetime as _dt
 
 from app.services.chat import extract_place_meta, horizon_note
@@ -6,7 +7,8 @@ from app.services.chat import extract_place_meta, horizon_note
 
 def test_filler_words_do_not_become_places():
     place, explicit = extract_place_meta(
-        "What is the source and update time of this answer?", "Pune")
+        "What is the source and update time of this answer?", "Pune"
+    )
     assert place == "Pune"
     assert explicit is False
 
@@ -75,6 +77,33 @@ def test_plain_forecast_question_has_no_horizon_note():
 # location. The note below must accompany that fallback.
 
 from app.services.chat import unresolved_location_note  # noqa: E402
+
+
+def test_unknown_explicit_place_keeps_name_and_fails_closed(monkeypatch):
+    from app.models import WeatherQueryRequest
+    from app.services import chat
+
+    place, explicit = chat.extract_place_meta(
+        "weather in Atlantis-Nowhere-12345", "Vijayawada"
+    )
+    assert explicit is True
+    assert place == "Atlantis-Nowhere-12345"
+
+    monkeypatch.setattr(chat.geo, "resolve_candidates", lambda *a, **k: [])
+    monkeypatch.setattr(
+        chat,
+        "get_weather",
+        lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not fetch weather")),
+    )
+    response = chat.answer(
+        WeatherQueryRequest(
+            query="weather in Atlantis-Nowhere-12345",
+            location_name="Vijayawada",
+        )
+    )
+    assert response.structured_weather is None
+    assert response.location_resolved is False
+    assert "could not resolve" in response.markdown_response.lower()
 
 
 def test_unresolved_location_note_names_both_places():

@@ -7,14 +7,20 @@ const BASE =
     ? "http://127.0.0.1:8000/api"
     : "/api");
 
-async function request(path, options) {
+async function request(path, options = {}) {
+  const { timeout = 20000, signal: externalSignal, ...init } = options;
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 20000);
+  const abortFromCaller = () => controller.abort();
+  if (externalSignal) {
+    if (externalSignal.aborted) controller.abort();
+    else externalSignal.addEventListener("abort", abortFromCaller, { once: true });
+  }
+  const timer = setTimeout(() => controller.abort(), timeout);
   try {
     const response = await fetch(`${BASE}${path}`, {
-      ...options,
+      ...init,
       signal: controller.signal,
-      headers: { "Content-Type": "application/json", ...(options?.headers || {}) },
+      headers: { "Content-Type": "application/json", ...(init.headers || {}) },
     });
     if (!response.ok) {
       // Attach the HTTP status so callers can distinguish "backend answered
@@ -27,22 +33,30 @@ async function request(path, options) {
     return await response.json();
   } finally {
     clearTimeout(timer);
+    if (externalSignal) externalSignal.removeEventListener("abort", abortFromCaller);
   }
 }
 
-const get = (path) => request(path, { method: "GET" });
+const get = (path, options = {}) => request(path, { method: "GET", ...options });
 
-export const sendChatQuery = (query, persona = "general", language = "auto", locationName = "") =>
+export const sendChatQuery = (
+  query,
+  persona = "general",
+  language = "auto",
+  locationName = "",
+  { signal } = {}
+) =>
   request("/chat/query", {
     method: "POST",
     body: JSON.stringify({ query, persona, language, location_name: locationName }),
+    signal,
   });
 
-export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null, model = "auto", state = null) => {
+export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null, model = "auto", state = null, signal = null) => {
   let path = `/weather/current?location=${encodeURIComponent(location)}&model=${model}`;
   if (lat !== null && lon !== null) path += `&lat=${lat}&lon=${lon}`;
   if (state) path += `&state=${encodeURIComponent(state)}`;
-  return get(path);
+  return get(path, { signal });
 };
 
 export const fetchActiveAlerts = (severity = null) =>
@@ -50,6 +64,9 @@ export const fetchActiveAlerts = (severity = null) =>
 
 export const fetchIndiaAlerts = (state = null) =>
   get(state ? `/alerts/india?state=${encodeURIComponent(state)}` : "/alerts/india");
+
+export const fetchImdWarnings = (limit = 20) =>
+  get(`/imd/warnings?limit=${encodeURIComponent(limit)}`);
 
 export const fetchCropAdvisory = (crop = "paddy", district = "Nagpur", state = "Maharashtra") =>
   get(`/advisory/crop?crop=${encodeURIComponent(crop)}&district=${encodeURIComponent(district)}&state=${encodeURIComponent(state)}`);
@@ -63,13 +80,11 @@ export const fetchMarineAdvisory = (location = "Mumbai") =>
 export const fetchClimateTrends = (region = "All India") =>
   get(`/climate/trends?region=${encodeURIComponent(region)}`);
 
-export const fetchCityComparison = (city1 = "Mumbai", city2 = "Delhi") =>
-  get(`/weather/compare?city1=${encodeURIComponent(city1)}&city2=${encodeURIComponent(city2)}`);
 
-export const searchLocations = async (query = "", limit = 8) => {
+export const searchLocations = async (query = "", limit = 8, signal = null) => {
   if (!query || query.trim().length < 2) return [];
   try {
-    return await get(`/locations/search?q=${encodeURIComponent(query.trim())}&limit=${limit}`);
+    return await get(`/locations/search?q=${encodeURIComponent(query.trim())}&limit=${limit}`, { signal });
   } catch {
     return [];
   }
@@ -82,6 +97,12 @@ export const fetchRegionalTalukas = async (region = "pune") => {
     return [];
   }
 };
+
+export const fetchNwpComparison = (location = "Pune") =>
+  get(`/nwp/compare?location=${encodeURIComponent(location)}`);
+
+export const fetchEnsembleForecast = (lat, lon, days = 3, signal = null) =>
+  get(`/ensemble/forecast?lat=${lat}&lon=${lon}&days=${days}`, { signal });
 
 export const fetchRiskAssessment = (location = "Pune", lat = null, lon = null) => {
   let path = `/risk/assess?location=${encodeURIComponent(location)}`;
@@ -115,13 +136,31 @@ export const fetchClimateHistory = (location = "Pune", years = 5) =>
 export const fetchClimateMonthly = (location = "Pune", year = 2025) =>
   get(`/climate/monthly?location=${encodeURIComponent(location)}&year=${year}`);
 
+export const fetchClimateDashboard = ({
+  location,
+  year,
+  startYear = 1991,
+  baselineStart = 1991,
+  baselineEnd = 2020,
+}) => {
+  const params = new URLSearchParams({
+    location,
+    start_year: String(startYear),
+    baseline_start: String(baselineStart),
+    baseline_end: String(baselineEnd),
+  });
+  if (year != null) params.set("year", String(year));
+  return get(`/climate/dashboard?${params.toString()}`, { timeout: 45000 });
+};
+
 export const fetchReverseGeocode = (lat, lon) =>
-  get(`/locations/reverse?lat=${lat}&lon=${lon}`);
+  get(`/locations/reverse?lat=${lat}&lon=${lon}`, { timeout: 6000 });
 
 export const fetchProvidersHealth = (live = true) =>
   get(`/providers/health?live=${live ? "true" : "false"}`);
 
-export const fetchEngineStatus = () => get("/agent/engine");
+export const fetchEngineStatus = (live = false) =>
+  get(`/agent/engine${live ? "?live=true" : ""}`);
 
 export const fetchUV = (location = "Pune") =>
   get(`/uv?location=${encodeURIComponent(location)}`);

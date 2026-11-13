@@ -1,0 +1,1451 @@
+/* ==========================================================================
+   WeatherGPT — Homepage cinematic composition
+   Full-bleed editorial hero, live observation glass, photographic field notes
+   and image-led intelligence bands. Loaded after OverviewPremium.css.
+   ========================================================================== */
+
+.wg-overview-v2 {
+  --home-gutter: clamp(1.1rem, 4.2vw, 4.5rem);
+  padding-top: 0 !important;
+}
+
+/* --------------------------------------------------------------------------
+   Full-bleed hero
+   -------------------------------------------------------------------------- */
+/* The hero also carries the legacy `.wg-ref-hero` class, whose !important
+   gradient and decorative pseudo-elements otherwise paint over the photo.
+   These overrides keep the photograph as the visible base layer. */
+.wg-overview-v2 .wg-ref-hero.wg-cine-hero {
+  position: relative;
+  isolation: isolate;
+  width: auto;
+  min-height: clamp(640px, 84vh, 860px);
+  margin: -0.35rem calc(50% - 50vw) 0;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(66, 217, 245, 0.18) !important;
+  border-radius: 0 0 var(--cine-radius-xl) var(--cine-radius-xl) !important;
+  box-shadow: 0 44px 120px -60px rgba(0, 0, 0, 0.95);
+  background: #05080f !important;
+}
+
+.wg-overview-v2 .wg-ref-hero.wg-cine-hero::before,
+.wg-overview-v2 .wg-ref-hero.wg-cine-hero::after {
+  display: none !important;
+}
+
+.wg-overview-v2 .wg-cine-hero .wg-cine-hero-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.wg-overview-v2 .wg-cine-hero-media img {
+  width: 108%;
+  height: 108%;
+  max-width: none;
+  object-fit: cover;
+  object-position: 58% 52%;
+  transform: translate3d(-2%, -2%, 0) scale(1.04);
+  filter: saturate(1.16) contrast(1.16) brightness(1.52);
+  animation: wgHeroDrift 26s ease-in-out infinite alternate;
+}
+
+.wg-overview-v2 .wg-cine-hero-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 8, 15, 0.98) 0%, rgba(5, 8, 15, 0.88) 25%, rgba(5, 8, 15, 0.5) 52%, rgba(5, 8, 15, 0.06) 78%, rgba(5, 8, 15, 0.24) 100%),
+    linear-gradient(180deg, rgba(5, 8, 15, 0.5) 0%, transparent 28%, rgba(5, 8, 15, 0.32) 72%, #05080f 100%);
+}
+
+.wg-overview-v2 .wg-cine-hero-media::before {
+  content: "";
+  position: absolute;
+  inset: -10% -5%;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(560px 420px at 74% 36%, rgba(66, 217, 245, 0.18), transparent 65%),
+    radial-gradient(620px 460px at 22% 82%, rgba(71, 123, 255, 0.12), transparent 68%);
+  mix-blend-mode: screen;
+  opacity: 0.85;
+}
+
+.wg-overview-v2 .wg-cine-hero-shell {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: var(--cine-max);
+  margin-inline: auto;
+  padding: clamp(1.1rem, 2.4vw, 1.8rem) clamp(1.1rem, 4vw, 3rem) clamp(3.4rem, 5vw, 4.6rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: clamp(2rem, 5vh, 4rem);
+}
+
+.wg-overview-v2 .wg-cine-hero-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(215, 225, 238, 0.12);
+}
+
+.wg-overview-v2 .wg-cine-live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--cine-font-mono);
+  font-size: 0.58rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cine-ink-soft);
+}
+
+.wg-overview-v2 .wg-cine-live-tag i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cine-success);
+  box-shadow: 0 0 0 4px rgba(56, 201, 138, 0.12), 0 0 14px rgba(56, 201, 138, 0.8);
+  animation: wgLivePulse 2.4s ease-in-out infinite;
+}
+
+.wg-overview-v2 .wg-cine-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-family: var(--cine-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--cine-muted);
+}
+
+.wg-overview-v2 .wg-cine-clock time {
+  color: var(--cine-cyan-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.wg-overview-v2 .wg-cine-clock span {
+  padding-left: 0.65rem;
+  border-left: 1px solid rgba(215, 225, 238, 0.16);
+  max-width: 30ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wg-overview-v2 .wg-cine-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(330px, 410px);
+  align-items: center;
+  gap: clamp(1.6rem, 4vw, 3.6rem);
+  flex: 1;
+}
+
+.wg-overview-v2 .wg-cine-hero-copy {
+  min-width: 0;
+  max-width: 780px;
+  padding-bottom: 0.4rem;
+}
+
+.wg-overview-v2 .wg-cine-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0 0 1rem;
+  font-family: var(--cine-font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cine-cyan-soft);
+}
+
+.wg-overview-v2 .wg-cine-eyebrow::before {
+  content: "";
+  width: 2.2rem;
+  height: 1px;
+  background: linear-gradient(90deg, var(--cine-cyan), transparent);
+}
+
+.wg-overview-v2 .wg-cine-hero h1 {
+  margin: 0;
+  font-size: clamp(4.1rem, 10.4vw, 8.6rem);
+  font-weight: 600;
+  line-height: 0.86;
+  letter-spacing: -0.065em;
+  color: var(--cine-ink);
+  text-wrap: balance;
+}
+
+.wg-overview-v2 .wg-cine-hero h1 .wg-cine-h1-sub {
+  display: block;
+  margin-top: clamp(0.7rem, 1.2vw, 1.1rem);
+  font-size: clamp(1.18rem, 2.4vw, 2.05rem);
+  font-weight: 400;
+  line-height: 1.18;
+  letter-spacing: -0.045em;
+  color: var(--cine-ink-soft);
+}
+
+.wg-overview-v2 .wg-cine-hero h1 em {
+  font-style: normal;
+  background: linear-gradient(100deg, #ffffff 0%, var(--cine-cyan-soft) 52%, #74a4ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--cine-cyan-soft);
+}
+
+.wg-overview-v2 .wg-cine-deck {
+  max-width: 54ch;
+  margin: clamp(1.1rem, 1.8vw, 1.5rem) 0 0;
+  color: rgba(215, 225, 238, 0.82);
+  font-size: clamp(0.88rem, 1.05vw, 1rem);
+  line-height: 1.72;
+}
+
+.wg-overview-v2 .wg-cine-search {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  width: min(100%, 620px);
+  margin-top: clamp(1.3rem, 2.2vw, 1.9rem);
+  padding: 0.72rem 0.85rem 0.72rem 1rem;
+  border: 1px solid rgba(215, 225, 238, 0.18);
+  border-radius: var(--cine-radius-pill);
+  background: rgba(7, 13, 24, 0.52);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 22px 60px -34px rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  color: var(--cine-ink-soft);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color var(--cine-base) ease, background var(--cine-base) ease, transform var(--cine-base) var(--cine-ease), box-shadow var(--cine-base) ease;
+}
+
+.wg-overview-v2 .wg-cine-search:hover {
+  border-color: rgba(66, 217, 245, 0.45);
+  background: rgba(9, 20, 32, 0.72);
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 28px 70px -34px rgba(0, 0, 0, 0.95), 0 0 50px -28px rgba(66, 217, 245, 0.5);
+}
+
+.wg-overview-v2 .wg-cine-search > svg {
+  flex: 0 0 auto;
+  color: var(--cine-cyan);
+}
+
+.wg-overview-v2 .wg-cine-search > span {
+  display: grid;
+  gap: 0.12rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.wg-overview-v2 .wg-cine-search b {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--cine-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wg-overview-v2 .wg-cine-search small {
+  font-size: 0.66rem;
+  color: var(--cine-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wg-overview-v2 .wg-cine-search em {
+  flex: 0 0 auto;
+  font-family: var(--cine-font-mono);
+  font-style: normal;
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  color: var(--cine-cyan-soft);
+  padding: 0.42rem 0.7rem;
+  border-radius: var(--cine-radius-pill);
+  background: rgba(66, 217, 245, 0.1);
+}
+
+.wg-overview-v2 .wg-cine-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 1.15rem;
+}
+
+.wg-overview-v2 .wg-cine-hero-actions .wg-btn,
+.wg-overview-v2 .wg-cine-hero-actions .wg-btn-ghost {
+  min-height: 2.55rem;
+  font-size: 0.74rem;
+}
+
+.wg-overview-v2 .wg-cine-hero-caption {
+  margin: 1.1rem 0 0;
+  max-width: 62ch;
+  font-family: var(--cine-font-mono);
+  font-size: 0.56rem;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+  color: rgba(155, 170, 189, 0.7);
+}
+
+/* Live observation panel */
+.wg-overview-v2 .wg-cine-live-card {
+  position: relative;
+  align-self: end;
+  height: auto !important;
+  max-height: 100%;
+  overflow: hidden;
+  padding: clamp(1rem, 1.6vw, 1.25rem);
+  border: 1px solid rgba(215, 225, 238, 0.16);
+  border-radius: var(--cine-radius-lg);
+  background:
+    radial-gradient(420px 220px at 88% 0%, rgba(66, 217, 245, 0.16), transparent 62%),
+    linear-gradient(160deg, rgba(14, 25, 42, 0.82), rgba(5, 10, 19, 0.76));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 40px 90px -42px rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(26px) saturate(140%);
+  -webkit-backdrop-filter: blur(26px) saturate(140%);
+}
+
+.wg-overview-v2 .wg-cine-live-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(66, 217, 245, 0.65), transparent);
+}
+
+.wg-overview-v2 .wg-cine-live-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(215, 225, 238, 0.1);
+}
+
+.wg-overview-v2 .wg-cine-live-head > span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  font-family: var(--cine-font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cine-muted);
+}
+
+.wg-overview-v2 .wg-cine-live-head > span:first-child i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--cine-cyan);
+  box-shadow: 0 0 10px rgba(66, 217, 245, 0.9);
+}
+
+.wg-overview-v2 .wg-cine-live-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.85rem 0 0.45rem;
+}
+
+.wg-overview-v2 .wg-cine-temp {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.1rem;
+  font-family: var(--cine-font-display);
+  line-height: 0.86;
+  letter-spacing: -0.075em;
+  color: #fff;
+}
+
+.wg-overview-v2 .wg-cine-temp b {
+  font-size: clamp(3.4rem, 5.8vw, 4.6rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.wg-overview-v2 .wg-cine-temp sup {
+  margin-top: 0.35rem;
+  font-family: var(--cine-font-mono);
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--cine-cyan-soft);
+}
+
+.wg-overview-v2 .wg-cine-condition {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.wg-overview-v2 .wg-cine-condition strong {
+  font-family: var(--cine-font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--cine-ink);
+}
+
+.wg-overview-v2 .wg-cine-condition span {
+  font-size: 0.7rem;
+  color: var(--cine-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wg-overview-v2 .wg-cine-feels {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.8rem;
+  font-family: var(--cine-font-mono);
+  font-size: 0.58rem;
+  color: var(--cine-faint);
+}
+
+.wg-overview-v2 .wg-cine-feels b {
+  color: var(--cine-ink-soft);
+  font-weight: 500;
+}
+
+.wg-overview-v2 .wg-cine-live-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.wg-overview-v2 .wg-cine-metric {
+  display: grid;
+  gap: 0.16rem;
+  padding: 0.5rem 0.55rem;
+  border: 1px solid rgba(215, 225, 238, 0.09);
+  border-radius: 11px;
+  background: rgba(5, 10, 19, 0.38);
+}
+
+.wg-overview-v2 .wg-cine-metric span {
+  font-family: var(--cine-font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cine-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wg-overview-v2 .wg-cine-metric b {
+  font-family: var(--cine-font-mono);
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--cine-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wg-overview-v2 .wg-cine-live-source {
+  margin-top: 0.7rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(215, 225, 238, 0.1);
+  font-family: var(--cine-font-mono);
+  font-size: 0.5rem;
+  line-height: 1.65;
+  letter-spacing: 0.02em;
+  color: rgba(155, 170, 189, 0.65);
+  overflow-wrap: anywhere;
+}
+
+.wg-overview-v2 .wg-cine-live-card .wg-ref-empty {
+  border: 0;
+  background: transparent;
+  padding: 1.4rem 0;
+  font-size: 0.76rem;
+}
+
+.wg-overview-v2 .wg-cine-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: 1.1rem;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--cine-radius-pill);
+  color: rgba(215, 225, 238, 0.62);
+  font-family: var(--cine-font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: color var(--cine-fast) ease, background var(--cine-fast) ease;
+}
+
+.wg-overview-v2 .wg-cine-scroll span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid rgba(215, 225, 238, 0.2);
+  border-radius: 50%;
+  animation: wgScrollCue 2.4s ease-in-out infinite;
+}
+
+.wg-overview-v2 .wg-cine-scroll:hover {
+  color: var(--cine-cyan-soft);
+  background: rgba(66, 217, 245, 0.06);
+}
+
+/* --------------------------------------------------------------------------
+   Briefing and homepage rhythm
+   -------------------------------------------------------------------------- */
+.wg-overview-v2 .wg-briefing .wg-briefing-card {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.1rem, 2vw, 1.7rem);
+  border-color: rgba(66, 217, 245, 0.18);
+  background:
+    radial-gradient(800px 280px at 0% 0%, rgba(66, 217, 245, 0.1), transparent 60%),
+    linear-gradient(145deg, rgba(12, 22, 38, 0.9), rgba(5, 10, 19, 0.84));
+}
+
+.wg-overview-v2 .wg-briefing-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 1.4rem;
+  bottom: 1.4rem;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--cine-cyan), transparent);
+}
+
+.wg-overview-v2 .wg-briefing-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.wg-overview-v2 .wg-briefing-card li {
+  position: relative;
+  padding-left: 1.1rem;
+  color: rgba(215, 225, 238, 0.82);
+  font-size: 0.83rem;
+  line-height: 1.68;
+}
+
+.wg-overview-v2 .wg-briefing-card li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--cine-cyan);
+  box-shadow: 0 0 8px rgba(66, 217, 245, 0.8);
+}
+
+.wg-overview-v2 .wg-briefing-card li b {
+  color: var(--cine-ink);
+  font-weight: 600;
+}
+
+.wg-overview-v2 .wg-briefing-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.2rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(215, 225, 238, 0.1);
+  font-family: var(--cine-font-mono);
+  font-size: 0.55rem;
+  line-height: 1.6;
+  color: var(--cine-faint);
+}
+
+/* Shortcut grid */
+.wg-overview-v2 .wg-ref-shortcut-groups {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.wg-overview-v2 .wg-ref-shortcut-group {
+  padding: 0.7rem;
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-md);
+  background: rgba(12, 20, 34, 0.45);
+}
+
+.wg-overview-v2 .wg-ref-shortcut-group > span {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-family: var(--cine-font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cine-faint);
+}
+
+.wg-overview-v2 .wg-ref-shortcut-group button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.4rem 0.45rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--cine-muted);
+  font-family: var(--cine-font-body);
+  font-size: 0.68rem;
+  text-align: left;
+  cursor: pointer;
+  transition: color var(--cine-fast) ease, background var(--cine-fast) ease;
+}
+
+.wg-overview-v2 .wg-ref-shortcut-group button:hover {
+  color: var(--cine-ink);
+  background: rgba(66, 217, 245, 0.07);
+}
+
+.wg-overview-v2 .wg-ref-shortcut-group button b {
+  color: var(--cine-cyan);
+  font-weight: 400;
+}
+
+/* Feature cards */
+.wg-overview-v2 .wg-ref-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.wg-overview-v2 .wg-ref-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 1rem;
+  text-align: left;
+  cursor: pointer;
+  color: var(--cine-ink-soft);
+}
+
+.wg-overview-v2 .wg-ref-feature .wg-ref-icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(66, 217, 245, 0.18);
+  border-radius: 14px;
+  background: rgba(66, 217, 245, 0.06);
+}
+
+.wg-overview-v2 .wg-ref-feature-copy {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.wg-overview-v2 .wg-ref-feature-copy strong {
+  font-family: var(--cine-font-display);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--cine-ink);
+}
+
+.wg-overview-v2 .wg-ref-feature-copy > span {
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: var(--cine-muted);
+}
+
+.wg-overview-v2 .wg-ref-feature-action {
+  color: var(--cine-cyan) !important;
+  font-family: var(--cine-font-mono);
+  font-size: 0.55rem !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.wg-overview-v2 .wg-ref-arrow {
+  color: var(--cine-faint);
+  font-size: 0.9rem;
+}
+
+/* Hourly forecast reads as a filmstrip */
+.wg-overview-v2 .wg-ref-hourly {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.45rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(66, 217, 245, 0.3) transparent;
+  scroll-snap-type: x proximity;
+}
+
+.wg-overview-v2 .wg-ref-hourly-item {
+  flex: 0 0 auto;
+  min-width: 92px;
+  padding: 0.7rem 0.6rem;
+  text-align: center;
+  scroll-snap-align: start;
+}
+
+.wg-overview-v2 .wg-ref-hourly-item b {
+  font-family: var(--cine-font-mono);
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.wg-overview-v2 .wg-ref-hourly-item small {
+  color: var(--cine-muted);
+  font-size: 0.58rem;
+}
+
+.wg-overview-v2 .wg-ref-hourly-item em {
+  color: var(--cine-cyan-soft);
+  font-family: var(--cine-font-mono);
+  font-style: normal;
+  font-size: 0.55rem;
+}
+
+.wg-overview-v2 .wg-hourly-chart {
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-md);
+  background: rgba(12, 20, 34, 0.45);
+  padding: 0.8rem;
+}
+
+.wg-overview-v2 .wg-hourly-chart-legend {
+  color: var(--cine-faint);
+  font-family: var(--cine-font-mono);
+  font-size: 0.52rem;
+}
+
+/* 7-day outlook */
+.wg-overview-v2 .wg-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.wg-overview-v2 .wg-week-day {
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  padding: 0.8rem 0.55rem;
+  text-align: center;
+}
+
+.wg-overview-v2 .wg-week-day-name {
+  color: var(--cine-ink);
+  font-family: var(--cine-font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.wg-overview-v2 .wg-week-day-date {
+  color: var(--cine-faint);
+  font-family: var(--cine-font-mono);
+  font-size: 0.52rem;
+}
+
+.wg-overview-v2 .wg-week-day-temps {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  font-family: var(--cine-font-mono);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.wg-overview-v2 .wg-week-day-temps em {
+  color: var(--cine-muted);
+  font-style: normal;
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.wg-overview-v2 .wg-week-day-condition {
+  color: var(--cine-muted);
+  font-size: 0.58rem;
+  line-height: 1.35;
+}
+
+.wg-overview-v2 .wg-week-day-rain {
+  color: var(--cine-cyan-soft);
+  font-family: var(--cine-font-mono);
+  font-style: normal;
+  font-size: 0.55rem;
+}
+
+@media (max-width: 900px) {
+  .wg-overview-v2 .wg-week-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .wg-overview-v2 .wg-week-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Risk + alerts */
+.wg-overview-v2 .wg-ref-alert-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.wg-overview-v2 .wg-ref-alert-summary-item {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.wg-overview-v2 .wg-ref-alert-summary-item strong {
+  font-family: var(--cine-font-display);
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--cine-ink);
+}
+
+.wg-overview-v2 .wg-ref-alert-summary-item small,
+.wg-overview-v2 .wg-ref-alert-summary-item em {
+  color: var(--cine-muted);
+  font-size: 0.66rem;
+  font-style: normal;
+  line-height: 1.5;
+}
+
+.wg-overview-v2 .wg-ref-risk-summary {
+  padding: 1rem;
+  border-color: rgba(244, 184, 74, 0.14);
+  background:
+    radial-gradient(600px 240px at 100% 0%, rgba(244, 184, 74, 0.06), transparent 60%),
+    var(--cine-glass);
+}
+
+.wg-overview-v2 .wg-ref-risk-overall b {
+  font-family: var(--cine-font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.wg-overview-v2 .wg-ref-risk-levels {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.wg-overview-v2 .wg-ref-risk-levels > div {
+  padding: 0.55rem;
+  border: 1px solid var(--cine-line-soft);
+  border-radius: 10px;
+  background: rgba(5, 10, 19, 0.35);
+}
+
+.wg-overview-v2 .wg-ref-risk-levels span {
+  display: block;
+  font-family: var(--cine-font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cine-faint);
+}
+
+.wg-overview-v2 .wg-ref-risk-levels b {
+  font-family: var(--cine-font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   Photographic field notes
+   -------------------------------------------------------------------------- */
+.wg-overview-v2 .wg-cine-fieldnotes {
+  padding-top: clamp(0.8rem, 1.5vw, 1.2rem);
+}
+
+.wg-overview-v2 .wg-cine-note-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.wg-overview-v2 .wg-cine-note {
+  position: relative;
+  isolation: isolate;
+  min-height: clamp(280px, 34vw, 400px);
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--cine-line);
+  border-radius: var(--cine-radius-lg);
+  background: #05080f;
+  text-align: left;
+  cursor: pointer;
+  transition: transform var(--cine-slow) var(--cine-ease), border-color var(--cine-base) ease, box-shadow var(--cine-base) ease;
+}
+
+.wg-overview-v2 .wg-cine-note img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1.2s var(--cine-ease), filter var(--cine-base) ease;
+}
+
+.wg-overview-v2 .wg-cine-note::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(5, 8, 15, 0.08) 0%, rgba(5, 8, 15, 0.32) 38%, rgba(5, 8, 15, 0.94) 100%),
+    radial-gradient(420px 220px at 80% 100%, rgba(66, 217, 245, 0.16), transparent 65%);
+}
+
+.wg-overview-v2 .wg-cine-note:hover {
+  transform: translateY(-4px);
+  border-color: rgba(66, 217, 245, 0.3);
+  box-shadow: 0 34px 80px -44px rgba(0, 0, 0, 0.95), 0 0 50px -30px rgba(66, 217, 245, 0.4);
+}
+
+.wg-overview-v2 .wg-cine-note:hover img {
+  transform: scale(1.05);
+  filter: saturate(1.08) brightness(0.92);
+}
+
+.wg-overview-v2 .wg-cine-note-copy {
+  position: absolute;
+  inset: auto 0 0;
+  display: grid;
+  gap: 0.35rem;
+  padding: clamp(0.9rem, 1.6vw, 1.25rem);
+}
+
+.wg-overview-v2 .wg-cine-note-copy span {
+  font-family: var(--cine-font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cine-cyan-soft);
+}
+
+.wg-overview-v2 .wg-cine-note-copy strong {
+  font-family: var(--cine-font-display);
+  font-size: clamp(1.1rem, 1.7vw, 1.4rem);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  color: #fff;
+}
+
+.wg-overview-v2 .wg-cine-note-copy small {
+  max-width: 40ch;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: rgba(215, 225, 238, 0.72);
+}
+
+.wg-overview-v2 .wg-cine-note-copy em {
+  margin-top: 0.2rem;
+  font-family: var(--cine-font-mono);
+  font-style: normal;
+  font-size: 0.52rem;
+  letter-spacing: 0.08em;
+  color: var(--cine-cyan);
+}
+
+.wg-overview-v2 .wg-cine-note-credit {
+  margin: 0.55rem 0 0;
+  font-family: var(--cine-font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.02em;
+  color: var(--cine-faint);
+}
+
+/* --------------------------------------------------------------------------
+   Full-bleed intelligence bands
+   -------------------------------------------------------------------------- */
+.wg-overview-v2 .wg-cine-band {
+  position: relative;
+  isolation: isolate;
+  width: auto;
+  margin: clamp(1rem, 2vw, 1.8rem) calc(50% - 50vw) 0;
+  min-height: clamp(380px, 48vw, 520px);
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  background: #05080f;
+}
+
+.wg-overview-v2 .wg-cine-band-media {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+
+.wg-overview-v2 .wg-cine-band-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: saturate(0.95) contrast(1.04) brightness(0.8);
+}
+
+.wg-overview-v2 .wg-cine-band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, #05080f 0%, rgba(5, 8, 15, 0.9) 34%, rgba(5, 8, 15, 0.46) 64%, rgba(5, 8, 15, 0.2) 100%),
+    linear-gradient(180deg, transparent 40%, rgba(5, 8, 15, 0.78) 100%);
+}
+
+.wg-overview-v2 .wg-cine-band-inner {
+  width: 100%;
+  max-width: var(--cine-max);
+  margin-inline: auto;
+  padding: clamp(1.6rem, 4vw, 3.2rem) clamp(1.1rem, 4vw, 3rem);
+}
+
+.wg-overview-v2 .wg-cine-band-copy {
+  max-width: 600px;
+}
+
+.wg-overview-v2 .wg-cine-band-copy > span {
+  font-family: var(--cine-font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cine-cyan-soft);
+}
+
+.wg-overview-v2 .wg-cine-band-copy h2 {
+  margin: 0.55rem 0 0.7rem;
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
+  font-weight: 500;
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.wg-overview-v2 .wg-cine-band-copy h2 em {
+  font-style: normal;
+  color: var(--cine-cyan-soft);
+}
+
+.wg-overview-v2 .wg-cine-band-copy p {
+  max-width: 48ch;
+  margin: 0 0 1rem;
+  color: rgba(215, 225, 238, 0.78);
+  font-size: 0.83rem;
+  line-height: 1.68;
+}
+
+.wg-overview-v2 .wg-cine-band-copy small {
+  display: block;
+  margin-top: 0.9rem;
+  font-family: var(--cine-font-mono);
+  font-size: 0.5rem;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: rgba(155, 170, 189, 0.62);
+}
+
+.wg-overview-v2 .wg-cine-band--right::after {
+  background:
+    linear-gradient(270deg, #05080f 0%, rgba(5, 8, 15, 0.9) 34%, rgba(5, 8, 15, 0.46) 64%, rgba(5, 8, 15, 0.2) 100%),
+    linear-gradient(180deg, transparent 40%, rgba(5, 8, 15, 0.78) 100%);
+}
+
+.wg-overview-v2 .wg-cine-band--right .wg-cine-band-inner {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* --------------------------------------------------------------------------
+   Homepage data panels: keep density, add breathing room
+   -------------------------------------------------------------------------- */
+.wg-overview-v2 .wg-radar-replay,
+.wg-overview-v2 .wg-ref-synoptic,
+.wg-overview-v2 .wg-ref-outlook-panel,
+.wg-overview-v2 .wg-ref-freshness,
+.wg-overview-v2 .wg-ref-climate-grid,
+.wg-overview-v2 .wg-ref-map-card {
+  border-color: var(--cine-line);
+  background:
+    radial-gradient(800px 260px at 50% 0%, rgba(66, 217, 245, 0.05), transparent 62%),
+    var(--cine-glass);
+}
+
+.wg-overview-v2 .wg-ref-map-head,
+.wg-overview-v2 .wg-ref-map-tabs,
+.wg-overview-v2 .wg-ref-hubs {
+  font-family: var(--cine-font-mono);
+}
+
+.wg-overview-v2 .wg-ref-climate-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.wg-overview-v2 .wg-ref-climate-grid > div {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.55rem;
+  border: 1px solid var(--cine-line-soft);
+  border-radius: 10px;
+  background: rgba(5, 10, 19, 0.3);
+}
+
+.wg-overview-v2 .wg-ref-climate-grid span {
+  font-family: var(--cine-font-mono);
+  font-size: 0.48rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cine-faint);
+}
+
+.wg-overview-v2 .wg-ref-climate-grid b {
+  font-family: var(--cine-font-mono);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--cine-ink);
+}
+
+.wg-overview-v2 .wg-ref-climate-grid p {
+  grid-column: 1 / -1;
+  margin: 0.2rem 0 0;
+  color: var(--cine-faint);
+  font-size: 0.62rem;
+  line-height: 1.6;
+}
+
+/* Emergency strip */
+.wg-overview-v2 .wg-ref-emergency {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(244, 184, 74, 0.2);
+  border-radius: var(--cine-radius-md);
+  background: rgba(244, 184, 74, 0.045);
+}
+
+.wg-overview-v2 .wg-ref-emergency span {
+  display: block;
+  font-family: var(--cine-font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  color: var(--cine-warning);
+}
+
+.wg-overview-v2 .wg-ref-emergency b {
+  font-family: var(--cine-font-display);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cine-ink-soft);
+}
+
+.wg-overview-v2 .wg-ref-emergency-links a {
+  border-color: rgba(244, 184, 74, 0.26);
+  color: #f7d9a0;
+  font-family: var(--cine-font-mono);
+  font-size: 0.6rem;
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   Motion
+   -------------------------------------------------------------------------- */
+@keyframes wgHeroDrift {
+  from { transform: translate3d(-2%, -2%, 0) scale(1.04); }
+  to { transform: translate3d(1.5%, -1%, 0) scale(1.1); }
+}
+
+@keyframes wgLivePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.55; transform: scale(0.86); }
+}
+
+@keyframes wgScrollCue {
+  0%, 100% { transform: translateY(0); opacity: 0.7; }
+  50% { transform: translateY(4px); opacity: 1; }
+}
+
+@keyframes wgHeroReveal {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .wg-overview-v2 .wg-cine-eyebrow,
+  .wg-overview-v2 .wg-cine-hero h1,
+  .wg-overview-v2 .wg-cine-deck,
+  .wg-overview-v2 .wg-cine-search,
+  .wg-overview-v2 .wg-cine-hero-actions,
+  .wg-overview-v2 .wg-cine-hero-caption,
+  .wg-overview-v2 .wg-cine-live-card {
+    animation: wgHeroReveal 0.9s var(--cine-ease) both;
+  }
+
+  .wg-overview-v2 .wg-cine-hero h1 { animation-delay: 0.08s; }
+  .wg-overview-v2 .wg-cine-deck { animation-delay: 0.16s; }
+  .wg-overview-v2 .wg-cine-search { animation-delay: 0.24s; }
+  .wg-overview-v2 .wg-cine-hero-actions { animation-delay: 0.3s; }
+  .wg-overview-v2 .wg-cine-hero-caption { animation-delay: 0.36s; }
+  .wg-overview-v2 .wg-cine-live-card { animation-delay: 0.2s; }
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+@media (max-width: 1180px) {
+  .wg-overview-v2 .wg-cine-hero-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(310px, 365px);
+  }
+
+  .wg-overview-v2 .wg-ref-shortcut-groups {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .wg-overview-v2 .wg-cine-hero {
+    min-height: 0;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-grid {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-copy {
+    max-width: 100%;
+  }
+
+  .wg-overview-v2 .wg-cine-live-card {
+    max-width: 560px;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-media img {
+    object-position: 66% 36%;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-media::after {
+    background:
+      linear-gradient(90deg, #05080f 0%, rgba(5, 8, 15, 0.92) 44%, rgba(5, 8, 15, 0.44) 100%),
+      linear-gradient(180deg, rgba(5, 8, 15, 0.64) 0%, transparent 24%, rgba(5, 8, 15, 0.92) 82%, #05080f 100%);
+  }
+
+  .wg-overview-v2 .wg-cine-note-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wg-overview-v2 .wg-cine-note:last-child {
+    grid-column: 1 / -1;
+    min-height: 280px;
+  }
+
+  .wg-overview-v2 .wg-ref-alert-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .wg-overview-v2 .wg-ref-risk-levels {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .wg-overview-v2 .wg-ref-climate-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .wg-overview-v2 .wg-cine-hero {
+    border-radius: 0 0 24px 24px;
+    margin-top: 0;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-shell {
+    padding: 1rem 1rem 3.4rem;
+    gap: 1.5rem;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-topline {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .wg-overview-v2 .wg-cine-clock {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .wg-overview-v2 .wg-cine-clock span {
+    padding-left: 0;
+    border-left: 0;
+    white-space: normal;
+  }
+
+  .wg-overview-v2 .wg-cine-hero h1 {
+    font-size: clamp(3.25rem, 16.5vw, 4.6rem);
+    letter-spacing: -0.06em;
+  }
+
+  .wg-overview-v2 .wg-cine-hero h1 .wg-cine-h1-sub {
+    font-size: 1.08rem;
+  }
+
+  .wg-overview-v2 .wg-cine-deck {
+    font-size: 0.84rem;
+    line-height: 1.65;
+  }
+
+  .wg-overview-v2 .wg-cine-search {
+    border-radius: 18px;
+    padding: 0.75rem;
+  }
+
+  .wg-overview-v2 .wg-cine-search em {
+    display: none;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-actions .wg-btn,
+  .wg-overview-v2 .wg-cine-hero-actions .wg-btn-ghost {
+    width: 100%;
+    padding-inline: 0.6rem;
+    font-size: 0.68rem;
+  }
+
+  .wg-overview-v2 .wg-cine-live-card {
+    max-width: 100%;
+  }
+
+  .wg-overview-v2 .wg-cine-temp b {
+    font-size: 3.35rem;
+  }
+
+  .wg-overview-v2 .wg-cine-live-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wg-overview-v2 .wg-cine-scroll {
+    bottom: 0.65rem;
+  }
+
+  .wg-overview-v2 .wg-ref-shortcut-groups,
+  .wg-overview-v2 .wg-ref-feature-grid,
+  .wg-overview-v2 .wg-cine-note-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wg-overview-v2 .wg-cine-note:last-child {
+    grid-column: auto;
+  }
+
+  .wg-overview-v2 .wg-cine-note {
+    min-height: 300px;
+  }
+
+  .wg-overview-v2 .wg-ref-risk-levels,
+  .wg-overview-v2 .wg-ref-climate-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wg-overview-v2 .wg-briefing-meta {
+    flex-direction: column;
+  }
+
+  .wg-overview-v2 .wg-cine-band {
+    min-height: 440px;
+  }
+
+  .wg-overview-v2 .wg-cine-band::after,
+  .wg-overview-v2 .wg-cine-band--right::after {
+    background:
+      linear-gradient(180deg, rgba(5, 8, 15, 0.2) 0%, rgba(5, 8, 15, 0.5) 38%, rgba(5, 8, 15, 0.96) 100%);
+  }
+
+  .wg-overview-v2 .wg-cine-band--right .wg-cine-band-inner {
+    justify-content: flex-start;
+  }
+
+  .wg-overview-v2 .wg-cine-band-copy h2 {
+    font-size: clamp(1.9rem, 9vw, 2.8rem);
+  }
+
+  .wg-overview-v2 .wg-cine-hero-media img {
+    object-position: 64% 34%;
+  }
+}
+
+@media (max-width: 380px) {
+  .wg-overview-v2 .wg-cine-hero h1 {
+    font-size: 3rem;
+  }
+
+  .wg-overview-v2 .wg-cine-hero-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .wg-overview-v2 .wg-cine-temp b {
+    font-size: 2.9rem;
+  }
+}

@@ -8,6 +8,7 @@ transparent. They are NOT scientifically validated for operational use and
 must not be presented as official IMD warnings. Official warnings always
 take precedence.
 """
+
 from typing import Dict, Any, List
 from ..models import WeatherData
 
@@ -44,6 +45,38 @@ THRESHOLDS = {
 }
 
 RISK_ORDER = {"LOW": 0, "MODERATE": 1, "HIGH": 2, "EXTREME": 3}
+
+
+def methodology() -> Dict[str, Any]:
+    """Public, human-readable explanation of every hazard calculation."""
+    return {
+        "engine": "WeatherGPT Risk Engine v1",
+        "data_type": "ESTIMATED",
+        "inputs": [
+            "current temperature and feels-like temperature",
+            "current precipitation and 24-hour rain sum",
+            "peak rain probability in the next 12 hourly points",
+            "sustained wind speed",
+            "WMO weather condition code",
+        ],
+        "hazards": THRESHOLDS,
+        "flood": {
+            "description": "Flood is a rainfall proxy, not a hydrological or river-gauge model.",
+            "method": "The rainfall level is reused as the flood level.",
+            "limitation": "No river level, soil moisture, drainage or dam-release data is used.",
+        },
+        "cyclone": {
+            "description": "Cyclone is a wind/rain heuristic, not detection or tracking.",
+            "method": "Extreme wind plus high/extreme rainfall => HIGH; high/extreme wind or extreme rainfall => MODERATE.",
+        },
+        "overall": "The highest individual hazard level becomes the overall level.",
+        "limitations": [
+            "Thresholds are conservative and not scientifically validated for operational use.",
+            "This is not an official IMD/NDMA warning and must not be presented as one.",
+            "Official warnings always take precedence over this computed risk.",
+        ],
+        "source": "WeatherGPT Risk Engine v1 (deterministic, local computation)",
+    }
 
 
 def _level(order_value: int) -> str:
@@ -122,13 +155,21 @@ def assess_risk(weather: WeatherData) -> Dict[str, Any]:
 
     advisories: List[str] = []
     if overall == "EXTREME":
-        advisories.append("Extreme conditions possible. Follow official IMD/NDMA warnings; avoid non-essential travel.")
+        advisories.append(
+            "Extreme conditions possible. Follow official IMD/NDMA warnings; avoid non-essential travel."
+        )
     elif overall == "HIGH":
-        advisories.append("High risk. Limit outdoor exposure, secure loose objects, monitor official alerts.")
+        advisories.append(
+            "High risk. Limit outdoor exposure, secure loose objects, monitor official alerts."
+        )
     elif overall == "MODERATE":
-        advisories.append("Moderate risk. Stay alert for changing conditions, especially rain and wind.")
+        advisories.append(
+            "Moderate risk. Stay alert for changing conditions, especially rain and wind."
+        )
     else:
-        advisories.append("Low risk based on current data. Normal activities may continue.")
+        advisories.append(
+            "Low risk based on current data. Normal activities may continue."
+        )
 
     return {
         "location": weather.location,

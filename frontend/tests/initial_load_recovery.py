@@ -88,7 +88,9 @@ def scenario_all_fail(browser_type, failures):
             body='{"detail":"simulated provider failure"}',
         )
 
-    page.add_init_script("Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
+    page.add_init_script(
+        "Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })"
+    )
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", state="attached", timeout=120000)
@@ -122,8 +124,11 @@ def scenario_all_fail(browser_type, failures):
     # while the active location is unknown. The invariant is that every
     # weather request is grounded in a non-empty, explicit location query.
     missing_location = [
-        url for url in hits["urls"]
-        if not urllib.parse.parse_qs(urllib.parse.urlparse(url).query).get("location", [""])[0].strip()
+        url
+        for url in hits["urls"]
+        if not urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
+        .get("location", [""])[0]
+        .strip()
     ]
     check(
         not missing_location,
@@ -161,7 +166,11 @@ def scenario_recover(browser_type, failures):
             try:
                 lat = float(query.get("lat", ["0"])[0])
                 lon = float(query.get("lon", ["0"])[0])
-                location = "New Delhi" if abs(lat - 28.6139) < 0.2 and abs(lon - 77.2090) < 0.2 else "Pinned location"
+                location = (
+                    "New Delhi"
+                    if abs(lat - 28.6139) < 0.2 and abs(lon - 77.2090) < 0.2
+                    else "Pinned location"
+                )
             except (TypeError, ValueError):
                 location = "Pinned location"
 
@@ -204,9 +213,13 @@ def scenario_recover(browser_type, failures):
             "status": "LIVE",
             "updated_at_ist": "18 Oct 2026, 20:00 IST",
         }
-        route.fulfill(status=200, content_type="application/json", body=json.dumps(payload))
+        route.fulfill(
+            status=200, content_type="application/json", body=json.dumps(payload)
+        )
 
-    page.add_init_script("localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi'])); Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })")
+    page.add_init_script(
+        "localStorage.setItem('weathergpt.savedPlaces', JSON.stringify(['New Delhi'])); Object.defineProperty(navigator, 'geolocation', { configurable: true, value: undefined })"
+    )
     page.route(WEATHER_ROUTE, handler)
     page.goto(UI_URL, wait_until="domcontentloaded")
     page.wait_for_selector(".wg-ref-location b", state="attached", timeout=120000)
@@ -218,7 +231,9 @@ def scenario_recover(browser_type, failures):
             " return b && b.textContent.includes('New Delhi'); }",
             timeout=90000,
         )
-        check(True, "B: header settled on saved city 'New Delhi' automatically", failures)
+        check(
+            True, "B: header settled on saved city 'New Delhi' automatically", failures
+        )
     except Exception:
         check(
             False,
@@ -226,8 +241,20 @@ def scenario_recover(browser_type, failures):
             failures,
         )
 
+        # The selected city is shown immediately now, so wait for the actual
+    # automatic retry instead of assuming the header only changes after it.
+    for _ in range(120):
+        if hits["n"] >= 2:
+            break
+        page.wait_for_timeout(250)
     check(hits["n"] >= 2, f"B: retry observed (requests={hits['n']})", failures)
-    # The notice must clear once real data arrives.
+    # The selected place is now visible during the retry, so the header alone
+    # no longer proves the weather response succeeded. Wait for the notice to
+    # clear before asserting recovery.
+    try:
+        page.wait_for_selector(".wg-ref-notice", state="detached", timeout=90000)
+    except Exception:
+        pass
     check(
         page.locator(".wg-ref-notice").count() == 0,
         "B: failure notice cleared after recovery",

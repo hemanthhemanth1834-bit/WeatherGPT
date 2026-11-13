@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { fetchEngineStatus, fetchProvidersHealth } from "../services/api";
 import LiveEvidencePanel from "./LiveEvidencePanel";
 
-const TONE = { LIVE:"live", AVAILABLE:"live", OFFICIAL:"live", COMPUTED:"estimated", FALLBACK:"estimated", ESTIMATED:"estimated", STATIC:"static", DEMO:"demo", NOT_CONFIGURED:"off", ERROR:"off" };
+const TONE = { LIVE:"live", AVAILABLE:"live", OFFICIAL:"live", COMPUTED:"estimated", FALLBACK:"estimated", ESTIMATED:"estimated", DEGRADED:"estimated", STATIC:"static", PORTAL_ONLY:"static", DEMO:"demo", NOT_CONFIGURED:"off", UNCONFIGURED:"off", REQUIRES_CREDENTIALS:"off", UNAVAILABLE:"off", ERROR:"off" };
 
 export default function CapabilitiesHub() {
   const [providers, setProviders] = useState(null);
@@ -49,12 +49,13 @@ export default function CapabilitiesHub() {
   const engineName = engine?.engine || engine?.name || engine?.status || "Tool-grounded weather engine";
 
   return (
-    <section className="wg-admin-page" aria-label="System and Admin">
+        <section className="wg-admin-page" aria-label="Platform status">
       <header className="wg-admin-hero wg-card">
         <div>
-          <div className="wg-admin-kicker">SYSTEM CONTROL CENTER</div>
-          <h1>System &amp; Admin</h1>
-          <p>Live health, free-source matrix, Earth-observation evidence and local privacy information.</p>
+          <div className="wg-admin-kicker">PLATFORM STATUS &amp; DATA HEALTH</div>
+          <h1>Platform Status</h1>
+          <p>Provider health, free-source requirements, data provenance and local privacy information.</p>
+          <p style={{marginTop:".45rem",fontSize:".76rem",color:"var(--wg-muted)"}}>Status key: LIVE/AVAILABLE = responding · DEGRADED = slow or partial · UNAVAILABLE/ERROR = failing · NOT_CONFIGURED/REQUIRES_CREDENTIALS = not enabled. These labels describe actual checks, not guarantees.</p>
         </div>
         <div className="wg-admin-actions-top"><button className="wg-admin-action" onClick={saveDiagnosticReport} disabled={!checkedAt}>💾 Save report</button><button className="wg-admin-diagnostic" onClick={runDiagnostics} disabled={state === "checking"}>
           ↻ {state === "checking" ? "Checking…" : "Run Health Diagnostics"}
@@ -125,7 +126,7 @@ export default function CapabilitiesHub() {
         )}
       </section>
 
-      <section className="wg-admin-panel wg-card">
+            <section className="wg-admin-panel wg-card">
         <div className="wg-admin-panel-head">
           <h2>Privacy &amp; Local Storage</h2>
           <span>On this device</span>

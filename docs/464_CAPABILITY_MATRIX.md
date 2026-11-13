@@ -339,14 +339,14 @@ Total rows: **464** (count verified by ID sequence).
 | RD014 | RoadWatch/trip | Bridge/tunnel status | New | — | — | No structure data wired | — | NOT_CONFIGURED | — | n/a | matrix-only | INFRA |
 | RD015 | RoadWatch/trip | Accident-risk context | New | — | — | Flags imply risk only | — | NOT_CONFIGURED | travel drivers | n/a | matrix-only | INFRA |
 | RD016 | RoadWatch/trip | Travel ETA | New | — | — | No routing wired | — | NOT_CONFIGURED | — | n/a | matrix-only | INFRA |
-| CP001 | Compare | Two-city compare | Existing | compare panel | compare_places | Live × 2 | Open-Meteo | LIVE | — | test_api | README | YES |
-| CP002 | Compare | Temp/humidity/AQI rows | Existing | compare rows | live values | Live payloads | Open-Meteo | LIVE | — | test_api | README | YES |
-| CP003 | Compare | Wind row | Existing | wind row | live values | Live payloads | Open-Meteo | LIVE | — | browser QA | matrix-only | YES |
-| CP004 | Compare | Risk per city | Existing | risk row | risk per city | Computed | WeatherGPT | COMPUTED | — | browser QA | matrix-only | YES |
-| CP005 | Compare | Alerts per city | Existing | alerts row | filtered alerts | Computed | WeatherGPT | COMPUTED | — | browser QA | matrix-only | YES |
-| CP006 | Compare | Preset pairs | Existing | preset chips | fixed pairs | Curated list | WeatherGPT | STATIC | — | browser QA | matrix-only | YES |
-| CP007 | Compare | Swap cities | Existing | swap control | reload swapped | Live payloads | Open-Meteo | LIVE | — | browser QA | matrix-only | YES |
-| CP008 | Compare | Ask-AI analysis | Existing | ask button | compare intent | Live payloads | Open-Meteo | LIVE | — | test_chat | AI_AGENT | YES |
+| CP001 | Compare | Two-city compare | Existing | compare panel | compare_places | Live × 2 | Open-Meteo | LIVE | — | test_api | README | INFRA |
+| CP002 | Compare | Temp/humidity/AQI rows | Existing | compare rows | live values | Live payloads | Open-Meteo | LIVE | — | test_api | README | INFRA |
+| CP003 | Compare | Wind row | Existing | wind row | live values | Live payloads | Open-Meteo | LIVE | — | browser QA | matrix-only | INFRA |
+| CP004 | Compare | Risk per city | Existing | risk row | risk per city | Computed | WeatherGPT | COMPUTED | — | browser QA | matrix-only | INFRA |
+| CP005 | Compare | Alerts per city | Existing | alerts row | filtered alerts | Computed | WeatherGPT | COMPUTED | — | browser QA | matrix-only | INFRA |
+| CP006 | Compare | Preset pairs | Existing | preset chips | fixed pairs | Curated list | WeatherGPT | STATIC | — | browser QA | matrix-only | INFRA |
+| CP007 | Compare | Swap cities | Existing | swap control | reload swapped | Live payloads | Open-Meteo | LIVE | — | browser QA | matrix-only | INFRA |
+| CP008 | Compare | Ask-AI analysis | Existing | ask button | compare intent | Live payloads | Open-Meteo | LIVE | — | test_chat | AI_AGENT | INFRA |
 | CP009 | Compare | Model-vs-model compare | New | — | — | Blend vs GFS shown in NWP | — | NOT_CONFIGURED | NWP delta | n/a | matrix-only | INFRA |
 | CP010 | Compare | Date-vs-date compare | New | — | — | ERA5 yearly shown in climate | — | NOT_CONFIGURED | yearly table | n/a | matrix-only | INFRA |
 | CP011 | Compare | Climate compare | New | — | — | Yearly table covers years | — | NOT_CONFIGURED | yearly rows | n/a | matrix-only | INFRA |

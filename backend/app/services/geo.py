@@ -9,6 +9,7 @@ Two-stage strategy:
 Saved "preferred locations" live only in the visitor's browser
 (localStorage) and are never sent anywhere except as search queries.
 """
+
 import re
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -223,7 +224,12 @@ def _geocode_live(query: str) -> Optional[Tuple[float, float, str, str]]:
         pick = indian[0] if indian else results[0]
         name = str(pick.get("name") or query.title())
         state = str(pick.get("admin1") or pick.get("country") or "India")
-        return float(pick.get("latitude", 18.5204)), float(pick.get("longitude", 73.8567)), name, state
+        return (
+            float(pick.get("latitude", 18.5204)),
+            float(pick.get("longitude", 73.8567)),
+            name,
+            state,
+        )
     except Exception:
         return None
 
@@ -272,7 +278,10 @@ def autocomplete(query: str, limit: int = 8) -> List[Dict[str, Any]]:
             if response.status_code == 200:
                 for item in response.json().get("results", []):
                     country = (item.get("country_code") or "").upper()
-                    if country != "IN" and (item.get("country") or "").lower() != "india":
+                    if (
+                        country != "IN"
+                        and (item.get("country") or "").lower() != "india"
+                    ):
                         continue
                     push(
                         str(item.get("name", "")),
@@ -286,6 +295,94 @@ def autocomplete(query: str, limit: int = 8) -> List[Dict[str, Any]]:
         except Exception:
             pass
     return suggestions[:limit]
+
+
+def resolve_candidates(place: str, limit: int = 5) -> List[Dict[str, Any]]:
+    """Return ranked location candidates without silently choosing one.
+
+    The chat layer uses this when a name is ambiguous. Exact gazetteer
+    matches rank first; live Open-Meteo results are only added for Indian
+    locations and are labelled with their source. An empty list means the
+    name could not be resolved — callers must ask for clarification rather
+    than substituting a default city.
+    """
+    text = _clean(place)
+    if not text:
+        return []
+
+    candidates: List[Dict[str, Any]] = []
+    seen = set()
+
+    def push(
+        name: str,
+        lat: float,
+        lon: float,
+        state: str,
+        country: str,
+        confidence: float,
+        source: str,
+    ) -> None:
+        key = (round(float(lat), 3), round(float(lon), 3))
+        label = (name or "").strip().lower()
+        if not label or key in seen:
+            return
+        seen.add(key)
+        candidates.append(
+            {
+                "name": str(name).title(),
+                "state": state or "",
+                "country": country or "India",
+                "lat": float(lat),
+                "lon": float(lon),
+                "confidence": round(float(confidence), 2),
+                "source": source,
+            }
+        )
+
+    if text in GAZETTEER:
+        lat, lon, state, _area = GAZETTEER[text]
+        push(text, lat, lon, state, "India", 0.99, "gazetteer")
+
+    tokens = set(text.split())
+    for key in sorted(GAZETTEER, key=len, reverse=True):
+        if key == text:
+            continue
+        if all(token in tokens for token in key.split()):
+            lat, lon, state, _area = GAZETTEER[key]
+            push(key, lat, lon, state, "India", 0.9, "gazetteer")
+            if len(candidates) >= limit:
+                return candidates[:limit]
+
+    try:
+        url = (
+            "https://geocoding-api.open-meteo.com/v1/search"
+            f"?name={requests.utils.quote(text)}&count={max(limit, 5)}"
+            "&language=en&format=json"
+        )
+        response = http_get(url, timeout=4)
+        if response.status_code == 200:
+            for item in response.json().get("results") or []:
+                country_code = (item.get("country_code") or "").upper()
+                country = str(item.get("country") or "")
+                if country_code != "IN" and country.lower() != "india":
+                    continue
+                name = str(item.get("name") or "")
+                exact = name.strip().lower() == text
+                push(
+                    name,
+                    float(item.get("latitude", 0.0)),
+                    float(item.get("longitude", 0.0)),
+                    str(item.get("admin1") or ""),
+                    country or "India",
+                    0.85 if exact else 0.65,
+                    "open-meteo-geocoding",
+                )
+                if len(candidates) >= limit:
+                    break
+    except Exception:
+        pass
+
+    return candidates[:limit]
 
 
 def metro_areas(region: str) -> List[Dict[str, str]]:
@@ -302,10 +399,15 @@ def reverse(lat: float, lon: float) -> Dict[str, Any]:
 
     Falls back to coordinates when unreachable. Low-volume GPS use only.
     """
+
     def lookup() -> Dict[str, Any]:
-        url = ("https://api.bigdatacloud.net/data/reverse-geocode-client"
-               f"?latitude={lat}&longitude={lon}&localityLanguage=en")
-        response = http_get(url, timeout=6)
+        url = (
+            "https://api.bigdatacloud.net/data/reverse-geocode-client"
+            f"?latitude={lat}&longitude={lon}&localityLanguage=en"
+        )
+        # GPS labels must fail fast; the frontend keeps coordinates when this
+        # reverse-geocode provider is unavailable.
+        response = http_get(url, timeout=4, retries=0)
         if response.status_code != 200:
             raise RuntimeError(f"reverse HTTP {response.status_code}")
         data = response.json()
@@ -313,16 +415,27 @@ def reverse(lat: float, lon: float) -> Dict[str, Any]:
         state = data.get("principalSubdivision") or ""
         if not city:
             raise RuntimeError("no locality in reverse response")
-        return {"city": city, "state": state,
-                "country": data.get("countryName", ""),
-                "lat": lat, "lon": lon,
-                "data_source": "BigDataCloud reverse-geocode",
-                "status": "LIVE"}
+        return {
+            "city": city,
+            "state": state,
+            "country": data.get("countryName", ""),
+            "lat": lat,
+            "lon": lon,
+            "data_source": "BigDataCloud reverse-geocode",
+            "status": "LIVE",
+        }
+
     try:
         from .cache import cached
+
         return cached(86400, f"rev:{round(lat, 3)}:{round(lon, 3)}", lookup)
     except Exception:
-        return {"city": f"{lat:.2f}, {lon:.2f}", "state": "",
-                "country": "", "lat": lat, "lon": lon,
-                "data_source": "coordinates (reverse lookup unavailable)",
-                "status": "FALLBACK"}
+        return {
+            "city": f"{lat:.2f}, {lon:.2f}",
+            "state": "",
+            "country": "",
+            "lat": lat,
+            "lon": lon,
+            "data_source": "coordinates (reverse lookup unavailable)",
+            "status": "FALLBACK",
+        }

@@ -64,6 +64,17 @@ export function gibsWmtsTile(layer, date, zxy = "{z}/{y}/{x}") {
 }
 
 /** India-region WMS GetMap (EPSG:4326 bbox 68,6 → 98,37). */
+export function gibsWms(layer, date, bbox, width = 900, height = 520) {
+  return (
+    "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi" +
+    "?service=WMS&request=GetMap" +
+    `&layers=${encodeURIComponent(layer)}` +
+    "&styles=&format=image/jpeg&transparent=false&version=1.1.1" +
+    `&width=${width}&height=${height}&srs=EPSG:4326&bbox=${bbox}` +
+    `&time=${date}`
+  );
+}
+
 export function gibsIndiaWms(layer, date, width = 900, height = 520) {
   return (
     "https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi" +

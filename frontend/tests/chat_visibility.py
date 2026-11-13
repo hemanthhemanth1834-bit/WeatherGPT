@@ -8,12 +8,17 @@ Run after ``npm run build`` + backend on :8000 + ``npm run preview`` on :4173::
 
 Env overrides: WG_UI_URL, WG_BROWSERS (csv), WG_CHROME_PATH (local browser exe).
 """
+
 import json
 import os
 import sys
 
 UI_URL = os.getenv("WG_UI_URL", "http://127.0.0.1:4173/")
-BROWSERS = [b.strip() for b in os.getenv("WG_BROWSERS", "chromium,firefox,webkit").split(",") if b.strip()]
+BROWSERS = [
+    b.strip()
+    for b in os.getenv("WG_BROWSERS", "chromium,firefox,webkit").split(",")
+    if b.strip()
+]
 CHROME_PATH = os.getenv("WG_CHROME_PATH", "")
 
 # NOTE: named PROBE_TAG (not *TOKEN*) so secret scanners don't flag this
@@ -95,7 +100,9 @@ def run_browser(pw, name, viewport):
             kwargs["executable_path"] = CHROME_PATH
         browser = launcher.launch(**kwargs)
     except Exception as exc:  # browser unavailable on this machine
-        print(f"SKIP {tag} launcher unavailable: {str(exc)[:120]}")
+        print(
+            f"SKIP {tag} launcher unavailable: {str(exc).encode('ascii', 'replace').decode('ascii')[:120]}"
+        )
         return None
     page = browser.new_page(viewport=viewport)
     errors = []
@@ -114,19 +121,27 @@ def run_browser(pw, name, viewport):
     # Correlate console resource errors with the responses/requests that
     # caused them: console text alone often omits the URL.
     seen = {"chat500": False, "chatabort": False}
-    page.on("response", lambda r: seen.update(chat500=True)
-            if r.status >= 500 and "api/chat/query" in r.url else None)
+    page.on(
+        "response",
+        lambda r: (
+            seen.update(chat500=True)
+            if r.status >= 500 and "api/chat/query" in r.url
+            else None
+        ),
+    )
     # Every chat/query request in this suite is mocked (fulfill/500/abort),
     # so a failed request here can only be our deliberate abort (or infra
     # flakiness, which the reply assertions would independently surface).
-    page.on("requestfailed", lambda r: seen.update(chatabort=True)
-            if "api/chat/query" in r.url else None)
+    page.on(
+        "requestfailed",
+        lambda r: seen.update(chatabort=True) if "api/chat/query" in r.url else None,
+    )
     try:
         page.goto(UI_URL, wait_until="load", timeout=60000)
         page.wait_for_timeout(2000)
-        if viewport["width"] < 700:
-            page.get_by_role("button", name="Open navigation").first.click(timeout=15000)
-            page.wait_for_timeout(600)
+        menu_label = "Open menu" if viewport["width"] < 700 else "Open navigation"
+        page.get_by_role("button", name=menu_label).first.click(timeout=15000)
+        page.wait_for_timeout(600)
         chat_btn = page.get_by_role("button", name="AI Weather Assistant").first
         chat_btn.wait_for(state="attached", timeout=15000)
         try:
@@ -137,8 +152,9 @@ def run_browser(pw, name, viewport):
             # exercises the real handler, and the input assertion below
             # proves navigation actually happened.
             chat_btn.evaluate("(el) => el.click()")
-        page.locator('input[aria-label="Type your weather question"]').wait_for(
-            state="visible", timeout=15000)
+        page.locator('textarea[aria-label="Type your weather question"]').wait_for(
+            state="visible", timeout=15000
+        )
         page.wait_for_timeout(1000)
         # Drop any console noise from the home tab (e.g. the background map
         # initializing before navigation); only chat-tab errors can fail us.
@@ -148,36 +164,63 @@ def run_browser(pw, name, viewport):
         welcome = page.get_by_test_id("assistant-message").first
         welcome.wait_for(timeout=15000)
         wtext = (welcome.inner_text() or "").strip()
-        check(len(wtext) > 20, f"{tag} welcome message visible non-empty ({len(wtext)} chars)", failures)
+        check(
+            len(wtext) > 20,
+            f"{tag} welcome message visible non-empty ({len(wtext)} chars)",
+            failures,
+        )
         check("WeatherGPT" in wtext, f"{tag} welcome sender/content present", failures)
 
         # 3. Typed characters readable: value round-trips + light-on-dark contrast.
-        box = page.locator('input[aria-label="Type your weather question"]')
+        box = page.locator('textarea[aria-label="Type your weather question"]')
         box.fill(QUESTION)
         check(box.input_value() == QUESTION, f"{tag} typed text round-trips", failures)
         send_btn = page.locator('button[aria-label="Send question"]')
         send_btn.wait_for(state="visible", timeout=15000)
         try:
-            page.wait_for_function("""() => {
+            page.wait_for_function(
+                """() => {
               const b = document.querySelector('button[aria-label="Send question"]');
               return b && !b.disabled;
-            }""", timeout=10000)
+            }""",
+                timeout=10000,
+            )
             send_enabled = True
         except Exception:
             send_enabled = False
         check(send_enabled, f"{tag} Send enabled after typing", failures)
         ink = page.evaluate("""() => {
-          const i = document.querySelector('input[aria-label="Type your weather question"]');
+          const i = document.querySelector('textarea[aria-label="Type your weather question"]');
           const cs = getComputedStyle(i);
           return {color: cs.color, bg: cs.backgroundColor};
         }""")
         print(f"  input ink={ink}")
-        check("234, 241, 251" in ink["color"], f"{tag} input text is light ink", failures)
+        ink_ok = page.evaluate("""() => {
+          const i = document.querySelector('textarea[aria-label="Type your weather question"]');
+          const cs = getComputedStyle(i);
+          const p = (s) => (s.match(/\\d+/g) || []).slice(0, 3).map(Number);
+          const f = (v) => { v /= 255;
+            return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+          const lum = (c) => 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+          const fg = p(cs.color), bg = p(cs.backgroundColor);
+          const l1 = lum(fg), l2 = lum(bg);
+          return {lum: +l1.toFixed(3),
+                  ratio: +((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)).toFixed(2)};
+        }""")
+        check(
+            ink_ok["lum"] > 0.65 and ink_ok["ratio"] >= 4.5,
+            f"{tag} input text is light ink {ink_ok}",
+            failures,
+        )
 
         # 4-6. Mocked API reply: loading, echo, complete reply, no duplicates.
         def fulfill(route):
-            route.fulfill(status=200, content_type="application/json",
-                          body=json.dumps(FIXTURE), headers={"access-control-allow-origin": "*"})
+            route.fulfill(
+                status=200,
+                content_type="application/json",
+                body=json.dumps(FIXTURE),
+                headers={"access-control-allow-origin": "*"},
+            )
 
         import time as _time
 
@@ -190,14 +233,18 @@ def run_browser(pw, name, viewport):
             fulfill(route)
 
         page.route("**/api/chat/query", delayed)
+
         def send_now():
             # Wait for React state to enable the button after fill; under
             # load the state propagation can lag behind the DOM value.
             try:
-                page.wait_for_function("""() => {
+                page.wait_for_function(
+                    """() => {
                   const b = document.querySelector('button[aria-label="Send question"]');
                   return b && !b.disabled;
-                }""", timeout=15000)
+                }""",
+                    timeout=15000,
+                )
             except Exception:
                 pass
             try:
@@ -217,24 +264,39 @@ def run_browser(pw, name, viewport):
             # On a loaded runner the mocked reply can land before the
             # shimmer paint is observed; then the reply itself proves the
             # busy round-trip happened.
-            loading_seen = page.get_by_test_id("assistant-message").count() > assist_before
+            loading_seen = (
+                page.get_by_test_id("assistant-message").count() > assist_before
+            )
         check(loading_seen, f"{tag} loading indicator visible while busy", failures)
-        check(page.get_by_test_id("user-message").count() == before + 1,
-              f"{tag} exactly one user bubble appended (no duplicates)", failures)
+        check(
+            page.get_by_test_id("user-message").count() == before + 1,
+            f"{tag} exactly one user bubble appended (no duplicates)",
+            failures,
+        )
         page.wait_for_function(
             f"""() => [...document.querySelectorAll('[data-testid="assistant-message"]')]
                  .some(a => (a.innerText||'').includes('{PROBE_TAG}'))""",
-            timeout=30000)
+            timeout=30000,
+        )
         replies = page.get_by_test_id("assistant-message").all_inner_texts()
-        check(any(PROBE_TAG in t and "31.5" in t for t in replies),
-              f"{tag} assistant reply visible with complete fixture text", failures)
+        check(
+            any(PROBE_TAG in t and "31.5" in t for t in replies),
+            f"{tag} assistant reply visible with complete fixture text",
+            failures,
+        )
 
         # 7. Contrast: every message line vs effective background.
         rows = page.evaluate(CONTRAST_JS)
         bad = [r for r in rows if r["ratio"] < 4.5]
-        print(f"  contrast lines={len(rows)} min="
-              f"{min([r['ratio'] for r in rows]) if rows else 'n/a'}")
-        check(len(rows) > 0 and not bad, f"{tag} message contrast >= 4.5 ({len(rows)} lines)", failures)
+        print(
+            f"  contrast lines={len(rows)} min="
+            f"{min([r['ratio'] for r in rows]) if rows else 'n/a'}"
+        )
+        check(
+            len(rows) > 0 and not bad,
+            f"{tag} message contrast >= 4.5 ({len(rows)} lines)",
+            failures,
+        )
         if bad:
             print("  low-contrast:", json.dumps(bad[:5]))
 
@@ -255,20 +317,30 @@ def run_browser(pw, name, viewport):
                   ratio: +((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)).toFixed(2)};
         }""")
         print(f"  prompt-button ink={btn}")
-        check(btn is not None and btn["ratio"] >= 4.5,
-              f"{tag} suggested-prompt button contrast >= 4.5 {btn}", failures)
+        check(
+            btn is not None and btn["ratio"] >= 4.5,
+            f"{tag} suggested-prompt button contrast >= 4.5 {btn}",
+            failures,
+        )
 
         # 8a. Server-error state: HTTP 500 must show a visible error bubble.
         error_routes["count"] += 1
         page.unroute("**/api/chat/query")
-        page.route("**/api/chat/query", lambda r: r.fulfill(
-            status=500, content_type="application/json", body='{"detail":"mocked outage"}'))
+        page.route(
+            "**/api/chat/query",
+            lambda r: r.fulfill(
+                status=500,
+                content_type="application/json",
+                body='{"detail":"mocked outage"}',
+            ),
+        )
         box.fill(f"{PROBE_TAG} error path probe")
         send_now()
         page.wait_for_function(
             """() => [...document.querySelectorAll('[data-testid="assistant-message"]')]
                  .some(a => /could not reach|without readable text/i.test(a.innerText||''))""",
-            timeout=30000)
+            timeout=30000,
+        )
         check(True, f"{tag} API-error bubble visible", failures)
 
         # 8b. Network-failure state: an aborted request must also degrade
@@ -280,7 +352,8 @@ def run_browser(pw, name, viewport):
         page.wait_for_function(
             """() => [...document.querySelectorAll('[data-testid="assistant-message"]')]
                  .some(a => /could not reach|without readable text/i.test(a.innerText||''))""",
-            timeout=30000)
+            timeout=30000,
+        )
         check(True, f"{tag} network-abort bubble visible", failures)
 
         # 9. No clipping + newest reply reachable by scrolling.
@@ -291,16 +364,22 @@ def run_browser(pw, name, viewport):
         })""")
         check(all(c["ok"] for c in clip), f"{tag} no message clipped {clip}", failures)
         try:
-            page.wait_for_function("""() => {
+            page.wait_for_function(
+                """() => {
               const list = document.querySelector('.wg-ai-message-list');
               const arts = [...document.querySelectorAll('article')];
               const last = arts[arts.length - 1].getBoundingClientRect();
               return last.bottom <= list.getBoundingClientRect().bottom + 2;
-            }""", timeout=8000)
-            reach_ok, reach = True, page.evaluate("""() => {
+            }""",
+                timeout=8000,
+            )
+            reach_ok, reach = (
+                True,
+                page.evaluate("""() => {
               const list = document.querySelector('.wg-ai-message-list');
               return {scrollable: list.scrollHeight > list.clientHeight + 1};
-            }""")
+            }"""),
+            )
         except PwTimeout:
             reach_ok, reach = False, {"scrollable": "timeout"}
         check(reach_ok, f"{tag} newest reply reachable by scrolling {reach}", failures)
@@ -309,21 +388,32 @@ def run_browser(pw, name, viewport):
         # and the single expected artifact of our deliberate abort above).
         def relevant(e):
             t = e["text"] if isinstance(e, dict) else e
-            if "ERR_CONNECTION_REFUSED" in t or "api.open-meteo.com" in t or "net::" in t:
+            if (
+                "ERR_CONNECTION_REFUSED" in t
+                or "api.open-meteo.com" in t
+                or "net::" in t
+            ):
                 return False
             if "status of 500" in t or "Failed to load resource" in t:
                 # Only our deliberate mocked 500 produces such responses here.
                 return not seen["chat500"]
             if "api/chat/query" in t and (
-                    "CORS request did not succeed" in t or "Failed to fetch" in t
-                    or "abort" in t.lower() or "Cross-Origin Request Blocked" in t):
+                "CORS request did not succeed" in t
+                or "Failed to fetch" in t
+                or "abort" in t.lower()
+                or "Cross-Origin Request Blocked" in t
+            ):
                 # Only our deliberate route.abort() produces these here.
                 return not seen["chatabort"]
             return True
 
         noise = [e for e in errors if relevant(e)]
-        check(not noise, f"{tag} no relevant console/page errors "
-              f"{[(e['text'] if isinstance(e, dict) else e)[:120] for e in noise[:3]]}", failures)
+        check(
+            not noise,
+            f"{tag} no relevant console/page errors "
+            f"{[(e['text'] if isinstance(e, dict) else e)[:120] for e in noise[:3]]}",
+            failures,
+        )
     except Exception as exc:
         # A timeout in one suite must not abort the remaining suites; the
         # failure is recorded (with a screenshot) and the run continues.
@@ -339,6 +429,7 @@ def run_browser(pw, name, viewport):
 
 def main():
     from playwright.sync_api import sync_playwright
+
     viewports = [{"width": 1440, "height": 900}, {"width": 390, "height": 844}]
     all_failures, ran = [], 0
     with sync_playwright() as pw:

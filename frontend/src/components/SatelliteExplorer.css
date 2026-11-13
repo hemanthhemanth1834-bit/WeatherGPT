@@ -1,0 +1,478 @@
+.wg-satellite-explorer {
+  --sat-bg: #050b17;
+  --sat-panel: rgba(9, 20, 36, 0.86);
+  --sat-line: rgba(125, 211, 252, 0.16);
+  --sat-cyan: #67e8f9;
+  --sat-text: #e5f2ff;
+  --sat-muted: #91a7bd;
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  color: var(--sat-text);
+}
+
+.wg-sat-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 2px 2px 4px;
+}
+
+.wg-sat-header > div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.wg-sat-header strong {
+  font-size: clamp(1.05rem, 1.5vw, 1.4rem);
+  letter-spacing: -0.02em;
+}
+
+.wg-sat-header > div:first-child > span:last-child,
+.wg-sat-location span {
+  color: var(--sat-muted);
+  font-size: 0.76rem;
+}
+
+.wg-sat-status {
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid rgba(103, 232, 249, 0.3);
+  border-radius: 999px;
+  background: rgba(8, 47, 73, 0.46);
+  color: var(--sat-cyan);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.wg-sat-status.error {
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
+}
+
+.wg-sat-location {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  min-width: 0;
+}
+
+.wg-sat-location b {
+  overflow-wrap: anywhere;
+}
+
+.wg-sat-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 292px;
+  gap: 14px;
+  min-width: 0;
+}
+
+.wg-sat-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(125, 211, 252, 0.22);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(14, 116, 144, 0.18), transparent 48%),
+    #020617;
+  box-shadow: 0 18px 60px rgba(2, 6, 23, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  isolation: isolate;
+}
+
+.wg-sat-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0;
+  animation: wg-sat-reveal 480ms ease forwards;
+}
+
+.wg-sat-stage::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 82px;
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(2, 6, 23, 0.86));
+  z-index: 1;
+}
+
+@keyframes wg-sat-reveal {
+  from { opacity: 0; transform: scale(1.012); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.wg-sat-skeleton,
+.wg-sat-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px;
+  text-align: center;
+  color: var(--sat-muted);
+  background: #020617;
+}
+
+.wg-sat-empty b {
+  color: var(--sat-text);
+  font-size: 1.05rem;
+}
+
+.wg-sat-empty span {
+  max-width: 48ch;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.wg-sat-empty button,
+.wg-sat-stage-actions button,
+.wg-sat-stage-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1px solid rgba(103, 232, 249, 0.34);
+  border-radius: 9px;
+  background: rgba(8, 47, 73, 0.7);
+  color: #d9fbff;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wg-sat-empty button:hover,
+.wg-sat-stage-actions button:hover,
+.wg-sat-stage-actions a:hover {
+  background: rgba(14, 116, 144, 0.62);
+}
+
+.wg-sat-spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(103, 232, 249, 0.2);
+  border-top-color: var(--sat-cyan);
+  border-radius: 50%;
+  animation: wg-sat-spin 800ms linear infinite;
+}
+
+@keyframes wg-sat-spin { to { transform: rotate(360deg); } }
+
+.wg-sat-stage-actions {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: calc(100% - 24px);
+}
+
+.wg-sat-stage-actions button,
+.wg-sat-stage-actions a {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(2, 6, 23, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.wg-sat-stage-caption {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #b9d9ea;
+  font-size: 0.66rem;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 8px #020617;
+}
+
+.wg-sat-stage-caption span:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.wg-sat-panel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 15px;
+  border: 1px solid var(--sat-line);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(10, 26, 45, 0.93), rgba(6, 15, 28, 0.9));
+  min-width: 0;
+}
+
+.wg-sat-control-block {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.wg-sat-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.wg-sat-label b {
+  font-size: 0.68rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: #c7e6f5;
+}
+
+.wg-sat-label span {
+  font-size: 0.62rem;
+  color: var(--sat-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.wg-sat-chips {
+  display: grid;
+  gap: 5px;
+}
+
+.wg-sat-chips button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 9px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 9px;
+  background: rgba(15, 23, 42, 0.48);
+  color: #c9dceb;
+  text-align: left;
+  font: inherit;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.wg-sat-chips button small {
+  color: #6f8ba3;
+  font-size: 0.56rem;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
+
+.wg-sat-chips button:hover,
+.wg-sat-chips button.active {
+  border-color: rgba(103, 232, 249, 0.48);
+  background: rgba(8, 47, 73, 0.6);
+  color: #f0fdff;
+}
+
+.wg-sat-chips button.active small { color: #a5f3fc; }
+
+.wg-sat-layer-note {
+  margin: 0;
+  color: var(--sat-muted);
+  font-size: 0.65rem;
+  line-height: 1.5;
+}
+
+.wg-sat-dates {
+  display: grid;
+  gap: 5px;
+  max-height: 172px;
+  overflow: auto;
+  padding-right: 3px;
+  scrollbar-width: thin;
+}
+
+.wg-sat-dates button {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid rgba(148, 163, 184, 0.13);
+  border-radius: 8px;
+  background: transparent;
+  color: #a9c1d3;
+  font: inherit;
+  font-size: 0.66rem;
+  cursor: pointer;
+}
+
+.wg-sat-dates button b { color: #7896ad; font-size: 0.56rem; letter-spacing: 0.08em; }
+.wg-sat-dates button.active,
+.wg-sat-dates button:hover { border-color: rgba(103, 232, 249, 0.48); background: rgba(8, 47, 73, 0.5); color: #ecfeff; }
+.wg-sat-dates button.active b { color: var(--sat-cyan); }
+
+.wg-sat-zooms {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.wg-sat-zooms button {
+  padding: 7px 4px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: transparent;
+  color: #a9c1d3;
+  font: inherit;
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
+.wg-sat-zooms button.active,
+.wg-sat-zooms button:hover { border-color: rgba(103, 232, 249, 0.5); background: rgba(8, 47, 73, 0.58); color: #ecfeff; }
+
+.wg-sat-meta {
+  display: grid;
+  gap: 5px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.wg-sat-meta div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.64rem;
+}
+
+.wg-sat-meta span { color: var(--sat-muted); }
+.wg-sat-meta b { color: #d8f3ff; text-align: right; overflow-wrap: anywhere; }
+
+.wg-sat-disclaimer {
+  margin: 0;
+  color: #8fa9bd;
+  font-size: 0.63rem;
+  line-height: 1.55;
+}
+
+.wg-sat-source {
+  display: grid;
+  gap: 3px;
+  font-size: 0.63rem;
+  color: #829bb0;
+}
+
+.wg-sat-source a {
+  color: #7dd3fc;
+  text-decoration: none;
+}
+
+.wg-sat-source a:hover { text-decoration: underline; }
+
+.wg-sat-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: clamp(10px, 3vw, 34px);
+  background: rgba(2, 6, 23, 0.92);
+  backdrop-filter: blur(6px);
+}
+
+.wg-sat-modal-inner {
+  display: grid;
+  gap: 10px;
+  width: min(1500px, 100%);
+  max-height: 94vh;
+  min-width: 0;
+}
+
+.wg-sat-modal-head,
+.wg-sat-modal-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #dff7ff;
+}
+
+.wg-sat-modal-head > div { display: grid; gap: 2px; min-width: 0; }
+.wg-sat-modal-head span,
+.wg-sat-modal-foot { color: #9fb7ca; font-size: 0.7rem; }
+
+.wg-sat-modal-head button {
+  flex: 0 0 auto;
+  padding: 8px 13px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: 9px;
+  background: #0f172a;
+  color: #e2f6ff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.wg-sat-modal img {
+  display: block;
+  width: 100%;
+  max-height: calc(94vh - 100px);
+  object-fit: contain;
+  border: 1px solid rgba(125, 211, 252, 0.25);
+  border-radius: 10px;
+  background: #020617;
+}
+
+.wg-sat-modal-foot a { color: #7dd3fc; text-decoration: none; }
+.wg-sat-modal-foot a:hover { text-decoration: underline; }
+
+.wg-satellite-explorer :is(button, a):focus-visible {
+  outline: 2px solid #67e8f9;
+  outline-offset: 2px;
+}
+
+@media (max-width: 980px) {
+  .wg-sat-grid { grid-template-columns: minmax(0, 1fr); }
+  .wg-sat-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .wg-sat-panel > .wg-sat-control-block:nth-child(3),
+  .wg-sat-meta,
+  .wg-sat-disclaimer,
+  .wg-sat-source { grid-column: 1 / -1; }
+  .wg-sat-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; }
+}
+
+@media (max-width: 640px) {
+  .wg-sat-header { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .wg-sat-location { text-align: left; }
+  .wg-sat-panel { grid-template-columns: minmax(0, 1fr); padding: 12px; }
+  .wg-sat-panel > * { grid-column: auto; }
+  .wg-sat-stage { border-radius: 13px; }
+  .wg-sat-stage-actions { top: 8px; right: 8px; }
+  .wg-sat-stage-actions a { display: none; }
+  .wg-sat-stage-caption { left: 9px; right: 9px; bottom: 8px; font-size: 0.58rem; }
+  .wg-sat-stage-caption span:last-child { white-space: normal; text-align: right; }
+  .wg-sat-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 380px) {
+  .wg-sat-chips button { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .wg-sat-stage-actions button { min-height: 30px; padding: 5px 8px; font-size: 0.65rem; }
+  .wg-sat-modal { padding: 6px; }
+  .wg-sat-modal-head, .wg-sat-modal-foot { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wg-sat-image { animation: none; opacity: 1; }
+  .wg-sat-spinner { animation: none; }
+}

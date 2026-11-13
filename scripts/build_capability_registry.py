@@ -9,6 +9,7 @@ Single source of truth: the matrix doc. This script:
 
 Run: python scripts/build_capability_registry.py
 """
+
 import pathlib
 import re
 
@@ -17,25 +18,63 @@ MATRIX = ROOT / "docs" / "464_CAPABILITY_MATRIX.md"
 OUT = ROOT / "frontend" / "src" / "services" / "capabilityRegistry.generated.js"
 
 PREFIX_TAB = {
-    "W": "dashboard", "F": "dashboard", "L": "home", "Q": "dashboard",
-    "M": "aviation_marine", "V": "aviation_marine", "C": "climate",
-    "N": "nwp", "S": "satellite", "R": "map", "G": "map", "E": "earth",
-    "A": "alerts", "K": "risk", "D": "severe", "EV": "severe",
-    "AG": "agri", "SO": "dashboard", "LC": "dashboard", "RD": "risk",
-    "CP": "compare", "AI": "chat", "VM": "chat", "SV": "home",
-    "NT": "alerts", "PS": "chat", "EX": "dashboard", "PH": "nwp",
-    "SE": "about", "PQ": "about", "DC": "about",
+    "W": "dashboard",
+    "F": "dashboard",
+    "L": "home",
+    "Q": "dashboard",
+    "M": "aviation_marine",
+    "V": "aviation_marine",
+    "C": "climate",
+    "N": "nwp",
+    "S": "satellite",
+    "R": "map",
+    "G": "map",
+    "E": "earth",
+    "A": "alerts",
+    "K": "risk",
+    "D": "severe",
+    "EV": "severe",
+    "AG": "agri",
+    "SO": "dashboard",
+    "LC": "dashboard",
+    "RD": "risk",
+    "CP": "compare",
+    "AI": "chat",
+    "VM": "chat",
+    "SV": "home",
+    "NT": "alerts",
+    "PS": "chat",
+    "EX": "dashboard",
+    "PH": "nwp",
+    "SE": "about",
+    "PQ": "about",
+    "DC": "about",
+}
+
+# Capabilities whose former UI surface was retired during navigation cleanup.
+# Keep the backend/data path documented, but do not claim a reachable tab.
+RETIRED_TABS = {
+    "CP": "Two-city compare panel retired during navigation cleanup; "
+    "backend /api/weather/compare remains available. Use AI Assistant for comparisons.",
 }
 
 # Rows whose default tab would be misleading even though a frontend string exists.
 OVERRIDES = {
-    "LC011": "severe", "LC012": "severe",  # blueprint paths live in Severe
+    "LC011": "severe",
+    "LC012": "severe",  # blueprint paths live in Severe
     "RD009": "severe",  # emergency places panel lives in Severe
     "NT010": "about",  # official links live in footer/About
-    "PS010": "about", "PS011": "about", "PS012": "about",
-    "PS013": "about", "PS014": "about",  # documented prefs live in About/docs
-    "EX008": "about", "EX009": "about", "EX010": "about", "EX011": "about",
-    "SE011": "about", "SE012": "about",  # documented posture, About/docs
+    "PS010": "about",
+    "PS011": "about",
+    "PS012": "about",
+    "PS013": "about",
+    "PS014": "about",  # documented prefs live in About/docs
+    "EX008": "about",
+    "EX009": "about",
+    "EX010": "about",
+    "EX011": "about",
+    "SE011": "about",
+    "SE012": "about",  # documented posture, About/docs
 }
 
 
@@ -65,40 +104,68 @@ def main():
         cap_id, category, name = cells[0], cells[1], cells[2]
         frontend, source, provider, status = cells[4], cells[6], cells[7], cells[8]
         if frontend in ("", "—"):
-            tab, reason = None, f"No dedicated UI — status {status} (see matrix row {cap_id})"
+            tab, reason = (
+                None,
+                f"No dedicated UI — status {status} (see matrix row {cap_id})",
+            )
+            ui = "INFRA"
+        elif prefix_of(cap_id) in RETIRED_TABS:
+            tab, reason = None, RETIRED_TABS[prefix_of(cap_id)]
             ui = "INFRA"
         else:
             tab = OVERRIDES.get(cap_id, PREFIX_TAB[prefix_of(cap_id)])
             reason = ""
             ui = "YES"
-        entries.append({
-            "id": cap_id, "category": category, "name": name,
-            "status": status, "source": source, "provider": provider,
-            "tab": tab, "reason": reason, "frontend": frontend,
-        })
+        entries.append(
+            {
+                "id": cap_id,
+                "category": category,
+                "name": name,
+                "status": status,
+                "source": source,
+                "provider": provider,
+                "tab": tab,
+                "reason": reason,
+                "frontend": frontend,
+            }
+        )
         doc_lines.append(row.rstrip() + f" {ui} |")
     header_idx = next(i for i, l in enumerate(lines) if l.startswith("| ID |"))
     lines[header_idx] = lines[header_idx].rstrip() + " UI Accessible |"
     sep_idx = header_idx + 1
     assert set(lines[sep_idx].replace(" ", "")) <= set("|-:"), "separator row expected"
-    last_row = max(i for i, l in enumerate(lines) if re.match(r"^\| [A-Z]+[0-9]+ \|", l))
-    out_lines = lines[:sep_idx + 1] + doc_lines + lines[last_row + 1:]
-    MATRIX.write_text("\n".join(line.rstrip() for line in out_lines) + "\n", encoding="utf-8")
+    last_row = max(
+        i for i, l in enumerate(lines) if re.match(r"^\| [A-Z]+[0-9]+ \|", l)
+    )
+    out_lines = lines[: sep_idx + 1] + doc_lines + lines[last_row + 1 :]
+    MATRIX.write_text(
+        "\n".join(line.rstrip() for line in out_lines) + "\n", encoding="utf-8"
+    )
 
     js_entries = []
     for e in entries:
         tab_js = "null" if e["tab"] is None else repr(e["tab"])
         js_entries.append(
             "  { id: %r, category: %r, name: %r, status: %r, source: %r, "
-            "provider: %r, tab: %s, reason: %r }," % (
-                e["id"], e["category"], e["name"], e["status"], e["source"],
-                e["provider"], tab_js, e["reason"]))
+            "provider: %r, tab: %s, reason: %r },"
+            % (
+                e["id"],
+                e["category"],
+                e["name"],
+                e["status"],
+                e["source"],
+                e["provider"],
+                tab_js,
+                e["reason"],
+            )
+        )
     OUT.write_text(
         "/* GENERATED from docs/464_CAPABILITY_MATRIX.md — do not edit by hand.\n"
         "   Regenerate: python scripts/build_capability_registry.py */\n"
         "export const CAPABILITIES = [\n" + "\n".join(js_entries) + "\n];\n"
         "export const CAPABILITY_TABS = [...new Set(CAPABILITIES.map((c) => c.tab).filter(Boolean))];\n",
-        encoding="utf-8")
+        encoding="utf-8",
+    )
     tabs = sorted({e["tab"] for e in entries if e["tab"]})
     infra = sum(1 for e in entries if not e["tab"])
     print(f"rows={len(entries)} tabs={tabs} infra-only={infra}")
