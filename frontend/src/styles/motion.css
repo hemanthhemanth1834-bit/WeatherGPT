@@ -79,41 +79,10 @@ main section:nth-of-type(6) { animation-delay: 0.25s; }
 main section:nth-of-type(7) { animation-delay: 0.3s; }
 main section:nth-of-type(8) { animation-delay: 0.35s; }
 
-/* Every major panel/card drifts gently; negative delays de-synchronise them. */
-main .wg-card,
-main .wg-ref-feature-card,
-main .wg-dc-topic,
-main .wg-dc-metric,
-main .wg-dc-table-wrap,
-main .wg-alert-card,
-main .wg-alert,
-main .wg-provider-card,
-main .wg-risk-card,
-main .wg-solar-card,
-main .wg-ref-command,
-main .wg-ref-shortcut {
-  animation: wgm-float 11s ease-in-out infinite;
-  animation-delay: -2s;
-}
-
-main .wg-card:nth-of-type(2n),
-main .wg-ref-feature-card:nth-of-type(2n),
-main .wg-dc-topic:nth-of-type(2n),
-main .wg-alert-card:nth-of-type(2n) {
-  animation-delay: -5.5s;
-}
-
-main .wg-card:nth-of-type(3n),
-main .wg-ref-feature-card:nth-of-type(3n),
-main .wg-dc-topic:nth-of-type(3n),
-main .wg-alert-card:nth-of-type(3n) {
-  animation-delay: -8.5s;
-}
-
-/* Headers and command surfaces entrance-fade only. Perpetual transform
-   animation made fixed navigation buttons drift under the pointer, which
-   hurts real click targets and made Playwright report "element is not
-   stable". Motion stays on decorative surfaces. */
+/* Panels and cards entrance-fade only. Perpetual transform animation made
+   buttons inside cards drift under the pointer, which hurts real click
+   targets and made Playwright report "element is not stable". Motion stays
+   on decorative surfaces and hover/focus feedback. */
 .wg-ref-header-main { animation: wgm-rise 0.6s ease both; }
 .wg-ref-bottom-command,
 .wg-ref-mobile-nav { animation: none; }
