@@ -110,10 +110,13 @@ main .wg-alert-card:nth-of-type(3n) {
   animation-delay: -8.5s;
 }
 
-/* Headers, chips and command surfaces breathe rather than drift. */
-.wg-ref-header-main { animation: wgm-rise 0.6s ease both, wgm-float-soft 14s ease-in-out 0.6s infinite; }
+/* Headers and command surfaces entrance-fade only. Perpetual transform
+   animation made fixed navigation buttons drift under the pointer, which
+   hurts real click targets and made Playwright report "element is not
+   stable". Motion stays on decorative surfaces. */
+.wg-ref-header-main { animation: wgm-rise 0.6s ease both; }
 .wg-ref-bottom-command,
-.wg-ref-mobile-nav { animation: wgm-float-soft 9s ease-in-out infinite; }
+.wg-ref-mobile-nav { animation: none; }
 
 .wg-ref-nav-item button,
 .wg-ref-sidebar button,
