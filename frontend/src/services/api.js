@@ -59,8 +59,22 @@ export const fetchCurrentWeather = (location = "Pune", lat = null, lon = null, m
   return get(path, { signal });
 };
 
-export const fetchActiveAlerts = (severity = null) =>
-  get(severity ? `/alerts/active?severity=${severity}` : "/alerts/active");
+export const fetchActiveAlerts = (options = {}) => {
+  // Backward compatible: a string argument is still treated as a severity.
+  const opts = typeof options === "string" ? { severity: options } : options || {};
+  const params = new URLSearchParams();
+  if (opts.severity) params.set("severity", opts.severity);
+  const lat = Number(opts.lat);
+  const lon = Number(opts.lon);
+  if (Number.isFinite(lat) && Number.isFinite(lon)) {
+    params.set("lat", String(lat));
+    params.set("lon", String(lon));
+    const radius = Number(opts.radiusKm ?? opts.radius_km ?? 300);
+    if (Number.isFinite(radius)) params.set("radius_km", String(radius));
+  }
+  const query = params.toString();
+  return get(`/alerts/active${query ? `?${query}` : ""}`);
+};
 
 export const fetchIndiaAlerts = (state = null) =>
   get(state ? `/alerts/india?state=${encodeURIComponent(state)}` : "/alerts/india");

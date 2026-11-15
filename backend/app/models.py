@@ -64,6 +64,20 @@ class WeatherData(BaseModel):
     data_source: str = "Open-Meteo"
     data_type: str = "Forecast"
     status: str = "LIVE"
+    # Timestamp contract: provider current-conditions time and the time this
+    # server fetched the payload are separate. `freshness` is computed on every
+    # read from the stored timestamps, so a cached object can never claim LIVE.
+    conditions_at_ist: str = ""
+    conditions_at_iso: str = ""
+    fetched_at_ist: str = ""
+    fetched_at_iso: str = ""
+    data_age_minutes: Optional[int] = Field(default=None, ge=0)
+    fetch_age_minutes: Optional[int] = Field(default=None, ge=0)
+    freshness: str = "UNKNOWN"
+    freshness_basis: str = (
+        "Provider current-conditions timestamp compared with server clock; "
+        "model data, not a surface-station observation."
+    )
     updated_at_ist: str = ""
     confidence: str = "Provider/model dependent"
 
@@ -91,6 +105,10 @@ class CAPAlert(BaseModel):
     instruction: str = ""
     sender_name: str = "WeatherGPT computed alerts (not an official bulletin)"
     color: str = "#EAB308"
+    # Geographic relevance relative to the caller's coordinates. Populated only
+    # when lat/lon are supplied; never inferred from the station name alone.
+    distance_km: Optional[float] = Field(default=None, ge=0)
+    scope: str = "UNKNOWN"
 
 
 class AgriCropAdvisory(BaseModel):

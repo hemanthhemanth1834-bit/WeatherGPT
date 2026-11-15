@@ -599,8 +599,23 @@ def alerts(
     state: Optional[str] = None,
     district: Optional[str] = None,
     severity: Optional[str] = None,
+    lat: Optional[float] = Query(None, ge=-90, le=90),
+    lon: Optional[float] = Query(None, ge=-180, le=180),
+    radius_km: float = Query(300.0, ge=25.0, le=1000.0),
 ) -> List[CAPAlert]:
-    return active_alerts(state=state, district=district, severity=severity)
+    if (lat is None) != (lon is None):
+        raise HTTPException(
+            status_code=400,
+            detail="Supply both lat and lon, or neither, when filtering alerts by distance.",
+        )
+    return active_alerts(
+        state=state,
+        district=district,
+        severity=severity,
+        lat=lat,
+        lon=lon,
+        radius_km=radius_km,
+    )
 
 
 @app.get("/api/alerts/india")

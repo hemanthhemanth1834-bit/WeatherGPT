@@ -324,8 +324,9 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
       </header>
       <div className="wg-dashboard-meta" style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", alignItems: "center", fontSize: "0.75rem", color: "var(--wg-muted)" }}>
         <span className="wg-mono">SOURCE: {weather.data_source}</span>
-        <span className="wg-mono">UPDATED: {weather.updated_at_ist || "—"}</span>
-        <span className={`wg-chip ${weather.status === "LIVE" ? "live" : "simulated"}`}>STATUS: {weather.status}</span>
+        <span className="wg-mono">CONDITIONS: {weather.conditions_at_ist || "—"}</span>
+        <span className="wg-mono">FETCHED: {weather.fetched_at_ist || weather.updated_at_ist || "—"}</span>
+        <span className={`wg-chip ${weather.freshness === "LIVE" ? "live" : weather.freshness === "DELAYED" ? "estimated" : "simulated"}`}>FRESHNESS: {weather.freshness || "UNKNOWN"}</span>
         <span className="wg-mono">{weather.nwp_model}</span>
       </div>
 
@@ -393,13 +394,13 @@ export default function WeatherDashboard({ weather, busy, onAsk }) {
         <Metric label="Wind" value={`${weather.wind_speed} km/h`} sub={weather.wind_direction} />
         <Metric label="Pressure" value={`${weather.pressure} hPa`} />
         <Metric label="Precipitation" value={`${weather.precipitation} mm`} />
-        <Metric label="Cloud cover" value={`${weather.cloud_cover ?? 0}%`} sub="LIVE sky" />
+        <Metric label="Cloud cover" value={`${weather.cloud_cover ?? 0}%`} sub="Model sky" />
         <Metric label="UV index" value={weather.uv_index} />
         <Metric label="Visibility" value={`${weather.visibility} km`} />
         <Metric label="Sunrise" value={`${weather.sunrise} IST`} />
         <Metric label="Sunset" value={`${weather.sunset} IST`} />
       </div>
-      <SourceLine source={`${weather.data_source} · current conditions`} status={weather.status} hint={`Updated ${weather.updated_at_ist || "—"}`} />
+      <SourceLine source={`${weather.data_source} · current conditions`} status={weather.freshness || weather.status} hint={`Conditions ${weather.conditions_at_ist || "—"} · fetched ${weather.fetched_at_ist || "—"}`} />
 
       <div className="wg-responsive-2">
         <LocationRadarImagery

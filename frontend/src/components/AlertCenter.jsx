@@ -110,6 +110,11 @@ function normalizeComputed(alert) {
     area: alert.area_desc || alert.district || "Area not stated",
     district: alert.district || "",
     state: alert.state || "",
+    distanceKm:
+      alert.distance_km != null && Number.isFinite(Number(alert.distance_km))
+        ? Number(alert.distance_km)
+        : null,
+    scope: alert.scope || "UNKNOWN",
     link: null,
     geometry: Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null,
     hazard: inferHazard(`${alert.event} ${alert.headline} ${alert.instruction}`),
@@ -221,7 +226,11 @@ export default function AlertCenter({ onAsk, weather, selectedPlace = "", onTab 
     setSourceErrors({});
     const cached = readCache();
     const results = await Promise.allSettled([
-      fetchActiveAlerts(),
+      fetchActiveAlerts({
+        lat: weather?.lat,
+        lon: weather?.lon,
+        radiusKm: 300,
+      }),
       fetchImdWarnings(30),
       fetchIndiaAlerts(weather?.state || null),
     ]);
@@ -281,7 +290,7 @@ export default function AlertCenter({ onAsk, weather, selectedPlace = "", onTab 
       }
     }
     setBusy(false);
-  }, [weather?.state]);
+  }, [weather?.state, weather?.lat, weather?.lon]);
 
   useEffect(() => {
     load();
@@ -424,6 +433,11 @@ export default function AlertCenter({ onAsk, weather, selectedPlace = "", onTab 
           {item.updated ? <span>Updated: {formatTime(item.updated)}</span> : null}
           {item.expires ? <span>Expires: {formatTime(item.expires)}</span> : <span>Expiry: not supplied</span>}
           {item.area ? <span>Area: {item.area}</span> : null}
+          {item.distanceKm != null ? (
+            <span>
+              Distance: {item.distanceKm} km from selected location · {item.scope} scope
+            </span>
+          ) : null}
         </div>
         <div className="wg-safety-actions">
           <button type="button" className="wg-safety-btn" onClick={() => broadcast(item)}>
@@ -592,13 +606,13 @@ export default function AlertCenter({ onAsk, weather, selectedPlace = "", onTab 
           <div>
             <span className="wg-safety-kicker">COMPUTED · NOT OFFICIAL</span>
             <h2>Application-generated weather alerts</h2>
-            <p>Derived from available model thresholds at selected stations. These are not official warnings and can be incomplete.</p>
+            <p>Derived from available model thresholds at 10 reference districts. The feed is filtered to 300 km around the selected location and each card shows its distance and LOCAL/REGIONAL/NATIONAL scope. These are not official warnings; coverage is incomplete.</p>
           </div>
           <span className="wg-safety-badge computed">COMPUTED</span>
         </div>
         {busy && !computedItems.length ? <div className="wg-safety-loading" role="status">Loading computed telemetry…</div> : null}
         {sourceErrors.computed ? <div className="wg-safety-error" role="alert">Computed alert feed unavailable: {sourceErrors.computed}. No values are being guessed.</div> : null}
-        {renderList(filteredComputed, "No computed alerts match this filter. An empty computed feed is not a safety clearance.")}
+        {renderList(filteredComputed, "No computed alerts within 300 km of the selected location match this filter. Reference-station coverage is incomplete, so an empty feed is not a safety clearance.")}
       </section>
 
       {filteredRecent.length ? (

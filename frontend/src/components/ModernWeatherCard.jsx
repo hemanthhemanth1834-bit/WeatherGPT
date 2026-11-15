@@ -9,8 +9,8 @@ export default function ModernWeatherCard({ weather, compact = false, provenance
     : 0;
   const provSource = provenance?.source;
   const source = (typeof provSource === "string" ? provSource : provSource?.name) || weather.data_source;
-  const freshness = provenance?.freshness || weather.status;
-  const updated = provenance?.retrieved_at || weather.updated_at_ist;
+  const freshness = provenance?.freshness || weather.freshness || weather.status;
+  const updated = provenance?.retrieved_at || weather.conditions_at_ist || weather.updated_at_ist;
   return (
     <div
       className="wg-card"

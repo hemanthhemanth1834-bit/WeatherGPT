@@ -59,9 +59,69 @@ _COMPASS = [
 ]
 
 
+IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+
+
 def ist_now_label() -> str:
-    ist = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
-    return datetime.datetime.now(ist).strftime("%d %b %Y, %H:%M IST")
+    return datetime.datetime.now(IST).strftime("%d %b %Y, %H:%M IST")
+
+
+def _parse_ist_timestamp(value) -> datetime.datetime | None:
+    """Parse an Open-Meteo local/ISO timestamp into an IST-aware datetime."""
+    if not value:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    try:
+        parsed = datetime.datetime.fromisoformat(text.replace("Z", "+00:00"))
+    except ValueError:
+        try:
+            parsed = datetime.datetime.strptime(text, "%d %b %Y, %H:%M IST")
+        except ValueError:
+            return None
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=IST)
+    return parsed.astimezone(IST)
+
+
+def freshness_from_age(minutes: int | None) -> str:
+    """Classify data age without ever turning an unknown age into LIVE."""
+    if minutes is None:
+        return "UNKNOWN"
+    if minutes <= 90:
+        return "LIVE"
+    if minutes <= 360:
+        return "DELAYED"
+    return "STALE"
+
+
+def _refresh_freshness(data: WeatherData) -> WeatherData:
+    """Recompute ages on every read so cached payloads cannot claim freshness."""
+    now = datetime.datetime.now(IST)
+    observed = _parse_ist_timestamp(data.conditions_at_iso)
+    fetched = _parse_ist_timestamp(data.fetched_at_iso)
+
+    if observed:
+        age = (now - observed).total_seconds() / 60
+        if age < -5:
+            data.data_age_minutes = None
+            data.freshness = "UNKNOWN"
+        else:
+            rounded = max(0, int(round(age)))
+            data.data_age_minutes = rounded
+            data.freshness = freshness_from_age(rounded)
+    else:
+        data.data_age_minutes = None
+        data.freshness = "UNKNOWN"
+
+    if fetched:
+        data.fetch_age_minutes = max(
+            0, int(round((now - fetched).total_seconds() / 60))
+        )
+    else:
+        data.fetch_age_minutes = None
+    return data
 
 
 def compass(degrees: float) -> str:
@@ -110,7 +170,11 @@ def get_weather(
         lambda: _download(lat, lon, place, state, selection),
     )
     if isinstance(data, WeatherData):
+        # Never mutate the cached object: AQI merge and age recalculation must
+        # be derived per request so stale cached values keep their real age.
+        data = data.model_copy(deep=True)
         data = _apply_live_aqi(data, lat, lon)
+        data = _refresh_freshness(data)
     return data
 
 
@@ -367,6 +431,19 @@ def _from_api(
         if isinstance(visibility_value, (int, float))
         else "Estimated fallback (visibility omitted by selected model)"
     )
+    fetched_at = datetime.datetime.now(IST)
+    conditions_at = _parse_ist_timestamp(current.get("time"))
+    if conditions_at:
+        raw_age = (fetched_at - conditions_at).total_seconds() / 60
+        if raw_age < -5:
+            data_age = None
+            freshness = "UNKNOWN"
+        else:
+            data_age = max(0, int(round(raw_age)))
+            freshness = freshness_from_age(data_age)
+    else:
+        data_age = None
+        freshness = "UNKNOWN"
     return WeatherData(
         location=place,
         state=state,
@@ -398,6 +475,17 @@ def _from_api(
         data_source="Open-Meteo",
         data_type="Forecast",
         status="LIVE",
+        conditions_at_ist=(
+            conditions_at.strftime("%d %b %Y, %H:%M IST") if conditions_at else ""
+        ),
+        conditions_at_iso=(
+            conditions_at.isoformat(timespec="minutes") if conditions_at else ""
+        ),
+        fetched_at_ist=fetched_at.strftime("%d %b %Y, %H:%M IST"),
+        fetched_at_iso=fetched_at.isoformat(timespec="minutes"),
+        data_age_minutes=data_age,
+        fetch_age_minutes=0,
+        freshness=freshness,
         updated_at_ist=ist_now_label(),
         confidence="Provider/model dependent",
     )

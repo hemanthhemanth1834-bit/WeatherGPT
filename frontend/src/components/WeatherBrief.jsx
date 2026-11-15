@@ -15,7 +15,7 @@ export default function WeatherBrief({ weather, onClose }) {
   const today = weather.daily?.[0];
   const text =
     `WeatherGPT briefing (UNOFFICIAL) — ${weather.location}, ${weather.state}\n` +
-    `Updated ${weather.updated_at_ist} IST from ${weather.data_source} (${weather.status}).\n\n` +
+    `Conditions ${weather.conditions_at_ist || "time unavailable"}; fetched ${weather.fetched_at_ist || "time unavailable"} from ${weather.data_source} (${weather.freshness || weather.status || "FRESHNESS UNKNOWN"}).\n\n` +
     `Now: ${weather.condition}, ${weather.current_temp}°C (feels ${weather.feels_like}°C). ` +
     `Humidity ${weather.humidity}%, wind ${weather.wind_speed} km/h ${weather.wind_direction}, ` +
     `precipitation ${weather.precipitation} mm, cloud ${weather.cloud_cover ?? 0}%, ` +
