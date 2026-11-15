@@ -233,6 +233,10 @@
 .wg-safety-kpi.yellow strong { color: var(--safety-yellow); }
 .wg-safety-kpi.cyan strong { color: var(--safety-cyan); }
 
+.wg-safety-accum { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.5rem; }
+.wg-safety-accum .wg-safety-kpi { background: rgba(8, 17, 33, 0.55); }
+.wg-safety-credit { margin: 0.6rem 0 0; color: var(--wg-text-muted); font-size: 0.66rem; line-height: 1.5; }
+
 .wg-safety-map-panel { overflow: hidden; }
 .wg-safety-map-head { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: flex-end; justify-content: space-between; padding: 0.9rem 1rem 0.65rem; }
 .wg-safety-map-head h2 { margin: 0.15rem 0 0; font-size: 1rem; }
@@ -343,6 +347,7 @@
 @media (max-width: 1050px) {
   .wg-safety-grid.three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .wg-safety-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .wg-safety-accum { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 760px) {
@@ -362,6 +367,7 @@
   .wg-safety-title { font-size: 1.55rem; }
   .wg-safety-hero { min-height: 14rem; border-radius: 1rem; }
   .wg-safety-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
+  .wg-safety-accum { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
   .wg-safety-kpi { padding: 0.55rem; }
   .wg-safety-kpi strong { font-size: 1rem; }
   .wg-safety-btn { min-height: 2.25rem; }

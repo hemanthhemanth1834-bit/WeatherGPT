@@ -354,6 +354,7 @@ def _from_api(
         hlabel, hicon = WMO_LABELS.get(int(hcode), ("Clear Sky", "Sun"))
         temps = hourly_raw.get("temperature_2m", [])
         probs = hourly_raw.get("precipitation_probability", [])
+        rains = hourly_raw.get("precipitation", [])
         winds = hourly_raw.get("wind_speed_10m", [])
         hums = hourly_raw.get("relative_humidity_2m", [])
         stamp = times[i]
@@ -363,6 +364,9 @@ def _from_api(
                 temp=round(float(temps[i]), 1),
                 rain_prob=int(probs[i])
                 if i < len(probs) and probs[i] is not None
+                else None,
+                rain_mm=round(float(rains[i]), 1)
+                if i < len(rains) and rains[i] is not None
                 else None,
                 condition=hlabel,
                 icon=hicon,

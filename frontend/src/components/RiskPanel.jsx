@@ -32,6 +32,30 @@ function parseRain(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function sumHourRain(hours, count) {
+  const window = hours.slice(0, count);
+  if (window.length < count) return null;
+  let total = 0;
+  for (const hour of window) {
+    const value = parseRain(hour.rain_mm);
+    if (value == null) return null;
+    total += value;
+  }
+  return Math.round(total * 10) / 10;
+}
+
+function sumDayRain(days, count) {
+  const window = days.slice(0, count);
+  if (window.length < count) return null;
+  let total = 0;
+  for (const day of window) {
+    const value = parseRain(day.rain_sum);
+    if (value == null) return null;
+    total += value;
+  }
+  return Math.round(total * 10) / 10;
+}
+
 function hazardText(item) {
   return `${item.title || ""} ${item.description || ""} ${item.event || ""}`.toLowerCase();
 }
@@ -120,10 +144,19 @@ export default function RiskPanel({ location, weather, onAsk, onTab }) {
   }, [load]);
 
   const hourly = Array.isArray(current?.hourly) ? current.hourly.slice(0, 24) : [];
+  const daily = Array.isArray(current?.daily) ? current.daily : [];
   const rainNow = parseRain(current?.precipitation);
-  const rain24 = parseRain(current?.daily?.[0]?.rain_sum) ?? parseRain(flood?.rain_24h);
-  const rain7 = current?.daily ? current.daily.slice(0, 7).reduce((sum, day) => sum + (parseRain(day.rain_sum) || 0), 0) : null;
-  const maxHourly = Math.max(1, ...hourly.map((hour) => parseRain(hour.rain) || 0));
+  const accumulations = {
+    "1h": sumHourRain(hourly, 1),
+    "3h": sumHourRain(hourly, 3),
+    "6h": sumHourRain(hourly, 6),
+    "24h": sumHourRain(hourly, 24),
+    "72h": sumDayRain(daily, 3),
+  };
+  const rain24 = accumulations["24h"] ?? parseRain(flood?.accumulations_mm?.["24h"]) ?? null;
+  const rain7 = daily.length ? daily.slice(0, 7).reduce((sum, day) => sum + (parseRain(day.rain_sum) || 0), 0) : null;
+  const hasRainAmounts = hourly.some((hour) => parseRain(hour.rain_mm) != null);
+  const maxHourly = Math.max(1, ...hourly.map((hour) => parseRain(hour.rain_mm) || 0));
   const elevation = parseRain(flood?.elevation_m);
   const officialFloodItems = useMemo(() => {
     const items = Array.isArray(official?.items) ? official.items : [];
@@ -172,10 +205,27 @@ export default function RiskPanel({ location, weather, onAsk, onTab }) {
 
       <div className="wg-safety-kpis" aria-label="FloodWatch summary">
         <div className={`wg-safety-kpi ${tone}`}><span className="label">Computed flood proxy</span><strong>{loading && !flood ? "…" : level}</strong><small>{flood?.score != null ? `${flood.score}/100 · rain + elevation only` : "not an official flood warning"}</small></div>
-        <div className="wg-safety-kpi cyan"><span className="label">Rain now</span><strong>{rainNow != null ? `${rainNow} mm` : "—"}</strong><small>current Open-Meteo value</small></div>
-        <div className="wg-safety-kpi cyan"><span className="label">Next 24h rain</span><strong>{rain24 != null ? `${rain24} mm` : "—"}</strong><small>model forecast, not observed</small></div>
+        <div className="wg-safety-kpi cyan"><span className="label">Rain now</span><strong>{rainNow != null ? `${rainNow} mm` : "—"}</strong><small>model current value, not a gauge observation</small></div>
+        <div className="wg-safety-kpi cyan"><span className="label">Next 24h rain</span><strong>{rain24 != null ? `${rain24} mm` : "—"}</strong><small>sum of hourly model forecast</small></div>
         <div className="wg-safety-kpi"><span className="label">7-day rain</span><strong>{rain7 != null ? `${rain7.toFixed(1)} mm` : "—"}</strong><small>forecast accumulation</small></div>
       </div>
+
+      <section className="wg-safety-panel" aria-label="Forecast rainfall accumulation">
+        <div className="wg-safety-panel-head">
+          <div><span className="wg-safety-kicker">FORECAST ACCUMULATION</span><h2>Rainfall windows</h2><p>Simple sums of Open-Meteo hourly precipitation for 1, 3, 6 and 24 hours; 72 hours sums three daily forecasts.</p></div>
+          <span className="wg-safety-badge computed">MODEL FORECAST</span>
+        </div>
+        <div className="wg-safety-accum">
+          {[["1h", "next hour"], ["3h", "next 3 hours"], ["6h", "next 6 hours"], ["24h", "next 24 hours"], ["72h", "3 daily sums"]].map(([key, note]) => (
+            <div className="wg-safety-kpi cyan" key={key}>
+              <span className="label">{key} rain</span>
+              <strong>{accumulations[key] != null ? `${accumulations[key]} mm` : "—"}</strong>
+              <small>{note}</small>
+            </div>
+          ))}
+        </div>
+        <p className="wg-safety-credit">These are forecast rainfall sums, not observed gauge totals and not flood depth. A missing hourly value makes that window unavailable rather than zero.</p>
+      </section>
 
       <div className="wg-safety-grid two">
         <section className="wg-safety-panel" aria-label="Rainfall timeline">
@@ -183,11 +233,11 @@ export default function RiskPanel({ location, weather, onAsk, onTab }) {
             <div><span className="wg-safety-kicker">FORECAST CONTEXT</span><h2>Next 24 hours of rainfall</h2><p>Model rainfall, not a gauge observation. Bars are scaled to the largest hourly value.</p></div>
             <span className="wg-safety-badge computed">OPEN-METEO</span>
           </div>
-          {hourly.length ? (
+          {hourly.length && hasRainAmounts ? (
             <>
               <div className="wg-safety-bars" role="img" aria-label="Hourly rainfall forecast bars">
                 {hourly.map((hour, index) => {
-                  const value = parseRain(hour.rain) || 0;
+                  const value = parseRain(hour.rain_mm) || 0;
                   return (
                     <div className="wg-safety-bar" key={`${hour.time || index}`}>
                       <i style={{ height: `${Math.max(2, (value / maxHourly) * 100)}%` }} title={`${value} mm at ${hour.time || "hour"}`} />
@@ -198,7 +248,7 @@ export default function RiskPanel({ location, weather, onAsk, onTab }) {
               </div>
               <div className="wg-safety-bars-caption"><span>Next hours</span><span>Maximum hourly {maxHourly.toFixed(1)} mm</span></div>
             </>
-          ) : <div className="wg-safety-empty">Hourly forecast is unavailable for this location. No bars are generated.</div>}
+          ) : <div className="wg-safety-empty">Hourly rainfall amounts are unavailable for this location. No bars are generated rather than showing zero rain.</div>}
         </section>
 
         <section className="wg-safety-panel" aria-label="Computed flood evidence">
@@ -222,7 +272,7 @@ export default function RiskPanel({ location, weather, onAsk, onTab }) {
               General risk engine: <strong>{risk.overall}</strong> overall for {risk.location}. Flood level {riskLevels.flood || "—"}. {risk.disclaimer || ""}
             </div>
           ) : null}
-          {onAsk ? <button type="button" className="wg-safety-btn" style={{ marginTop: "0.55rem" }} onClick={() => onAsk(`Explain the FloodWatch evidence for ${target}: rainfall now ${rainNow ?? "unavailable"} mm, next 24h ${rain24 ?? "unavailable"} mm, computed flood proxy ${level}, elevation ${elevation ?? "unavailable"} m. Separate observed, forecast, and computed information. Do not invent river levels or flood depth.`)}>Ask WeatherGPT to explain</button> : null}
+          {onAsk ? <button type="button" className="wg-safety-btn" style={{ marginTop: "0.55rem" }} onClick={() => onAsk(`Explain the FloodWatch evidence for ${target}: rainfall now ${rainNow ?? "unavailable"} mm, next 1h ${accumulations["1h"] ?? "unavailable"} mm, next 3h ${accumulations["3h"] ?? "unavailable"} mm, next 6h ${accumulations["6h"] ?? "unavailable"} mm, next 24h ${rain24 ?? "unavailable"} mm, 72h ${accumulations["72h"] ?? "unavailable"} mm, computed flood proxy ${level}, elevation ${elevation ?? "unavailable"} m. Separate observed, forecast, and computed information. Do not invent river levels or flood depth.`)}>Ask WeatherGPT to explain</button> : null}
         </section>
       </div>
 

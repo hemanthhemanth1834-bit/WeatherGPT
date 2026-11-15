@@ -12,6 +12,7 @@ class HourlyPoint(BaseModel):
     time: str = Field(description="Local HH:MM label, Asia/Kolkata")
     temp: float = 25.0
     rain_prob: Optional[int] = Field(default=None, ge=0, le=100)
+    rain_mm: Optional[float] = Field(default=None, ge=0)
     condition: str = "Clear Sky"
     icon: str = "Sun"
     wind_speed: float = 10.0
